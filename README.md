@@ -66,7 +66,7 @@ Desenvolver um sistema full stack de gerenciamento de projetos e tarefas utiliza
 - [x] API para criação de projetos
 - [x] API para listagem de projetos
 - [x] API para exclusão de projetos
-- [ ] API para criação de tarefas vinculadas a projetos
+- [x] API para criação de tarefas vinculadas a projetos
 - [ ] API para listagem de tarefas por projeto
 - [ ] API para exclusão de tarefas
 

@@ -1,19 +1,12 @@
 import { Hono } from "hono";
 import { prisma } from "@/lib/prisma";
 import { taskRoutes } from "../task.routes";
-import { cleanDatabase } from "@/utils";
-import { expect, test, describe, beforeEach, afterAll } from "vitest";
+import { expect, test, describe, afterAll } from "vitest";
 
 const app = new Hono();
 app.route("/tasks", taskRoutes);
 
-beforeEach(async () => {
-  await cleanDatabase();
-});
-
-afterAll(async () => {
-  await cleanDatabase();
-});
+afterAll(async () => {});
 
 describe("Task API", () => {
   // POST /api/task - Create new task.

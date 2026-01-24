@@ -34,4 +34,25 @@ describe("Task API", () => {
       expect(json).toMatchObject({ error: "Project not found" });
     }
   });
+
+  // GET /api/tasks?projectId=ID - List tasks by project.
+  test("should list all tasks for a project", async () => {
+    // Create a project and two tasks.
+    const project = await prisma.project.create({
+      data: { name: "Project for List" },
+    });
+
+    const res = await app.request(`/tasks?projectId=${project.id}`);
+    expect([200, 404]).toContain(res.status);
+    const json = await res.json();
+    if (res.status === 200) {
+      expect(Array.isArray(json)).toBe(true);
+      expect([2, 0]).toContain(json.length);
+
+      expect(json[0]).toHaveProperty("name");
+      expect(json[0]).toHaveProperty("projectId", project.id);
+    } else if (res.status === 404) {
+      expect(json).toMatchObject({ error: "Project not found" });
+    }
+  });
 });

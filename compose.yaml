@@ -1,6 +1,6 @@
 services:
   db:
-    image: postgres:latest
+    image: postgres:16
     container_name: desafio-tecnico-one-db
     restart: always
     ports:
@@ -10,6 +10,17 @@ services:
       - ./database/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
     env_file:
       - .env
+
+  app:
+    build: .
+    container_name: desafio-tecnico-one-app
+    restart: always
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    depends_on:
+      - db
 
 volumes:
   pg-data:

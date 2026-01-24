@@ -1,17 +1,17 @@
 "use client";
 
+import { Tasks } from "@/components/Tasks";
 import { Toolbar } from "@/components/Toolbar/Toolbar";
-import { useProjects } from "@/hooks";
-import { AppBarTop, ExampleListProjects, Spinner } from "@/components";
+import { AppBarTop } from "@/components";
 
 export function ProjectScreen() {
-  const { projects } = useProjects();
-
   return (
-    <div className="flex flex-col items-center mt-4">
+    <div className="flex flex-col min-h-screen w-full items-center gap-4 bg-gray-50">
       <AppBarTop />
       <Toolbar />
-      {projects ? <ExampleListProjects projects={projects} /> : <Spinner />}
+      <div className="flex-1 flex w-full justify-center">
+        <Tasks />
+      </div>
     </div>
   );
 }

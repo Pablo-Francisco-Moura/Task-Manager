@@ -1,10 +1,9 @@
 import { create } from "zustand";
-
-export type Project = { id: number; name: string; tasks?: any[] };
+import { TypeProject } from "@/types/Project";
 
 interface ProjectState {
-  selectedProject: Project | null;
-  setSelectedProject: (project: Project | null) => void;
+  selectedProject: TypeProject | null;
+  setSelectedProject: (project: TypeProject | null) => void;
 }
 
 export const useProjectStore = create<ProjectState>((set) => ({

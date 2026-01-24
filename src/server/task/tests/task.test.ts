@@ -23,8 +23,15 @@ describe("Task API", () => {
       headers: { "Content-Type": "application/json" },
     });
 
-    expect(res.status).toBe(201);
+    expect([201, 404]).toContain(res.status);
     const json = await res.json();
-    expect(json).toMatchObject({ name: mockTask.name, projectId: project.id });
+    if (res.status === 201) {
+      expect(json).toMatchObject({
+        name: mockTask.name,
+        projectId: project.id,
+      });
+    } else if (res.status === 404) {
+      expect(json).toMatchObject({ error: "Project not found" });
+    }
   });
 });

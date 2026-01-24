@@ -18,10 +18,18 @@ taskRoutes.post("/", async (c) => {
   }
 
   // Create the task.
-  const task = await prisma.task.create({
-    data: { name, projectId },
-  });
-  return c.json(task, 201);
+  try {
+    const task = await prisma.task.create({
+      data: { name, projectId },
+    });
+    return c.json(task, 201);
+  } catch (err: any) {
+    // Handles foreign key errors. (project not found).
+    if (err.code === "P2003") {
+      return c.json({ error: "Project not found" }, 404);
+    }
+    throw err;
+  }
 });
 
 export { taskRoutes };

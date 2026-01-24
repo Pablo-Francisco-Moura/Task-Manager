@@ -49,4 +49,19 @@ taskRoutes.get("/", async (c) => {
   return c.json(tasks, 200);
 });
 
+// DELETE /api/task/:id - Delete a task by id
+taskRoutes.delete(":id", async (c) => {
+  const id = Number(c.req.param("id"));
+  if (!id) {
+    return c.json({ error: "id is required" }, 400);
+  }
+
+  try {
+    await prisma.task.delete({ where: { id } });
+    return c.json({ message: "Task deleted successfully" }, 200);
+  } catch (error) {
+    return c.json({ error: "Task not found" }, 404);
+  }
+});
+
 export { taskRoutes };

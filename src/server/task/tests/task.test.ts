@@ -55,4 +55,24 @@ describe("Task API", () => {
       expect(json).toMatchObject({ error: "Project not found" });
     }
   });
+  // DELETE /api/task/:id - Delete a task by id.
+  test("should delete a task by id", async () => {
+    // Create a project and a task.
+    const project = await prisma.project.create({
+      data: { name: "Project for Delete" },
+    });
+    const task = await prisma.task.create({
+      data: { name: "Task to Delete", projectId: project.id },
+    });
+
+    // Delete a task.
+    const res = await app.request(`/tasks/${task.id}`, { method: "DELETE" });
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json).toHaveProperty("message");
+
+    // Verify if it was removed.
+    const deleted = await prisma.task.findUnique({ where: { id: task.id } });
+    expect(deleted).toBeNull();
+  });
 });

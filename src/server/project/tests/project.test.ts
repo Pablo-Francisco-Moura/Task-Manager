@@ -1,11 +1,22 @@
+import {
+  test,
+  expect,
+  describe,
+  afterAll,
+  beforeAll,
+  beforeEach,
+} from "vitest";
 import { Hono } from "hono";
 import { prisma } from "@/lib/prisma";
 import { projectRoutes } from "../project.routes";
 import { cleanDatabase } from "@/utils";
-import { expect, test, describe, beforeEach, afterAll } from "vitest";
 
 const app = new Hono();
 app.route("/projects", projectRoutes);
+
+beforeAll(async () => {
+  await cleanDatabase();
+});
 
 beforeEach(async () => {
   await cleanDatabase();

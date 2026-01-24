@@ -32,4 +32,21 @@ taskRoutes.post("/", async (c) => {
   }
 });
 
+// GET /api/tasks?projectId=ID - List all tasks for a project.
+taskRoutes.get("/", async (c) => {
+  const projectId = Number(c.req.query("projectId"));
+  if (!projectId) {
+    return c.json({ error: "projectId is required" }, 400);
+  }
+
+  // Check if the project exists.
+  const project = await prisma.project.findUnique({ where: { id: projectId } });
+  if (!project) {
+    return c.json({ error: "Project not found" }, 404);
+  }
+
+  const tasks = await prisma.task.findMany({ where: { projectId } });
+  return c.json(tasks, 200);
+});
+
 export { taskRoutes };

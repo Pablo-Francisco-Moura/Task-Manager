@@ -165,6 +165,7 @@ Desenvolver um sistema full stack de gerenciamento de projetos e tarefas utiliza
 
 - Utilize boas práticas de desenvolvimento e organização de código.
 - Documente claramente qualquer decisão arquitetural relevante.
+- O reset/migração do banco de dados de testes foi centralizado no script de teste (`npm run test`) para evitar conflitos e duplicidade de comandos, garantindo que o ambiente de testes seja sempre inicializado de forma consistente.
 
 ---
 

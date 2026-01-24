@@ -2,7 +2,6 @@ import { useEffect } from "react";
 import { useProjects } from "@/hooks/useProjects";
 import { useProjectStore } from "@/store/projectStore";
 import { CircularProgress } from "@mui/material";
-import Box from "@mui/material/Box";
 import Select, { SelectChangeEvent } from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
 import InputLabel from "@mui/material/InputLabel";
@@ -34,27 +33,16 @@ export function Toolbar() {
   };
 
   return (
-    <Box
-      sx={{
-        p: 2,
-        gap: 2,
-        width: "100%",
-        bgcolor: "background.paper",
-        display: "flex",
-        alignItems: "center",
-        borderColor: "divider",
-        borderBottom: 1,
-      }}
-    >
+    <div className="w-full bg-white border-b border-gray-200 py-4 px-4 flex items-center gap-4">
       <FormControl sx={{ minWidth: 200 }}>
         <InputLabel id="select-project-label">Projeto</InputLabel>
         <Select
-          labelId="select-project-label"
           value={selectedProject?.id?.toString() ?? ""}
+          label="Projeto"
+          labelId="select-project-label"
           onChange={handleChange}
           disabled={!projects || projects.length === 0 || isLoading}
           displayEmpty
-          label="Projeto"
         >
           <MenuItem value="" disabled>
             {isLoading ? "Carregando..." : "Selecione um projeto"}
@@ -68,6 +56,6 @@ export function Toolbar() {
         </Select>
       </FormControl>
       {isLoading && <CircularProgress />}
-    </Box>
+    </div>
   );
 }

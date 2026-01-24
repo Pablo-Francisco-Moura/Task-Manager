@@ -1,16 +1,13 @@
 import { appTitle } from "@/app/constants/app";
-import AppBar from "@mui/material/AppBar";
-import Toolbar from "@mui/material/Toolbar";
-import Typography from "@mui/material/Typography";
 
 export function AppBarTop() {
   return (
-    <AppBar position="static">
-      <Toolbar>
-        <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+    <header className="w-full bg-blue-600 shadow-md">
+      <div className="container mx-auto py-3 ml-4 flex items-start">
+        <h1 className="text-white text-lg font-bold tracking-wide">
           {appTitle}
-        </Typography>
-      </Toolbar>
-    </AppBar>
+        </h1>
+      </div>
+    </header>
   );
 }

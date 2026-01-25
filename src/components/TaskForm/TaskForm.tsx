@@ -29,7 +29,9 @@ export function TaskForm({ projectId, onClose }: TaskFormProps) {
       return createTask({ ...data, projectId });
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.TASKS] });
+      await queryClient.invalidateQueries({
+        queryKey: [QUERY_KEYS.TASKS, projectId],
+      });
       await queryClient.refetchQueries({
         queryKey: [QUERY_KEYS.TASKS, projectId],
       });

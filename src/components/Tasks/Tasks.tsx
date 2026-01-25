@@ -2,14 +2,54 @@ import { Task } from "@prisma/client";
 import { Button } from "../Button";
 import { TaskForm } from "@/components/TaskForm";
 import { SubTitle } from "@/components/SubTitle";
+import { deleteTask } from "@/hooks/useTasks/useCase/deleteTask.api";
+import { QUERY_KEYS } from "@/constants/queryKeys";
 import { AlertMessage } from "@/components/AlertMessage";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useProjectStore } from "@/store/projectStore";
+import { IconButton, Tooltip } from "@mui/material";
 import { useProjects, useTasks } from "@/hooks";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import React, { useState } from "react";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 export function Tasks() {
   const selectedProject = useProjectStore((s) => s.selectedProject);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
   const [openAddTask, toggleOpenAddTask] = useState(false);
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: async (id: number) => deleteTask(id),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: [QUERY_KEYS.PROJECTS, selectedProject?.id],
+      });
+      await queryClient.refetchQueries({
+        queryKey: [QUERY_KEYS.PROJECTS, selectedProject?.id],
+      });
+
+      setTaskToDelete(null);
+      setOpenDialog(false);
+    },
+  });
+
+  const handleDeleteClick = (task: Task) => {
+    setTaskToDelete(task);
+    setOpenDialog(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (taskToDelete) {
+      mutation.mutate(taskToDelete.id);
+    }
+  };
+
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
+    setTaskToDelete(null);
+  };
 
   const { projects, isLoading: isProjectsLoading } = useProjects();
   const {
@@ -74,14 +114,32 @@ export function Tasks() {
       )}
 
       <ul className="list-none pl-0 ml-4 mt-6">
-        {[...tasks]
+        {tasks
           .sort((a, b) => a.name.localeCompare(b.name))
           .map((task: Task) => (
-            <li key={task.id} className="text-gray-800 mb-1">
-              {task.name}
-            </li>
+            <div
+              key={task.id}
+              className="w-full flex justify-between items-center gap-4"
+            >
+              <li className="text-gray-800 mb-1">{task.name}</li>
+              <Tooltip arrow title={`Deletar tarefa: ${task.name}`}>
+                <IconButton
+                  onClick={() => handleDeleteClick(task)}
+                  size="small"
+                >
+                  <DeleteIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </div>
           ))}
       </ul>
+
+      <ConfirmDialog
+        open={openDialog}
+        onClose={handleCloseDialog}
+        onConfirm={handleConfirmDelete}
+        description={`Tem certeza que deseja deletar a tarefa "${taskToDelete?.name}"? Essa ação não pode ser desfeita.`}
+      />
     </div>
   );
 }

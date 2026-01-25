@@ -32,8 +32,8 @@ export function Tasks() {
 
   return (
     <div
-      className="w-full max-w-2xl bg-white shadow-md rounded-md p-4 mt-4
-     border border-grey-200 "
+      className="w-full min-h-300 max-w-2xl bg-white shadow-md rounded-md p-4 mb-4 mx-2
+     border border-grey-200 overflow-y-auto"
     >
       <h6 className="flex text-lg font-semibold mb-2 text-black">
         Tarefas do {selectedProject?.name}

@@ -34,7 +34,7 @@ export function Toolbar() {
   };
 
   return (
-    <div className="w-full bg-white border-b border-gray-200 py-4 px-4 flex items-center gap-4">
+    <div className="w-full border-b border-gray-200 py-4 px-4 flex items-center gap-4">
       <FormControl sx={{ minWidth: 200 }}>
         <InputLabel id="select-project-label">Projeto</InputLabel>
         <Select

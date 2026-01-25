@@ -9,4 +9,3 @@ export * from "./Providers";
 export * from "./AppBarTop";
 export * from "./ProjectForm";
 export * from "./AlertMessage";
-export * from "./ExampleListProjects";

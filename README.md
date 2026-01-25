@@ -72,7 +72,7 @@ Desenvolver um sistema full stack de gerenciamento de projetos e tarefas utiliza
 
 **Frontend**
 
-- [ ] Interface para cadastro de projetos
+- [x] Interface para cadastro de projetos
 - [x] Interface para visualização/listagem de projetos
 - [x] Interface para cadastro de tarefas por projeto
 - [x] Interface para visualização/listagem de tarefas associadas a projetos

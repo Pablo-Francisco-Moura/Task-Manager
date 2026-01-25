@@ -1,4 +1,5 @@
 import { Task } from "@prisma/client";
+import { Button } from "../Button";
 import { AlertMessage } from "@/components/AlertMessage";
 import { useProjectStore } from "@/store/projectStore";
 import { useProjects, useTasks } from "@/hooks";
@@ -8,7 +9,11 @@ export function Tasks() {
   const selectedProject = useProjectStore((s) => s.selectedProject);
 
   const { projects, isLoading: isProjectsLoading } = useProjects();
-  const { tasks, isLoading, isError } = useTasks(selectedProject?.id);
+  const {
+    tasks,
+    isError,
+    isLoading: isTasksLoading,
+  } = useTasks(selectedProject?.id);
 
   if (isProjectsLoading && projects === undefined) {
     return <AlertMessage message="Carregando projetos..." />;
@@ -18,16 +23,21 @@ export function Tasks() {
     return <AlertMessage message="Selecione um projeto para ver as tarefas." />;
   }
 
-  if (isLoading) {
+  if (isTasksLoading) {
     return <AlertMessage message="Carregando tarefas..." />;
   }
 
   if (isError) {
-    return <AlertMessage type="error" message="Erro ao buscar tarefas." />;
+    return <AlertMessage type="error" message="Erro ao buscar tarefas!" />;
   }
 
   if (!tasks || tasks.length === 0) {
-    return <AlertMessage message="Nenhuma tarefa associada a este projeto." />;
+    return (
+      <div className="flex gap-4 flex-col items-center justify-center w-full p-4">
+        <AlertMessage message="Nenhuma tarefa associada a este projeto!" />
+        <Button full={false} label="Add Task" onClick={() => {}} />
+      </div>
+    );
   }
 
   return (

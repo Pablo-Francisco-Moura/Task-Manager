@@ -1,10 +1,11 @@
 "use client";
 
+import { Button } from "@/components/Button/Button";
 import { Project } from "@prisma/client";
 import { useState } from "react";
 import { useProjects } from "@/hooks";
 import { ProjectForm } from "@/components/ProjectForm/ProjectForm";
-import { AlertMessage } from "@/components";
+import { AlertMessage } from "@/components/AlertMessage/AlertMessage";
 import { useMainStore } from "@/store/mainStore";
 import { useProjectStore } from "@/store/projectStore";
 import AddIcon from "@mui/icons-material/Add";
@@ -45,19 +46,25 @@ export function ProjectScreen() {
       <div className="flex flex-col gap-4 justify-center w-full px-4">
         {sortedProjects && sortedProjects.length > 0
           ? sortedProjects.map((project: Project) => (
-              <button
+              <Button
                 key={project.id}
-                className="w-full border-2 rounded px-6 py-2 text-base font-semibold transition-colors duration-150 border-blue-600 text-blue-600 bg-blue-50 hover:bg-blue-100"
+                label={project.name}
                 onClick={() => {
                   setSelectedProject(project);
                   setSelectedTab("task");
                 }}
-              >
-                {project.name}
-              </button>
+              />
             ))
           : !isLoading && (
-              <div className="text-gray-500">Nenhum projeto encontrado.</div>
+              <div className="flex gap-4 flex-col items-center justify-center w-full p-4">
+                <AlertMessage message="Nenhum projeto encontrado!" />
+                <Button
+                  full={false}
+                  label="Add Project"
+                  onClick={() => toggleOpenAddProject(true)}
+                  disabled={openAddProject}
+                />
+              </div>
             )}
       </div>
     </div>

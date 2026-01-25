@@ -1,17 +1,16 @@
 interface Props {
   label: string;
-  selected: boolean;
+  full?: boolean;
+  disabled?: boolean;
   onClick: () => void;
 }
 
-export function Button({ label, selected, onClick }: Props) {
+export function Button({ label, full, disabled, onClick }: Props) {
   return (
     <button
-      type="button"
       onClick={onClick}
-      className={`w-full border-2 rounded px-6 py-2 text-sm font-semibold transition-colors duration-150
-        ${selected ? "border-blue-600 text-blue-600 bg-blue-50" : "border-gray-400 text-gray-700 bg-white"}
-        hover:border-blue-600 hover:text-blue-600`}
+      disabled={disabled}
+      className={`${full || full === undefined ? "w-full" : ""} h-10 flex justify-center items-center border-2 rounded px-6 py-2 text-base font-semibold transition-colors duration-150 border-blue-600 text-blue-600 bg-blue-50 hover:bg-blue-100`}
     >
       {label}
     </button>

@@ -9,7 +9,7 @@ export function MainScreen() {
   const selectedTab = useMainStore((s) => s.selectedTab);
 
   return (
-    <div className="flex flex-col min-h-screen w-full items-center gap-4 bg-gray-50">
+    <div className="flex flex-col min-h-screen w-full items-center gap-4 bg-gray-50 overflow-x-hidden">
       <AppBarTop />
       <TabBar />
 

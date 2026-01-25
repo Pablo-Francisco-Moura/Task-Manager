@@ -1,3 +1,4 @@
+import { Form } from "@/components/Form";
 import { useForm } from "react-hook-form";
 import { useState } from "react";
 import { createTask } from "@/hooks/useTasks/useCase/createTask.api";
@@ -15,7 +16,7 @@ interface TaskFormInputs {
 
 export function TaskForm({ projectId, onClose }: TaskFormProps) {
   const {
-    formState: { errors, isSubmitting },
+    formState: { isSubmitting },
     reset,
     register,
     handleSubmit,
@@ -48,32 +49,15 @@ export function TaskForm({ projectId, onClose }: TaskFormProps) {
   };
 
   return (
-    <form
+    <Form
+      title="Nome da Tarefa"
+      error={error}
+      onClose={onClose}
       onSubmit={handleSubmit(onSubmit)}
-      className="flex flex-col gap-2 w-full max-w-md p-4 bg-white rounded shadow"
-    >
-      <label htmlFor="name" className="font-medium text-gray-700">
-        Nome da Tarefa
-      </label>
-      <input
-        id="name"
-        type="text"
-        {...register("name", { required: "Nome é obrigatório" })}
-        className="text-black border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        placeholder="Digite o nome da tarefa"
-        disabled={isSubmitting}
-      />
-      {errors?.name && (
-        <span className="text-red-500 text-sm">{errors.name?.message}</span>
-      )}
-      <button
-        type="submit"
-        className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
-        disabled={isSubmitting}
-      >
-        {isSubmitting ? "Cadastrando..." : "Cadastrar Tarefa"}
-      </button>
-      {error && <div className="text-red-500 text-sm mt-1">{error}</div>}
-    </form>
+      register={register}
+      submitLabel="Cadastrar Tarefa"
+      placeholder="Digite o nome da tarefa"
+      isSubmitting={isSubmitting}
+    />
   );
 }

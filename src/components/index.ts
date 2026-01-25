@@ -1,6 +1,6 @@
 export * from "./Tasks";
 export * from "./TabBar";
-export * from "./Spinner";
+export * from "./Button";
 export * from "./Toolbar";
 export * from "./Providers";
 export * from "./AppBarTop";

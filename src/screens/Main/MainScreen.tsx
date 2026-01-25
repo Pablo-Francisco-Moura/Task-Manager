@@ -1,5 +1,6 @@
 "use client";
 
+import { TaskScreen } from "../Task";
 import { useMainStore } from "@/store/mainStore";
 import { ProjectScreen } from "../Project";
 import { AppBarTop, TabBar } from "@/components";
@@ -12,7 +13,7 @@ export function MainScreen() {
       <AppBarTop />
       <TabBar />
 
-      {selectedTab === "project" ? <ProjectScreen /> : null}
+      {selectedTab === "project" ? <ProjectScreen /> : <TaskScreen />}
     </div>
   );
 }

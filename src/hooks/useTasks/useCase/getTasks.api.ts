@@ -1,7 +1,11 @@
-import axios from "axios";
+import { api } from "@/lib/axios";
+import { ROUTES } from "@/constants";
+import { GetTaskResponse } from "./getTasks.types";
 
 export async function getTasks(projectId?: number) {
   if (!projectId) return [];
-  const res = await axios.get(`/api/task?projectId=${projectId}`);
-  return res.data;
+  const response = await api.get<GetTaskResponse>(
+    `${ROUTES.TASK}?projectId=${projectId}`,
+  );
+  return response.data;
 }

@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { TypeTab } from "@/types/Main";
+import { defaultSelectedTab } from "@/constants/app";
 
 interface MainState {
   selectedTab: TypeTab;
@@ -7,6 +8,6 @@ interface MainState {
 }
 
 export const useMainStore = create<MainState>((set) => ({
-  selectedTab: "project",
+  selectedTab: defaultSelectedTab,
   setSelectedTab: (tab) => set({ selectedTab: tab }),
 }));

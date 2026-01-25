@@ -75,4 +75,72 @@ describe("Task API", () => {
     const deleted = await prisma.task.findUnique({ where: { id: task.id } });
     expect(deleted).toBeNull();
   });
+
+  // PATCH /api/task/:id - Edit a task by id.
+  test("should edit a task's name", async () => {
+    const project = await prisma.project.create({
+      data: { name: "Project for Edit" },
+    });
+    const task = await prisma.task.create({
+      data: { name: "Old Task Name", projectId: project.id },
+    });
+    const newName = "Updated Task Name";
+    const res = await app.request(`/tasks/${task.id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ name: newName }),
+      headers: { "Content-Type": "application/json" },
+    });
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json).toMatchObject({
+      id: task.id,
+      name: newName,
+      projectId: project.id,
+    });
+  });
+
+  test("should return 404 if task does not exist on edit", async () => {
+    const res = await app.request(`/tasks/99999`, {
+      method: "PATCH",
+      body: JSON.stringify({ name: "Doesn't matter" }),
+      headers: { "Content-Type": "application/json" },
+    });
+    expect(res.status).toBe(404);
+    const json = await res.json();
+    expect(json).toHaveProperty("error");
+  });
+
+  test("should return 400 if no data is sent on edit", async () => {
+    const project = await prisma.project.create({
+      data: { name: "Project for Edit No Data" },
+    });
+    const task = await prisma.task.create({
+      data: { name: "Task", projectId: project.id },
+    });
+    const res = await app.request(`/tasks/${task.id}`, {
+      method: "PATCH",
+      body: JSON.stringify({}),
+      headers: { "Content-Type": "application/json" },
+    });
+    expect(res.status).toBe(400);
+    const json = await res.json();
+    expect(json).toHaveProperty("error");
+  });
+
+  test("should return 404 if projectId does not exist on edit", async () => {
+    const project = await prisma.project.create({
+      data: { name: "Project for Edit Bad Project" },
+    });
+    const task = await prisma.task.create({
+      data: { name: "Task", projectId: project.id },
+    });
+    const res = await app.request(`/tasks/${task.id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ projectId: 99999 }),
+      headers: { "Content-Type": "application/json" },
+    });
+    expect(res.status).toBe(404);
+    const json = await res.json();
+    expect(json).toHaveProperty("error");
+  });
 });

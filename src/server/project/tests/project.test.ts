@@ -99,4 +99,45 @@ describe("Project API", () => {
     });
     expect(tasks.length).toBe(0);
   });
+
+  // PATCH /api/project/:id - Edit a project by id.
+  test("should edit a project's name", async () => {
+    const project = await prisma.project.create({
+      data: { name: "Old Project Name" },
+    });
+    const newName = "Updated Project Name";
+    const res = await app.request(`/projects/${project.id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ name: newName }),
+      headers: { "Content-Type": "application/json" },
+    });
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json).toMatchObject({ id: project.id, name: newName });
+  });
+
+  test("should return 404 if project does not exist on edit", async () => {
+    const res = await app.request(`/projects/99999`, {
+      method: "PATCH",
+      body: JSON.stringify({ name: "Doesn't matter" }),
+      headers: { "Content-Type": "application/json" },
+    });
+    expect(res.status).toBe(404);
+    const json = await res.json();
+    expect(json).toHaveProperty("error");
+  });
+
+  test("should return 400 if no name is sent on edit", async () => {
+    const project = await prisma.project.create({
+      data: { name: "Project for Edit No Data" },
+    });
+    const res = await app.request(`/projects/${project.id}`, {
+      method: "PATCH",
+      body: JSON.stringify({}),
+      headers: { "Content-Type": "application/json" },
+    });
+    expect(res.status).toBe(400);
+    const json = await res.json();
+    expect(json).toHaveProperty("error");
+  });
 });

@@ -1,12 +1,15 @@
 import { Task } from "@prisma/client";
 import { Button } from "../Button";
+import { TaskForm } from "@/components/TaskForm";
+import { SubTitle } from "@/components/SubTitle";
 import { AlertMessage } from "@/components/AlertMessage";
 import { useProjectStore } from "@/store/projectStore";
 import { useProjects, useTasks } from "@/hooks";
-import React from "react";
+import React, { useState } from "react";
 
 export function Tasks() {
   const selectedProject = useProjectStore((s) => s.selectedProject);
+  const [openAddTask, toggleOpenAddTask] = useState(false);
 
   const { projects, isLoading: isProjectsLoading } = useProjects();
   const {
@@ -35,7 +38,18 @@ export function Tasks() {
     return (
       <div className="flex gap-4 flex-col items-center justify-center w-full p-4">
         <AlertMessage message="Nenhuma tarefa associada a este projeto!" />
-        <Button full={false} label="Add Task" onClick={() => {}} />
+        {openAddTask && selectedProject ? (
+          <TaskForm
+            onClose={() => toggleOpenAddTask(false)}
+            projectId={selectedProject.id}
+          />
+        ) : (
+          <Button
+            full={false}
+            label="Add Task"
+            onClick={() => toggleOpenAddTask(true)}
+          />
+        )}
       </div>
     );
   }
@@ -45,9 +59,19 @@ export function Tasks() {
       className="w-full min-h-300 max-w-2xl bg-white shadow-md rounded-md p-4 mb-4 mx-2
      border border-grey-200 overflow-y-auto"
     >
-      <h2 className="flex text-lg font-semibold mb-2 text-black">
-        Tarefas do {selectedProject?.name}
-      </h2>
+      <SubTitle
+        label={`Tasks of ${selectedProject?.name ?? ""}`}
+        onClick={() => toggleOpenAddTask(!openAddTask)}
+      />
+
+      {selectedProject && openAddTask && (
+        <div className="flex justify-center my-4">
+          <TaskForm
+            onClose={() => toggleOpenAddTask(false)}
+            projectId={selectedProject.id}
+          />
+        </div>
+      )}
 
       <ul className="list-none pl-0 ml-4 mt-6">
         {[...tasks]

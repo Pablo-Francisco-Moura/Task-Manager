@@ -29,6 +29,7 @@ export function ProjectForm({ toggleOpenAddProject }: Props) {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.PROJECTS] });
       await queryClient.refetchQueries({ queryKey: [QUERY_KEYS.PROJECTS] });
+
       reset();
       setError(null);
       toggleOpenAddProject(false);

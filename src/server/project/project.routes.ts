@@ -40,4 +40,26 @@ projectRoutes.delete("/:id", async (c) => {
   }
 });
 
+// PATCH /api/project/:id - Edit a project by id.
+projectRoutes.patch(":id", async (c) => {
+  const id = Number(c.req.param("id"));
+  if (isNaN(id)) {
+    return c.json({ error: "Invalid ID" }, 400);
+  }
+  const body = await c.req.json();
+  const { name } = body;
+  if (!name) {
+    return c.json({ error: "name is required" }, 400);
+  }
+  try {
+    const updatedProject = await prisma.project.update({
+      where: { id },
+      data: { name },
+    });
+    return c.json(updatedProject, 200);
+  } catch (error) {
+    return c.json({ error: "Project not found or error updating" }, 404);
+  }
+});
+
 export { projectRoutes };

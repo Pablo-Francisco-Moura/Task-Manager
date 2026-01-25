@@ -64,4 +64,38 @@ taskRoutes.delete(":id", async (c) => {
   }
 });
 
+// PATCH /api/task/:id - Edit a task by id.
+taskRoutes.patch(":id", async (c) => {
+  const id = Number(c.req.param("id"));
+  if (!id) {
+    return c.json({ error: "id is required" }, 400);
+  }
+  const body = await c.req.json();
+  const { name, projectId } = body;
+  if (!name && !projectId) {
+    return c.json(
+      { error: "At least one of name or projectId is required" },
+      400,
+    );
+  }
+  // If projectId is being updated, check if the new project exists
+  if (projectId) {
+    const project = await prisma.project.findUnique({
+      where: { id: projectId },
+    });
+    if (!project) {
+      return c.json({ error: "Project not found" }, 404);
+    }
+  }
+  try {
+    const updatedTask = await prisma.task.update({
+      where: { id },
+      data: { ...(name && { name }), ...(projectId && { projectId }) },
+    });
+    return c.json(updatedTask, 200);
+  } catch (error) {
+    return c.json({ error: "Task not found or error updating" }, 404);
+  }
+});
+
 export { taskRoutes };

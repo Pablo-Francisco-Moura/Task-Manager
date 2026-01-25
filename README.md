@@ -76,7 +76,7 @@ Desenvolver um sistema full stack de gerenciamento de projetos e tarefas utiliza
 - [x] Interface para visualização/listagem de projetos
 - [x] Interface para cadastro de tarefas por projeto
 - [x] Interface para visualização/listagem de tarefas associadas a projetos
-- [ ] Funcionalidade de exclusão de projetos e tarefas
+- [x] Funcionalidade de exclusão de projetos e tarefas
 
 ### Requisitos Técnicos
 

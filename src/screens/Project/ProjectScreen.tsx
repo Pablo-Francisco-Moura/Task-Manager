@@ -3,13 +3,12 @@
 import { Button } from "@/components/Button/Button";
 import { Project } from "@prisma/client";
 import { useState } from "react";
+import { SubTitle } from "@/components/SubTitle";
 import { useProjects } from "@/hooks";
 import { ProjectForm } from "@/components/ProjectForm/ProjectForm";
 import { AlertMessage } from "@/components/AlertMessage/AlertMessage";
 import { useMainStore } from "@/store/mainStore";
 import { useProjectStore } from "@/store/projectStore";
-import AddIcon from "@mui/icons-material/Add";
-import IconButton from "@mui/material/IconButton";
 
 export function ProjectScreen() {
   const setSelectedTab = useMainStore((s) => s.setSelectedTab);
@@ -27,17 +26,10 @@ export function ProjectScreen() {
 
   return (
     <div className="flex flex-col w-full items-center gap-4 bg-gray-50 pb-4">
-      <div className="flex items-center gap-2 px-4 pt-4">
-        <h2 className="flex text-lg font-semibold mb-0.5 text-black">
-          Projects
-        </h2>
-        <IconButton
-          onClick={() => toggleOpenAddProject(!openAddProject)}
-          className="mb-4"
-        >
-          <AddIcon />
-        </IconButton>
-      </div>
+      <SubTitle
+        label="Projects"
+        onClick={() => toggleOpenAddProject(!openAddProject)}
+      />
       {openAddProject && (
         <ProjectForm toggleOpenAddProject={toggleOpenAddProject} />
       )}

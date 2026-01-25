@@ -2,6 +2,7 @@ export * from "./Tasks";
 export * from "./TabBar";
 export * from "./Button";
 export * from "./Toolbar";
+export * from "./SubTitle";
 export * from "./TabButton";
 export * from "./Providers";
 export * from "./AppBarTop";

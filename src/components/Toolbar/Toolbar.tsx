@@ -1,3 +1,4 @@
+import { Project } from "@prisma/client";
 import { useEffect } from "react";
 import { useProjects } from "@/hooks/useProjects";
 import { useProjectStore } from "@/store/projectStore";
@@ -17,7 +18,7 @@ export function Toolbar() {
     if (projects && projects.length > 0) {
       if (
         !selectedProject ||
-        !projects.some((p: any) => p.id === selectedProject.id)
+        !projects.some((p: Project) => p.id === selectedProject.id)
       ) {
         setSelectedProject(projects[0]);
       }
@@ -28,7 +29,7 @@ export function Toolbar() {
 
   const handleChange = (event: SelectChangeEvent) => {
     const id = Number(event.target.value);
-    const project = projects?.find((p: any) => p.id === id) || null;
+    const project = projects?.find((p: Project) => p.id === id) || null;
     setSelectedProject(project);
   };
 
@@ -48,7 +49,7 @@ export function Toolbar() {
             {isLoading ? "Carregando..." : "Selecione um projeto"}
           </MenuItem>
           {projects &&
-            projects.map((project: any) => (
+            projects.map((project: Project) => (
               <MenuItem key={project.id} value={project.id.toString()}>
                 {project.name}
               </MenuItem>

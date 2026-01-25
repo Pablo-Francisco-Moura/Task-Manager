@@ -1,4 +1,4 @@
-import { TypeTask } from "@/types/Task";
+import { Task } from "@prisma/client";
 import { AlertMessage } from "@/components/AlertMessage";
 import { useProjectStore } from "@/store/projectStore";
 import { useProjects, useTasks } from "@/hooks";
@@ -41,7 +41,7 @@ export function Tasks() {
       <ul className="list-none pl-0 ml-4 mt-6">
         {[...tasks]
           .sort((a, b) => a.name.localeCompare(b.name))
-          .map((task: TypeTask) => (
+          .map((task: Task) => (
             <li key={task.id} className="text-gray-800 mb-1">
               {task.name}
             </li>

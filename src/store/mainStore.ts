@@ -1,10 +1,9 @@
 import { create } from "zustand";
-
-export type MainTab = "project" | "task";
+import { TypeTab } from "@/types/Main";
 
 interface MainState {
-  selectedTab: MainTab;
-  setSelectedTab: (tab: MainTab) => void;
+  selectedTab: TypeTab;
+  setSelectedTab: (tab: TypeTab) => void;
 }
 
 export const useMainStore = create<MainState>((set) => ({

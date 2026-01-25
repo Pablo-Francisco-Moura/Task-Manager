@@ -1,9 +1,9 @@
 import { create } from "zustand";
-import { TypeProject } from "@/types/Project";
+import { Project } from "@prisma/client";
 
 interface ProjectState {
-  selectedProject: TypeProject | null;
-  setSelectedProject: (project: TypeProject | null) => void;
+  selectedProject: Project | null;
+  setSelectedProject: (project: Project | null) => void;
 }
 
 export const useProjectStore = create<ProjectState>((set) => ({

@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { getProjects } from "./useCase/getProjects.api";
 import { QUERY_KEYS } from "@/constants";
+import { getProjects } from "./useCase/getProjects.api";
 
 export function useProjects() {
   const {

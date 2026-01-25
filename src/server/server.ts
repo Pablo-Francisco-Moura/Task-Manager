@@ -4,8 +4,8 @@ import { healthRoutes } from "./health";
 import { projectRoutes } from "./project";
 
 const app = new Hono()
+  .route("task", taskRoutes)
   .route("health", healthRoutes)
-  .route("project", projectRoutes)
-  .route("task", taskRoutes);
+  .route("project", projectRoutes);
 
 export { app };

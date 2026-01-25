@@ -1,4 +1,4 @@
-import { appTitle } from "@/app/constants/app";
+import { appTitle } from "@/constants/app";
 
 export function AppBarTop() {
   return (

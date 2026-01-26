@@ -178,6 +178,10 @@ Desenvolver um sistema full stack de gerenciamento de projetos e tarefas utiliza
 - [x] Testes para edição de tarefas
 - [x] Documentação com hono-openapi (Swagger)
 
+**FrontEnd**
+
+- [x] Interface para edição de projetos
+
 ---
 
 Boa sorte no desafio! 🚀

@@ -3,6 +3,7 @@ export * from "./Tasks";
 export * from "./TabBar";
 export * from "./Button";
 export * from "./Toolbar";
+export * from "./Project";
 export * from "./SubTitle";
 export * from "./Projects";
 export * from "./TabButton";

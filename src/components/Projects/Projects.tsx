@@ -1,19 +1,13 @@
-import { Form } from "../Form";
 import { Button } from "../Button";
-import { Project } from "@prisma/client";
-import { useForm } from "react-hook-form";
+import { Project } from "../Project/Project";
 import { useState } from "react";
 import { QUERY_KEYS } from "@/constants/queryKeys";
+import { useProjects } from "@/hooks";
 import { AlertMessage } from "../AlertMessage";
-import { useMainStore } from "@/store/mainStore";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { deleteProject } from "@/hooks/useProjects/useCase/deleteProject.api";
-import { useProjectStore } from "@/store/projectStore";
-import { useProjects, updateProject } from "@/hooks";
-import { IconButton, Tooltip, Dialog } from "@mui/material";
+import { Project as TypeProject } from "@prisma/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import EditIcon from "@mui/icons-material/Edit";
-import DeleteIcon from "@mui/icons-material/Delete";
 
 interface Props {
   openAddProject: boolean;
@@ -21,15 +15,13 @@ interface Props {
 }
 
 export function Projects({ openAddProject, toggleOpenAddProject }: Props) {
-  const setSelectedTab = useMainStore((s) => s.setSelectedTab);
-  const setSelectedProject = useProjectStore((s) => s.setSelectedProject);
-
   const { projects, isLoading, isError } = useProjects();
 
   const [openDialog, setOpenDialog] = useState(false);
-  const [editProject, setEditProject] = useState<Project | null>(null);
-  const [openEditDialog, setOpenEditDialog] = useState(false);
-  const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
+
+  const [projectToDelete, setProjectToDelete] = useState<TypeProject | null>(
+    null,
+  );
 
   const queryClient = useQueryClient();
 
@@ -45,34 +37,6 @@ export function Projects({ openAddProject, toggleOpenAddProject }: Props) {
     },
   });
 
-  // Mutation to update project.
-  const updateMutation = useMutation({
-    mutationFn: updateProject,
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.PROJECTS] });
-      await queryClient.refetchQueries({ queryKey: [QUERY_KEYS.PROJECTS] });
-
-      setEditProject(null);
-      setOpenEditDialog(false);
-    },
-  });
-
-  // Edit form.
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { isSubmitting },
-  } = useForm<{ name: string }>({
-    defaultValues: { name: "" },
-  });
-
-  // Handlers
-  const handleDeleteClick = (project: Project) => {
-    setProjectToDelete(project);
-    setOpenDialog(true);
-  };
-
   const handleConfirmDelete = () => {
     if (projectToDelete) {
       deleteMutation.mutate(projectToDelete.id);
@@ -82,23 +46,6 @@ export function Projects({ openAddProject, toggleOpenAddProject }: Props) {
   const handleCloseDialog = () => {
     setOpenDialog(false);
     setProjectToDelete(null);
-  };
-
-  const handleEditClick = (project: Project) => {
-    setEditProject(project);
-    reset({ name: project.name });
-    setOpenEditDialog(true);
-  };
-
-  const handleEditClose = () => {
-    setOpenEditDialog(false);
-    setEditProject(null);
-  };
-
-  const onEditSubmit = async (data: { name: string }) => {
-    if (editProject) {
-      await updateMutation.mutateAsync({ id: editProject.id, name: data.name });
-    }
   };
 
   return (
@@ -113,46 +60,13 @@ export function Projects({ openAddProject, toggleOpenAddProject }: Props) {
           {projects.length > 0
             ? projects
                 .sort((a, b) => a.name.localeCompare(b.name))
-                .map((project: Project) => (
-                  <div
+                .map((project: TypeProject) => (
+                  <Project
                     key={project.id}
-                    className="w-full flex justify-between items-center gap-4"
-                  >
-                    <Button
-                      key={project.id}
-                      label={project.name}
-                      onClick={() => {
-                        setSelectedProject(project);
-                        setSelectedTab("task");
-                      }}
-                    />
-                    <Tooltip arrow title={`Edit Project: ${project.name}`}>
-                      <IconButton onClick={() => handleEditClick(project)}>
-                        <EditIcon />
-                      </IconButton>
-                    </Tooltip>
-                    <Dialog open={openEditDialog} onClose={handleEditClose}>
-                      <Form
-                        title="Edit Project"
-                        error={
-                          updateMutation.isError
-                            ? "Error updating project"
-                            : undefined
-                        }
-                        onClose={handleEditClose}
-                        onSubmit={handleSubmit(onEditSubmit)}
-                        register={register}
-                        placeholder="Project name"
-                        submitLabel="Save"
-                        isSubmitting={isSubmitting || updateMutation.isPending}
-                      />
-                    </Dialog>
-                    <Tooltip arrow title={`Delete Project: ${project.name}`}>
-                      <IconButton onClick={() => handleDeleteClick(project)}>
-                        <DeleteIcon />
-                      </IconButton>
-                    </Tooltip>
-                  </div>
+                    project={project}
+                    setOpenDialog={setOpenDialog}
+                    setProjectToDelete={setProjectToDelete}
+                  />
                 ))
             : !isLoading && (
                 <div className="flex gap-4 flex-col items-center justify-center w-full p-4">

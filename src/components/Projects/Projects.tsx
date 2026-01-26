@@ -6,6 +6,7 @@ import { useProjects } from "@/hooks";
 import { AlertMessage } from "../AlertMessage";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { deleteProject } from "@/hooks/useProjects/useCase/deleteProject.api";
+import { useTranslation } from "react-i18next";
 import { Project as TypeProject } from "@prisma/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
@@ -15,6 +16,7 @@ interface Props {
 }
 
 export function Projects({ openAddProject, toggleOpenAddProject }: Props) {
+  const { t } = useTranslation();
   const { projects, isLoading, isError } = useProjects();
 
   const [openDialog, setOpenDialog] = useState(false);
@@ -50,8 +52,8 @@ export function Projects({ openAddProject, toggleOpenAddProject }: Props) {
 
   return (
     <>
-      {isLoading && <AlertMessage message="Carregando projetos..." />}
-      {isError && <AlertMessage message="Erro ao carregar projetos." />}
+      {isLoading && <AlertMessage message={t("loadingProjects")} />}
+      {isError && <AlertMessage message={t("errorLoadingProjects")} />}
       {projects && (
         <div
           className="w-full min-h-300 max-w-2xl bg-white shadow-md rounded-md p-4 mb-4 mx-2
@@ -70,10 +72,10 @@ export function Projects({ openAddProject, toggleOpenAddProject }: Props) {
                 ))
             : !isLoading && (
                 <div className="flex gap-4 flex-col items-center justify-center w-full p-4">
-                  <AlertMessage message="Nenhum projeto encontrado!" />
+                  <AlertMessage message={t("noProjectsFound")} />
                   <Button
                     full={false}
-                    label="Add Project"
+                    label={t("addProject")}
                     onClick={() => toggleOpenAddProject(true)}
                     disabled={openAddProject}
                   />
@@ -85,7 +87,7 @@ export function Projects({ openAddProject, toggleOpenAddProject }: Props) {
         open={openDialog}
         onClose={handleCloseDialog}
         onConfirm={handleConfirmDelete}
-        description={`Tem certeza que deseja deletar o projeto "${projectToDelete?.name}"? Essa ação não pode ser desfeita.`}
+        description={`${t("confirmDeleteProject")} "${projectToDelete?.name}"? ${t("inforToDeleteProject")}`}
       />
     </>
   );

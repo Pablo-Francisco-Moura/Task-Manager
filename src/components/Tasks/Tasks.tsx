@@ -10,6 +10,7 @@ import { QUERY_KEYS } from "@/constants/queryKeys";
 import { updateTask } from "@/hooks/useTasks/useCase/updateTask.api";
 import { AlertMessage } from "@/components/AlertMessage";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { useTranslation } from "react-i18next";
 import { useProjectStore } from "@/store/projectStore";
 import { Task as TypeTask } from "@prisma/client";
 import { useProjects, useTasks } from "@/hooks";
@@ -25,6 +26,7 @@ export function Tasks() {
   const [openAddTask, toggleOpenAddTask] = useState(false);
   const [openEditDialog, setOpenEditDialog] = useState(false);
 
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
 
   // Mutation to delete task.
@@ -125,25 +127,25 @@ export function Tasks() {
   } = useTasks(selectedProject?.id);
 
   if (isProjectsLoading && projects === undefined) {
-    return <AlertMessage message="Carregando projetos..." />;
+    return <AlertMessage message={t("loadingProjects")} />;
   }
 
   if (projects && !selectedProject) {
-    return <AlertMessage message="Selecione um projeto para ver as tarefas." />;
+    return <AlertMessage message={t("selectProject")} />;
   }
 
   if (isTasksLoading) {
-    return <AlertMessage message="Carregando tarefas..." />;
+    return <AlertMessage message={t("loadingTasks")} />;
   }
 
   if (isError) {
-    return <AlertMessage type="error" message="Erro ao buscar tarefas!" />;
+    return <AlertMessage type="error" message={t("errorLoadingTasks")} />;
   }
 
   if (!tasks || tasks.length === 0) {
     return (
       <div className="flex gap-4 flex-col items-center justify-center w-full p-4">
-        <AlertMessage message="Nenhuma tarefa associada a este projeto!" />
+        <AlertMessage message={t("noTasks")} />
         {openAddTask && selectedProject ? (
           <TaskForm
             onClose={() => toggleOpenAddTask(false)}
@@ -194,12 +196,10 @@ export function Tasks() {
 
       <Dialog open={openEditDialog} onClose={handleEditClose}>
         <Form
-          title="Editar Tarefa"
-          placeholder="Nome da tarefa"
-          submitLabel="Salvar"
-          error={
-            updateMutation.isError ? "Erro ao atualizar tarefa" : undefined
-          }
+          title={t("editTask")}
+          placeholder={t("taskName")}
+          submitLabel={t("save")}
+          error={updateMutation.isError ? t("errorUpdatingTask") : undefined}
           isSubmitting={isSubmitting || updateMutation.isPending}
           register={register}
           onSubmit={handleSubmit(onEditSubmit)}
@@ -211,7 +211,7 @@ export function Tasks() {
         open={openDialog}
         onClose={handleCloseDialog}
         onConfirm={handleConfirmDelete}
-        description={`Tem certeza que deseja deletar a tarefa "${taskToDelete?.name}"? Essa ação não pode ser desfeita.`}
+        description={`${t("confirmDeleteTask")} "${taskToDelete?.name}"? ${t("infoToDeleteTask")}`}
       />
     </div>
   );

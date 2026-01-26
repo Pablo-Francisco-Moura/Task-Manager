@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { useState } from "react";
 import { QUERY_KEYS } from "@/constants/queryKeys";
 import { createProject } from "@/hooks/useProjects/useCase/createProject.api";
+import { useTranslation } from "react-i18next";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 interface Props {
@@ -21,6 +22,8 @@ export function ProjectForm({ toggleOpenAddProject }: Props) {
     handleSubmit,
   } = useForm<ProjectFormInputs>();
   const [error, setError] = useState<string | null>(null);
+
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
@@ -34,7 +37,7 @@ export function ProjectForm({ toggleOpenAddProject }: Props) {
       toggleOpenAddProject(false);
     },
     onError: () => {
-      setError("Erro ao cadastrar projeto!");
+      setError(t("errorCreatingProject"));
     },
   });
 
@@ -45,13 +48,13 @@ export function ProjectForm({ toggleOpenAddProject }: Props) {
 
   return (
     <Form
-      title="Nome do Projeto"
+      title={t("projectName")}
       error={error}
       onClose={() => toggleOpenAddProject(false)}
       onSubmit={handleSubmit(onSubmit)}
       register={register}
-      submitLabel="Cadastrar Projeto"
-      placeholder="Digite o nome do projeto"
+      submitLabel={t("registerProject")}
+      placeholder={t("enterProjectName")}
       isSubmitting={isSubmitting}
     />
   );

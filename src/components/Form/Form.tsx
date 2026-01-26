@@ -1,4 +1,5 @@
 import { IconButton } from "@mui/material";
+import { useTranslation } from "react-i18next";
 import { UseFormRegister } from "react-hook-form";
 import CloseIcon from "@mui/icons-material/Close";
 
@@ -23,6 +24,8 @@ export function Form({
   onSubmit,
   register,
 }: Props) {
+  const { t } = useTranslation();
+
   return (
     <form
       onSubmit={onSubmit}
@@ -40,7 +43,7 @@ export function Form({
       <input
         id="name"
         type="text"
-        {...register("name", { required: "Nome é obrigatório" })}
+        {...register("name", { required: t("nameRequired") })}
         disabled={isSubmitting}
         className="text-black border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
         placeholder={placeholder}
@@ -51,7 +54,7 @@ export function Form({
         className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
         disabled={isSubmitting}
       >
-        {isSubmitting ? "Salvando..." : submitLabel}
+        {isSubmitting ? t("saving") : submitLabel}
       </button>
       {error && <div className="text-red-500 text-sm mt-1">{error}</div>}
     </form>

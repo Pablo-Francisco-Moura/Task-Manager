@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import React from "react";
 import Dialog from "@mui/material/Dialog";
 import Button from "@mui/material/Button";
@@ -19,18 +20,20 @@ export function ConfirmDialog({
   onConfirm,
   description,
 }: ConfirmDialogProps) {
+  const { t } = useTranslation();
+
   return (
     <Dialog open={open} onClose={onClose}>
-      <DialogTitle>Confirmar deleção</DialogTitle>
+      <DialogTitle>{t("confirmDelete")}</DialogTitle>
       <DialogContent>
         <DialogContentText>{description}</DialogContentText>
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} color="primary">
-          Cancelar
+          {t("cancel")}
         </Button>
         <Button onClick={onConfirm} color="error" variant="contained" autoFocus>
-          Confirmar
+          {t("confirm")}
         </Button>
       </DialogActions>
     </Dialog>

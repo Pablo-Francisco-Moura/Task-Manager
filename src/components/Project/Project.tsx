@@ -5,6 +5,7 @@ import { useState } from "react";
 import { QUERY_KEYS } from "@/constants/queryKeys";
 import { useMainStore } from "@/store/mainStore";
 import { updateProject } from "@/hooks";
+import { useTranslation } from "react-i18next";
 import { useProjectStore } from "@/store/projectStore";
 import { Project as TypeProject } from "@prisma/client";
 import { IconButton, Tooltip, Dialog } from "@mui/material";
@@ -25,6 +26,7 @@ export function Project({ project, setOpenDialog, setProjectToDelete }: Props) {
   const [editProject, setEditProject] = useState<TypeProject | null>(null);
   const [openEditDialog, setOpenEditDialog] = useState(false);
 
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
 
   // Mutation to update project.
@@ -85,24 +87,24 @@ export function Project({ project, setOpenDialog, setProjectToDelete }: Props) {
           setSelectedTab("task");
         }}
       />
-      <Tooltip arrow title={`Edit Project: ${project.name}`}>
+      <Tooltip arrow title={`${t("editProject")}: ${project.name}`}>
         <IconButton onClick={() => handleEditClick(project)}>
           <EditIcon />
         </IconButton>
       </Tooltip>
       <Dialog open={openEditDialog} onClose={handleEditClose}>
         <Form
-          title="Edit Project"
-          error={updateMutation.isError ? "Error updating project" : undefined}
+          title={t("editProject")}
+          error={updateMutation.isError ? t("errorUpdatingProject") : undefined}
           onClose={handleEditClose}
           onSubmit={handleSubmit(onEditSubmit)}
           register={register}
-          placeholder="Project name"
-          submitLabel="Save"
+          placeholder={t("projectName")}
+          submitLabel={t("save")}
           isSubmitting={isSubmitting || updateMutation.isPending}
         />
       </Dialog>
-      <Tooltip arrow title={`Delete Project: ${project.name}`}>
+      <Tooltip arrow title={`${t("deleteProject")}: ${project.name}`}>
         <IconButton onClick={() => handleDeleteClick(project)}>
           <DeleteIcon />
         </IconButton>

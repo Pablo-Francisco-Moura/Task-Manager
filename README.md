@@ -65,18 +65,18 @@ Desenvolver um sistema full stack de gerenciamento de projetos e tarefas utiliza
 
 - [x] API para criação de projetos
 - [x] API para listagem de projetos
-- [ ] API para exclusão de projetos
-- [ ] API para criação de tarefas vinculadas a projetos
-- [ ] API para listagem de tarefas por projeto
-- [ ] API para exclusão de tarefas
+- [x] API para exclusão de projetos
+- [x] API para criação de tarefas vinculadas a projetos
+- [x] API para listagem de tarefas por projeto
+- [x] API para exclusão de tarefas
 
 **Frontend**
 
-- [ ] Interface para cadastro de projetos
+- [x] Interface para cadastro de projetos
 - [x] Interface para visualização/listagem de projetos
-- [ ] Interface para cadastro de tarefas por projeto
-- [ ] Interface para visualização/listagem de tarefas associadas a projetos
-- [ ] Funcionalidade de exclusão de projetos e tarefas
+- [x] Interface para cadastro de tarefas por projeto
+- [x] Interface para visualização/listagem de tarefas associadas a projetos
+- [x] Funcionalidade de exclusão de projetos e tarefas
 
 ### Requisitos Técnicos
 
@@ -165,6 +165,23 @@ Desenvolver um sistema full stack de gerenciamento de projetos e tarefas utiliza
 
 - Utilize boas práticas de desenvolvimento e organização de código.
 - Documente claramente qualquer decisão arquitetural relevante.
+- O reset/migração do banco de dados de testes foi centralizado no script de teste (`npm run test`) para evitar conflitos e duplicidade de comandos, garantindo que o ambiente de testes seja sempre inicializado de forma consistente.
+- Documentação com hono-openapi (Swagger) disponível em: http://localhost:3000/swagger.html
+
+## Adicionais
+
+**Backend**
+
+- [x] API para edição de projetos
+- [x] API para edição de tarefas
+- [x] Testes para edição de projetos
+- [x] Testes para edição de tarefas
+- [x] Documentação com hono-openapi (Swagger)
+
+**FrontEnd**
+
+- [x] Interface para edição de projetos
+- [x] Interface para edição de tarefas
 
 ---
 

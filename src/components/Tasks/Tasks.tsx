@@ -165,7 +165,7 @@ export function Tasks() {
   return (
     <div
       className="w-full min-h-300 max-w-2xl bg-white shadow-md rounded-md p-4 mb-4 mx-2
-     border border-grey-200 overflow-y-auto"
+     border border-grey-200 overflow-y-auto dark:bg-gray-600"
     >
       <SubTitle
         label={`Tasks of ${selectedProject?.name ?? ""}`}

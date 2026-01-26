@@ -87,28 +87,32 @@ export function Project({ project, setOpenDialog, setProjectToDelete }: Props) {
           setSelectedTab("task");
         }}
       />
-      <Tooltip arrow title={`${t("editProject")}: ${project.name}`}>
-        <IconButton onClick={() => handleEditClick(project)}>
-          <EditIcon />
-        </IconButton>
-      </Tooltip>
-      <Dialog open={openEditDialog} onClose={handleEditClose}>
-        <Form
-          title={t("editProject")}
-          error={updateMutation.isError ? t("errorUpdatingProject") : undefined}
-          onClose={handleEditClose}
-          onSubmit={handleSubmit(onEditSubmit)}
-          register={register}
-          placeholder={t("projectName")}
-          submitLabel={t("save")}
-          isSubmitting={isSubmitting || updateMutation.isPending}
-        />
-      </Dialog>
-      <Tooltip arrow title={`${t("deleteProject")}: ${project.name}`}>
-        <IconButton onClick={() => handleDeleteClick(project)}>
-          <DeleteIcon />
-        </IconButton>
-      </Tooltip>
+      <div className="flex gap-2">
+        <Tooltip arrow title={`${t("editProject")}: ${project.name}`}>
+          <IconButton onClick={() => handleEditClick(project)}>
+            <EditIcon className="dark:text-white" />
+          </IconButton>
+        </Tooltip>
+        <Dialog open={openEditDialog} onClose={handleEditClose}>
+          <Form
+            title={t("editProject")}
+            error={
+              updateMutation.isError ? t("errorUpdatingProject") : undefined
+            }
+            onClose={handleEditClose}
+            onSubmit={handleSubmit(onEditSubmit)}
+            register={register}
+            placeholder={t("projectName")}
+            submitLabel={t("save")}
+            isSubmitting={isSubmitting || updateMutation.isPending}
+          />
+        </Dialog>
+        <Tooltip arrow title={`${t("deleteProject")}: ${project.name}`}>
+          <IconButton onClick={() => handleDeleteClick(project)}>
+            <DeleteIcon className="dark:text-white" />
+          </IconButton>
+        </Tooltip>
+      </div>
     </div>
   );
 }

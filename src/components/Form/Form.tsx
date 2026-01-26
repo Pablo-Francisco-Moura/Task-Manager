@@ -1,6 +1,6 @@
-import { IconButton } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { UseFormRegister } from "react-hook-form";
+import { IconButton, Tooltip } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 
 interface Props {
@@ -29,14 +29,18 @@ export function Form({
   return (
     <form
       onSubmit={onSubmit}
-      className="flex flex-col gap-2 w-full max-w-md p-4 bg-white rounded shadow"
+      className="flex flex-col gap-2 w-full max-w-md p-4 bg-gray-100 dark:bg-gray-500 rounded shadow"
     >
       <div className="flex flex-col gap-2 md:flex-row md:justify-between md:items-center">
-        <label className="font-medium text-gray-700">{title}</label>
+        <label className="font-medium text-gray-700 dark:text-gray-100">
+          {title}
+        </label>
         {onClose && (
-          <IconButton color="error" onClick={onClose} className="mb-4">
-            <CloseIcon />
-          </IconButton>
+          <Tooltip arrow title={t("close")}>
+            <IconButton color="error" onClick={onClose} className="mb-4">
+              <CloseIcon />
+            </IconButton>
+          </Tooltip>
         )}
       </div>
 
@@ -45,7 +49,7 @@ export function Form({
         type="text"
         {...register("name", { required: t("nameRequired") })}
         disabled={isSubmitting}
-        className="text-black border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="text-black border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-500 dark:text-gray-100"
         placeholder={placeholder}
       />
 

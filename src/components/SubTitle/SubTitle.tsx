@@ -13,10 +13,12 @@ export function SubTitle({ label, onClick }: Props) {
 
   return (
     <div className="flex items-center gap-2 px-4 pt-4">
-      <h2 className="flex text-lg font-semibold text-black">{label}</h2>
+      <h2 className="flex text-lg font-semibold text-black dark:text-gray-100">
+        {label}
+      </h2>
       <Tooltip arrow title={`${t("add")} ${label}`}>
         <IconButton onClick={onClick}>
-          <AddIcon />
+          <AddIcon className="text-black dark:text-gray-100" />
         </IconButton>
       </Tooltip>
     </div>

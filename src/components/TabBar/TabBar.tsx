@@ -9,7 +9,7 @@ export function TabBar() {
   const { t } = useTranslation();
 
   return (
-    <div className="px-4 flex gap-4 w-full justify-between py-2 bg-white border-b border-gray-200">
+    <div className="flex px-4 flex gap-4 w-full justify-between py-2 bg-white dark:bg-gray-700 border-b border-gray-200">
       <TabButton
         label={t("projects")}
         onClick={() => setSelectedTab("project")}

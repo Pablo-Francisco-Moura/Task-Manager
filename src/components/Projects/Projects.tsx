@@ -56,7 +56,7 @@ export function Projects({ openAddProject, toggleOpenAddProject }: Props) {
       {isError && <AlertMessage message={t("errorLoadingProjects")} />}
       {projects && (
         <div
-          className="w-full min-h-300 max-w-2xl bg-white shadow-md rounded-md p-4 mb-4 mx-2
+          className="w-full min-h-300 max-w-2xl bg-white dark:bg-gray-600 shadow-md rounded-md p-4 mb-4 mx-2
      border border-grey-200 overflow-y-auto gap-4 flex flex-col items-center overflow-y-auto"
         >
           {projects.length > 0

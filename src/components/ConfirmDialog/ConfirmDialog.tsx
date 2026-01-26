@@ -24,18 +24,33 @@ export function ConfirmDialog({
 
   return (
     <Dialog open={open} onClose={onClose}>
-      <DialogTitle>{t("confirmDelete")}</DialogTitle>
-      <DialogContent>
-        <DialogContentText>{description}</DialogContentText>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} color="primary">
-          {t("cancel")}
-        </Button>
-        <Button onClick={onConfirm} color="error" variant="contained" autoFocus>
-          {t("confirm")}
-        </Button>
-      </DialogActions>
+      <div className="dark:bg-gray-600">
+        <DialogTitle className="dark:text-white">
+          {t("confirmDelete")}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText className="dark:text-white">
+            {description}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            className="dark:text-blue-400"
+            onClick={onClose}
+            color="primary"
+          >
+            {t("cancel")}
+          </Button>
+          <Button
+            onClick={onConfirm}
+            color="error"
+            variant="contained"
+            autoFocus
+          >
+            {t("confirm")}
+          </Button>
+        </DialogActions>
+      </div>
     </Dialog>
   );
 }

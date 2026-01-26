@@ -1,6 +1,7 @@
-import { Task } from "@prisma/client";
+import { Task } from "../Task/Task";
 import { Form } from "../Form";
 import { Button } from "../Button";
+import { Dialog } from "@mui/material";
 import { useForm } from "react-hook-form";
 import { TaskForm } from "@/components/TaskForm";
 import { SubTitle } from "@/components/SubTitle";
@@ -10,19 +11,17 @@ import { updateTask } from "@/hooks/useTasks/useCase/updateTask.api";
 import { AlertMessage } from "@/components/AlertMessage";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useProjectStore } from "@/store/projectStore";
+import { Task as TypeTask } from "@prisma/client";
 import { useProjects, useTasks } from "@/hooks";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { IconButton, Tooltip, Dialog } from "@mui/material";
 import React, { useState } from "react";
-import EditIcon from "@mui/icons-material/Edit";
-import DeleteIcon from "@mui/icons-material/Delete";
 
 export function Tasks() {
   const selectedProject = useProjectStore((s) => s.selectedProject);
 
-  const [editTask, setEditTask] = useState<Task | null>(null);
+  const [editTask, setEditTask] = useState<TypeTask | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
-  const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
+  const [taskToDelete, setTaskToDelete] = useState<TypeTask | null>(null);
   const [openAddTask, toggleOpenAddTask] = useState(false);
   const [openEditDialog, setOpenEditDialog] = useState(false);
 
@@ -32,12 +31,21 @@ export function Tasks() {
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => deleteTask(id),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: [QUERY_KEYS.PROJECTS, selectedProject?.id],
-      });
-      await queryClient.refetchQueries({
-        queryKey: [QUERY_KEYS.PROJECTS, selectedProject?.id],
-      });
+      if (selectedProject?.id) {
+        await queryClient.invalidateQueries({
+          queryKey: [QUERY_KEYS.PROJECTS, selectedProject?.id],
+        });
+        await queryClient.refetchQueries({
+          queryKey: [QUERY_KEYS.PROJECTS, selectedProject?.id],
+        });
+
+        await queryClient.invalidateQueries({
+          queryKey: [QUERY_KEYS.TASKS, selectedProject.id],
+        });
+        await queryClient.refetchQueries({
+          queryKey: [QUERY_KEYS.TASKS, selectedProject.id],
+        });
+      }
       setTaskToDelete(null);
       setOpenDialog(false);
     },
@@ -47,12 +55,15 @@ export function Tasks() {
   const updateMutation = useMutation({
     mutationFn: updateTask,
     onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: [QUERY_KEYS.PROJECTS, selectedProject?.id],
-      });
-      await queryClient.refetchQueries({
-        queryKey: [QUERY_KEYS.PROJECTS, selectedProject?.id],
-      });
+      if (selectedProject?.id) {
+        await queryClient.invalidateQueries({
+          queryKey: [QUERY_KEYS.TASKS, selectedProject.id],
+        });
+        await queryClient.refetchQueries({
+          queryKey: [QUERY_KEYS.TASKS, selectedProject.id],
+        });
+      }
+
       setEditTask(null);
       setOpenEditDialog(false);
     },
@@ -69,7 +80,7 @@ export function Tasks() {
   });
 
   // Handlers
-  const handleDeleteClick = (task: Task) => {
+  const handleDeleteClick = (task: TypeTask) => {
     setTaskToDelete(task);
     setOpenDialog(true);
   };
@@ -85,7 +96,7 @@ export function Tasks() {
     setTaskToDelete(null);
   };
 
-  const handleEditClick = (task: Task) => {
+  const handleEditClick = (task: TypeTask) => {
     setEditTask(task);
     reset({ name: task.name });
     setOpenEditDialog(true);
@@ -171,26 +182,13 @@ export function Tasks() {
       <ul className="list-none pl-0 ml-4 mt-6">
         {tasks
           .sort((a, b) => a.name.localeCompare(b.name))
-          .map((task: Task) => (
-            <div
+          .map((task: TypeTask) => (
+            <Task
               key={task.id}
-              className="w-full flex justify-between items-center gap-4"
-            >
-              <li className="text-gray-800 mb-1">{task.name}</li>
-              <Tooltip arrow title={`Editar tarefa: ${task.name}`}>
-                <IconButton onClick={() => handleEditClick(task)} size="small">
-                  <EditIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-              <Tooltip arrow title={`Deletar tarefa: ${task.name}`}>
-                <IconButton
-                  onClick={() => handleDeleteClick(task)}
-                  size="small"
-                >
-                  <DeleteIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            </div>
+              task={task}
+              onEditClick={handleEditClick}
+              onDeleteClick={handleDeleteClick}
+            />
           ))}
       </ul>
 

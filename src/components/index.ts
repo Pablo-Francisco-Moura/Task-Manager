@@ -1,9 +1,11 @@
 export * from "./Form";
+export * from "./Task";
 export * from "./Tasks";
 export * from "./TabBar";
 export * from "./Button";
 export * from "./Toolbar";
 export * from "./Project";
+export * from "./TaskForm";
 export * from "./SubTitle";
 export * from "./Projects";
 export * from "./TabButton";
@@ -11,3 +13,4 @@ export * from "./Providers";
 export * from "./AppBarTop";
 export * from "./ProjectForm";
 export * from "./AlertMessage";
+export * from "./ConfirmDialog";

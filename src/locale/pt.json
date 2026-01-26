@@ -35,5 +35,8 @@
   "confirmDeleteTask": "Tem certeza que deseja deletar a tarefa",
   "infoToDeleteTask": "Essa ação não pode ser desfeita.",
   "delete": "Deletar",
-  "noProjects": "Nenhum projeto encontrado!"
+  "noProjects": "Nenhum projeto encontrado!",
+  "lightMode": "Modo Claro",
+  "darkMode": "Modo Escuro",
+  "close": "Fechar"
 }

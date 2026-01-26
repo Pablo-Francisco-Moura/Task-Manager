@@ -35,5 +35,8 @@
   "confirmDeleteTask": "Are you sure you want to delete the task",
   "infoToDeleteTask": "This action cannot be undone.",
   "delete": "Delete",
-  "noProjects": "No projects found!"
+  "noProjects": "No projects found!",
+  "lightMode": "Light Mode",
+  "darkMode": "Dark Mode",
+  "close": "Close"
 }

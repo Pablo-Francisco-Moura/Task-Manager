@@ -12,5 +12,6 @@ export * from "./TabButton";
 export * from "./Providers";
 export * from "./AppBarTop";
 export * from "./ProjectForm";
+export * from "./ThemeSwitch";
 export * from "./AlertMessage";
 export * from "./ConfirmDialog";

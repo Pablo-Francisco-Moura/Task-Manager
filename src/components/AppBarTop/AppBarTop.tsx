@@ -1,3 +1,4 @@
+import { ThemeSwitch } from "../ThemeSwitch";
 import { useTranslation } from "react-i18next";
 
 export function AppBarTop() {
@@ -9,6 +10,7 @@ export function AppBarTop() {
         <h1 className="text-white text-lg font-bold tracking-wide">
           {t("projectManagement")}
         </h1>
+        <ThemeSwitch />
       </div>
     </header>
   );

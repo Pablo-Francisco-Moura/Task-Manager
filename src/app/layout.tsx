@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Providers } from "@/components/Providers/Providers";
+import { ThemeProvider } from "@/components/Providers/ThemeProvider";
 import { metadataTitle } from "../constants/app";
 import "./globals.css";
 
@@ -13,7 +14,9 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" data-lt-installed="true">
       <body>
-        <Providers>{children}</Providers>
+        <ThemeProvider>
+          <Providers>{children}</Providers>
+        </ThemeProvider>
       </body>
     </html>
   );

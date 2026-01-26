@@ -1,6 +1,8 @@
 import { Project } from "@prisma/client";
+import { useTheme } from "../Providers/ThemeProvider";
 import { useEffect } from "react";
 import { useProjects } from "@/hooks/useProjects";
+import { useTranslation } from "react-i18next";
 import { useProjectStore } from "@/store/projectStore";
 import { CircularProgress } from "@mui/material";
 import Select, { SelectChangeEvent } from "@mui/material/Select";
@@ -12,7 +14,11 @@ export function Toolbar() {
   const selectedProject = useProjectStore((s) => s.selectedProject);
   const setSelectedProject = useProjectStore((s) => s.setSelectedProject);
 
+  const { t } = useTranslation();
+  const { theme } = useTheme();
   const { projects, isLoading } = useProjects();
+
+  const isDark = theme === "dark";
 
   useEffect(() => {
     if (projects && projects.length > 0) {
@@ -34,19 +40,33 @@ export function Toolbar() {
   };
 
   return (
-    <div className="w-full border-b border-gray-200 py-4 px-4 flex items-center gap-4">
+    <div className="w-full border-b border-gray-200 py-4 px-4 flex items-center gap-4 bg-white dark:bg-gray-700 transition-colors">
       <FormControl sx={{ minWidth: 200 }}>
-        <InputLabel id="select-project-label">Projeto</InputLabel>
+        <InputLabel
+          id="select-project-label"
+          sx={{ color: isDark ? "#fff" : undefined }}
+        >
+          {t("projectName")}
+        </InputLabel>
         <Select
           value={selectedProject?.id?.toString() ?? ""}
-          label="Projeto"
+          label={t("projectName")}
           labelId="select-project-label"
           onChange={handleChange}
           disabled={!projects || projects.length === 0 || isLoading}
           displayEmpty
+          sx={{
+            color: isDark ? "#fff" : undefined,
+            ".MuiOutlinedInput-notchedOutline": {
+              borderColor: isDark ? "#fff" : undefined,
+            },
+            "& .MuiSvgIcon-root": {
+              color: isDark ? "#fff" : undefined,
+            },
+          }}
         >
           <MenuItem value="" disabled>
-            {isLoading ? "Carregando..." : "Selecione um projeto"}
+            {isLoading ? t("loadingProjects") : t("selectProject")}
           </MenuItem>
           {projects &&
             projects.map((project: Project) => (

@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Task as TypeTask } from "@prisma/client";
 import { IconButton, Tooltip } from "@mui/material";
 import React from "react";
@@ -11,21 +12,23 @@ interface Props {
 }
 
 export function Task({ task, onEditClick, onDeleteClick }: Props) {
+  const { t } = useTranslation();
+
   return (
     <div
       key={task.id}
       className="w-full flex justify-between items-center gap-4"
     >
-      <li className="text-gray-800 mb-1">{task.name}</li>
+      <li className="text-gray-800 dark:text-white mb-1">{task.name}</li>
       <div>
-        <Tooltip arrow title={`Editar tarefa: ${task.name}`}>
+        <Tooltip arrow title={`${t("editTask")} ${task.name}`}>
           <IconButton onClick={() => onEditClick(task)} size="small">
-            <EditIcon fontSize="small" />
+            <EditIcon className="dark:text-white" fontSize="small" />
           </IconButton>
         </Tooltip>
-        <Tooltip arrow title={`Deletar tarefa: ${task.name}`}>
+        <Tooltip arrow title={`${t("deleteTask")} ${task.name}`}>
           <IconButton onClick={() => onDeleteClick(task)} size="small">
-            <DeleteIcon fontSize="small" />
+            <DeleteIcon className="dark:text-white" fontSize="small" />
           </IconButton>
         </Tooltip>
       </div>

@@ -182,6 +182,8 @@ Desenvolver um sistema full stack de gerenciamento de projetos e tarefas utiliza
 
 - [x] Interface para edição de projetos
 - [x] Interface para edição de tarefas
+- [x] Internacionalização de interfaces
+- [x] Sistema de design com modos claro e escuro
 
 ---
 

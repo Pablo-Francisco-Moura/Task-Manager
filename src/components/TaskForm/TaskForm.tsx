@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { useState } from "react";
 import { createTask } from "@/hooks/useTasks/useCase/createTask.api";
 import { QUERY_KEYS } from "@/constants/queryKeys";
+import { useTranslation } from "react-i18next";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 interface TaskFormProps {
@@ -22,6 +23,8 @@ export function TaskForm({ projectId, onClose }: TaskFormProps) {
     handleSubmit,
   } = useForm<TaskFormInputs>();
   const [error, setError] = useState<string | null>(null);
+
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
@@ -41,7 +44,7 @@ export function TaskForm({ projectId, onClose }: TaskFormProps) {
       onClose();
     },
     onError: () => {
-      setError("Erro ao cadastrar tarefa!");
+      setError(t("errorCreatingTask"));
     },
   });
 
@@ -52,13 +55,13 @@ export function TaskForm({ projectId, onClose }: TaskFormProps) {
 
   return (
     <Form
-      title="Nome da Tarefa"
+      title={t("taskName")}
       error={error}
       onClose={onClose}
       onSubmit={handleSubmit(onSubmit)}
       register={register}
-      submitLabel="Cadastrar Tarefa"
-      placeholder="Digite o nome da tarefa"
+      submitLabel={t("registerTask")}
+      placeholder={t("enterTaskName")}
       isSubmitting={isSubmitting}
     />
   );

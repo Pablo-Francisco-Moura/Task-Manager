@@ -1,26 +1,35 @@
 import { Task } from "@prisma/client";
+import { Form } from "../Form";
 import { Button } from "../Button";
+import { useForm } from "react-hook-form";
 import { TaskForm } from "@/components/TaskForm";
 import { SubTitle } from "@/components/SubTitle";
 import { deleteTask } from "@/hooks/useTasks/useCase/deleteTask.api";
 import { QUERY_KEYS } from "@/constants/queryKeys";
+import { updateTask } from "@/hooks/useTasks/useCase/updateTask.api";
 import { AlertMessage } from "@/components/AlertMessage";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useProjectStore } from "@/store/projectStore";
-import { IconButton, Tooltip } from "@mui/material";
 import { useProjects, useTasks } from "@/hooks";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { IconButton, Tooltip, Dialog } from "@mui/material";
 import React, { useState } from "react";
+import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 
 export function Tasks() {
   const selectedProject = useProjectStore((s) => s.selectedProject);
+
+  const [editTask, setEditTask] = useState<Task | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
   const [openAddTask, toggleOpenAddTask] = useState(false);
+  const [openEditDialog, setOpenEditDialog] = useState(false);
+
   const queryClient = useQueryClient();
 
-  const mutation = useMutation({
+  // Mutation to delete task.
+  const deleteMutation = useMutation({
     mutationFn: async (id: number) => deleteTask(id),
     onSuccess: async () => {
       await queryClient.invalidateQueries({
@@ -29,12 +38,37 @@ export function Tasks() {
       await queryClient.refetchQueries({
         queryKey: [QUERY_KEYS.PROJECTS, selectedProject?.id],
       });
-
       setTaskToDelete(null);
       setOpenDialog(false);
     },
   });
 
+  // Mutation to edit task.
+  const updateMutation = useMutation({
+    mutationFn: updateTask,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: [QUERY_KEYS.PROJECTS, selectedProject?.id],
+      });
+      await queryClient.refetchQueries({
+        queryKey: [QUERY_KEYS.PROJECTS, selectedProject?.id],
+      });
+      setEditTask(null);
+      setOpenEditDialog(false);
+    },
+  });
+
+  // Edit form.
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { isSubmitting },
+  } = useForm<{ name: string }>({
+    defaultValues: { name: "" },
+  });
+
+  // Handlers
   const handleDeleteClick = (task: Task) => {
     setTaskToDelete(task);
     setOpenDialog(true);
@@ -42,13 +76,34 @@ export function Tasks() {
 
   const handleConfirmDelete = () => {
     if (taskToDelete) {
-      mutation.mutate(taskToDelete.id);
+      deleteMutation.mutate(taskToDelete.id);
     }
   };
 
   const handleCloseDialog = () => {
     setOpenDialog(false);
     setTaskToDelete(null);
+  };
+
+  const handleEditClick = (task: Task) => {
+    setEditTask(task);
+    reset({ name: task.name });
+    setOpenEditDialog(true);
+  };
+
+  const handleEditClose = () => {
+    setOpenEditDialog(false);
+    setEditTask(null);
+  };
+
+  const onEditSubmit = async (data: { name: string }) => {
+    if (editTask) {
+      await updateMutation.mutateAsync({
+        id: editTask.id,
+        name: data.name,
+        projectId: editTask.projectId,
+      });
+    }
   };
 
   const { projects, isLoading: isProjectsLoading } = useProjects();
@@ -122,6 +177,11 @@ export function Tasks() {
               className="w-full flex justify-between items-center gap-4"
             >
               <li className="text-gray-800 mb-1">{task.name}</li>
+              <Tooltip arrow title={`Editar tarefa: ${task.name}`}>
+                <IconButton onClick={() => handleEditClick(task)} size="small">
+                  <EditIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
               <Tooltip arrow title={`Deletar tarefa: ${task.name}`}>
                 <IconButton
                   onClick={() => handleDeleteClick(task)}
@@ -133,6 +193,21 @@ export function Tasks() {
             </div>
           ))}
       </ul>
+
+      <Dialog open={openEditDialog} onClose={handleEditClose}>
+        <Form
+          title="Editar Tarefa"
+          placeholder="Nome da tarefa"
+          submitLabel="Salvar"
+          error={
+            updateMutation.isError ? "Erro ao atualizar tarefa" : undefined
+          }
+          isSubmitting={isSubmitting || updateMutation.isPending}
+          register={register}
+          onSubmit={handleSubmit(onEditSubmit)}
+          onClose={handleEditClose}
+        />
+      </Dialog>
 
       <ConfirmDialog
         open={openDialog}

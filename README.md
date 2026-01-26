@@ -181,6 +181,7 @@ Desenvolver um sistema full stack de gerenciamento de projetos e tarefas utiliza
 **FrontEnd**
 
 - [x] Interface para edição de projetos
+- [x] Interface para edição de tarefas
 
 ---
 

@@ -1,15 +1,18 @@
+import { Form } from "../Form";
 import { Button } from "../Button";
 import { Project } from "@prisma/client";
+import { useForm } from "react-hook-form";
 import { useState } from "react";
 import { QUERY_KEYS } from "@/constants/queryKeys";
-import { useProjects } from "@/hooks";
 import { AlertMessage } from "../AlertMessage";
 import { useMainStore } from "@/store/mainStore";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { deleteProject } from "@/hooks/useProjects/useCase/deleteProject.api";
 import { useProjectStore } from "@/store/projectStore";
-import { IconButton, Tooltip } from "@mui/material";
+import { useProjects, updateProject } from "@/hooks";
+import { IconButton, Tooltip, Dialog } from "@mui/material";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 
 interface Props {
@@ -24,10 +27,14 @@ export function Projects({ openAddProject, toggleOpenAddProject }: Props) {
   const { projects, isLoading, isError } = useProjects();
 
   const [openDialog, setOpenDialog] = useState(false);
+  const [editProject, setEditProject] = useState<Project | null>(null);
+  const [openEditDialog, setOpenEditDialog] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
+
   const queryClient = useQueryClient();
 
-  const mutation = useMutation({
+  // Mutation to delete project.
+  const deleteMutation = useMutation({
     mutationFn: async (id: number) => deleteProject(id),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.PROJECTS] });
@@ -38,6 +45,29 @@ export function Projects({ openAddProject, toggleOpenAddProject }: Props) {
     },
   });
 
+  // Mutation to update project.
+  const updateMutation = useMutation({
+    mutationFn: updateProject,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.PROJECTS] });
+      await queryClient.refetchQueries({ queryKey: [QUERY_KEYS.PROJECTS] });
+
+      setEditProject(null);
+      setOpenEditDialog(false);
+    },
+  });
+
+  // Edit form.
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { isSubmitting },
+  } = useForm<{ name: string }>({
+    defaultValues: { name: "" },
+  });
+
+  // Handlers
   const handleDeleteClick = (project: Project) => {
     setProjectToDelete(project);
     setOpenDialog(true);
@@ -45,13 +75,30 @@ export function Projects({ openAddProject, toggleOpenAddProject }: Props) {
 
   const handleConfirmDelete = () => {
     if (projectToDelete) {
-      mutation.mutate(projectToDelete.id);
+      deleteMutation.mutate(projectToDelete.id);
     }
   };
 
   const handleCloseDialog = () => {
     setOpenDialog(false);
     setProjectToDelete(null);
+  };
+
+  const handleEditClick = (project: Project) => {
+    setEditProject(project);
+    reset({ name: project.name });
+    setOpenEditDialog(true);
+  };
+
+  const handleEditClose = () => {
+    setOpenEditDialog(false);
+    setEditProject(null);
+  };
+
+  const onEditSubmit = async (data: { name: string }) => {
+    if (editProject) {
+      await updateMutation.mutateAsync({ id: editProject.id, name: data.name });
+    }
   };
 
   return (
@@ -79,6 +126,27 @@ export function Projects({ openAddProject, toggleOpenAddProject }: Props) {
                         setSelectedTab("task");
                       }}
                     />
+                    <Tooltip arrow title={`Edit Project: ${project.name}`}>
+                      <IconButton onClick={() => handleEditClick(project)}>
+                        <EditIcon />
+                      </IconButton>
+                    </Tooltip>
+                    <Dialog open={openEditDialog} onClose={handleEditClose}>
+                      <Form
+                        title="Edit Project"
+                        error={
+                          updateMutation.isError
+                            ? "Error updating project"
+                            : undefined
+                        }
+                        onClose={handleEditClose}
+                        onSubmit={handleSubmit(onEditSubmit)}
+                        register={register}
+                        placeholder="Project name"
+                        submitLabel="Save"
+                        isSubmitting={isSubmitting || updateMutation.isPending}
+                      />
+                    </Dialog>
                     <Tooltip arrow title={`Delete Project: ${project.name}`}>
                       <IconButton onClick={() => handleDeleteClick(project)}>
                         <DeleteIcon />

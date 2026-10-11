@@ -188,3 +188,11 @@ Desenvolver um sistema full stack de gerenciamento de projetos e tarefas utiliza
 ---
 
 Boa sorte no desafio! 🚀
+
+## Minha checklist
+
+- [x] [1º Autoavaliação](docs/01-autoavaliacao.md)
+- [ ] 2º Improvements
+  - [ ] Registrar melhorias identificadas
+- [ ] 3º Novidades
+  - [ ] Registrar novas ideias e evoluções

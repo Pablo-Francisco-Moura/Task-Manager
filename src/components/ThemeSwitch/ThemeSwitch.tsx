@@ -72,6 +72,12 @@ export function ThemeSwitch() {
           sx={{ m: 1 }}
           checked={mode === "dark"}
           onChange={toggleTheme}
+          slotProps={{
+            input: {
+              "aria-label": mode === "light" ? t("lightMode") : t("darkMode"),
+              role: "switch",
+            },
+          }}
         />
       }
       label={mode === "light" ? t("lightMode") : t("darkMode")}

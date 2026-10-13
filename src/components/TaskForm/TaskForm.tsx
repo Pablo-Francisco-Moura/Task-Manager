@@ -60,6 +60,7 @@ export function TaskForm({ projectId, onClose }: IProps) {
     <Form
       title={t("taskName")}
       error={error}
+      inputId="task-create-name"
       onClose={onClose}
       onSubmit={handleSubmit(onSubmit)}
       register={register}

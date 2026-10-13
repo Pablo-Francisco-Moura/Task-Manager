@@ -119,6 +119,7 @@ export function Project({
         </Tooltip>
         <Dialog open={openEditDialog} onClose={handleEditClose}>
           <Form
+            inputId={`project-edit-name-${project.id}`}
             title={t("editProject")}
             error={
               updateMutation.isError ? t("errorUpdatingProject") : undefined

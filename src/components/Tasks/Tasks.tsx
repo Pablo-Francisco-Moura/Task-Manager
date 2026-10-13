@@ -280,13 +280,14 @@ export function Tasks() {
       <Dialog open={openEditDialog} onClose={handleEditClose}>
         <Form
           title={t("editTask")}
-          placeholder={t("taskName")}
-          submitLabel={t("save")}
           error={updateMutation.isError ? t("errorUpdatingTask") : undefined}
-          isSubmitting={isSubmitting || updateMutation.isPending}
+          inputId={`task-edit-name-${editTask?.id ?? "pending"}`}
+          onClose={handleEditClose}
           register={register}
           onSubmit={handleSubmit(onEditSubmit)}
-          onClose={handleEditClose}
+          placeholder={t("taskName")}
+          submitLabel={t("save")}
+          isSubmitting={isSubmitting || updateMutation.isPending}
         />
       </Dialog>
 

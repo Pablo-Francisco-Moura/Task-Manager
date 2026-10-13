@@ -6,12 +6,15 @@
   --background: #f4f6f3;
   --foreground: #202925;
   --surface: #ffffff;
-  --muted: #68746d;
+  --muted: #626d66;
   --line: #dce3dd;
-  --accent: #bf4f36;
-  --accent-dark: #963b29;
+  --accent: #a6432e;
+  --accent-dark: #843321;
+  --accent-contrast: #ffffff;
   --brand: #254b3d;
+  --brand-contrast: #ffffff;
   --brand-soft: #e8f0eb;
+  --danger-text: #b53d35;
 }
 
 html.dark {
@@ -20,14 +23,31 @@ html.dark {
   --surface: #202925;
   --muted: #a6b2aa;
   --line: #35433b;
+  --accent: #f08b72;
+  --accent-dark: #ff9d84;
+  --accent-contrast: #202925;
   --brand: #a8c6b4;
+  --brand-contrast: #171e1b;
   --brand-soft: #2a3930;
+  --danger-text: #ff9388;
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
   font-family: "Avenir Next", Avenir, "Segoe UI", sans-serif;
+}
+
+:where(
+  button,
+  a,
+  input,
+  select,
+  [role="combobox"],
+  [role="switch"]
+):focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
 }
 
 .app-shell {
@@ -136,7 +156,7 @@ html.dark .app-brand-mark {
   border-radius: 6px;
   padding: 0.65rem 1rem;
   background: var(--accent);
-  color: #fff;
+  color: var(--accent-contrast);
   font-size: 0.875rem;
   font-weight: 700;
   transition:
@@ -153,7 +173,13 @@ html.dark .app-brand-mark {
 
 .primary-action:focus-visible,
 .text-action:focus-visible,
-.project-card-main:focus-visible {
+.project-card-main:focus-visible,
+.app-nav-button:focus-visible,
+.project-card-actions .MuiIconButton-root:focus-visible,
+.task-row-actions .MuiIconButton-root:focus-visible,
+.app-header .MuiSwitch-switchBase:focus-visible,
+.app-form-heading .MuiIconButton-root:focus-visible,
+.app-form-submit:focus-visible {
   outline: 3px solid color-mix(in srgb, var(--accent) 65%, transparent);
   outline-offset: 3px;
 }
@@ -386,7 +412,7 @@ html.dark .app-brand-mark {
   border-radius: 5px;
   background: var(--brand);
   padding: 0.6rem 0.9rem;
-  color: #fff;
+  color: var(--brand-contrast);
   font-weight: 700;
 }
 
@@ -400,7 +426,7 @@ html.dark .app-brand-mark {
 }
 
 .app-form-error {
-  color: #b53d35;
+  color: var(--danger-text);
   font-size: 0.85rem;
 }
 
@@ -437,6 +463,13 @@ html.dark .app-brand-mark {
 
 .task-project-select .MuiOutlinedInput-notchedOutline {
   border-color: var(--line);
+}
+
+.task-project-select
+  .MuiOutlinedInput-root.Mui-focused
+  .MuiOutlinedInput-notchedOutline {
+  border-color: var(--accent);
+  border-width: 2px;
 }
 
 .task-workspace {
@@ -550,7 +583,12 @@ html.dark .app-brand-mark {
   }
 
   .app-header .MuiFormControlLabel-label {
-    display: none;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 
   .app-nav {
@@ -564,7 +602,18 @@ html.dark .app-brand-mark {
   .screen-heading,
   .task-heading {
     align-items: flex-start;
+    flex-wrap: wrap;
     gap: 1rem;
+  }
+
+  .screen-heading > div,
+  .task-heading > div {
+    min-width: 0;
+    flex: 1 1 10rem;
+  }
+
+  .screen-title {
+    overflow-wrap: anywhere;
   }
 
   .primary-action {

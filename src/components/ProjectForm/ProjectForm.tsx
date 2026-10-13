@@ -53,6 +53,7 @@ export function ProjectForm({ toggleOpenAddProject }: IProps) {
     <Form
       title={t("projectName")}
       error={error}
+      inputId="project-create-name"
       onClose={() => toggleOpenAddProject(false)}
       onSubmit={handleSubmit(onSubmit)}
       register={register}

@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import List from "@mui/material/List";
 import React from "react";
 import Dialog from "@mui/material/Dialog";
@@ -34,13 +34,22 @@ export function ConfirmDialog({
 }: IProps) {
   const { t } = useTranslation();
   const [showRelatedItems, setShowRelatedItems] = useState(false);
+  const cancelButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (!open) setShowRelatedItems(false);
   }, [open]);
 
   return (
-    <Dialog open={open} onClose={isLoading ? undefined : onClose}>
+    <Dialog
+      open={open}
+      onClose={isLoading ? undefined : onClose}
+      slotProps={{
+        transition: {
+          onEntered: () => cancelButtonRef.current?.focus(),
+        },
+      }}
+    >
       <div className="dark:bg-gray-600">
         <DialogTitle className="dark:text-white">
           {t("confirmDelete")}
@@ -88,6 +97,7 @@ export function ConfirmDialog({
             onClick={onClose}
             color="primary"
             disabled={isLoading}
+            ref={cancelButtonRef}
           >
             {t("cancel")}
           </Button>
@@ -95,7 +105,6 @@ export function ConfirmDialog({
             onClick={onConfirm}
             color="error"
             variant="contained"
-            autoFocus
             disabled={isLoading}
           >
             {isLoading ? t("deleting") : t("confirm")}

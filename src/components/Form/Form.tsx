@@ -5,6 +5,7 @@ import CloseIcon from "@mui/icons-material/Close";
 
 interface IProps<TFieldValues extends FieldValues & { name: string }> {
   title: string;
+  inputId: string;
   placeholder: string;
   submitLabel: string;
   error?: string | null;
@@ -17,6 +18,7 @@ interface IProps<TFieldValues extends FieldValues & { name: string }> {
 export function Form<TFieldValues extends FieldValues & { name: string }>({
   title,
   error,
+  inputId,
   placeholder,
   submitLabel,
   isSubmitting,
@@ -29,7 +31,7 @@ export function Form<TFieldValues extends FieldValues & { name: string }>({
   return (
     <form onSubmit={onSubmit} className="app-form">
       <div className="app-form-heading">
-        <label htmlFor="name" className="app-form-title">
+        <label htmlFor={inputId} className="app-form-title">
           {title}
         </label>
         {onClose && (
@@ -47,12 +49,14 @@ export function Form<TFieldValues extends FieldValues & { name: string }>({
       </div>
 
       <input
-        id="name"
+        id={inputId}
         type="text"
         {...register("name" as FieldPath<TFieldValues>, {
           required: t("nameRequired"),
         })}
         disabled={isSubmitting}
+        aria-invalid={Boolean(error)}
+        aria-describedby={error ? `${inputId}-error` : undefined}
         className="app-form-input"
         placeholder={placeholder}
       />
@@ -61,7 +65,7 @@ export function Form<TFieldValues extends FieldValues & { name: string }>({
         {isSubmitting ? t("saving") : submitLabel}
       </button>
       {error && (
-        <div className="app-form-error" role="alert">
+        <div id={`${inputId}-error`} className="app-form-error" role="alert">
           {error}
         </div>
       )}

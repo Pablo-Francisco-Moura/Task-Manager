@@ -1,6 +1,13 @@
 import { Hono } from "hono";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { describeRoute } from "hono-openapi";
+import {
+  hasOnlyKeys,
+  parseName,
+  parsePositiveIntegerString,
+  readJsonObject,
+} from "@/server/validation";
 
 const projectRoutes = new Hono();
 
@@ -26,7 +33,14 @@ projectRoutes.post(
     },
   }),
   async (c) => {
-    const { name } = await c.req.json();
+    const body = await readJsonObject(c.req);
+    if (!body || !hasOnlyKeys(body, ["name"])) {
+      return c.json({ error: "Invalid project payload" }, 400);
+    }
+    const name = parseName(body.name);
+    if (name === null) {
+      return c.json({ error: "name must be a non-empty string" }, 400);
+    }
     const project = await prisma.project.create({
       data: { name },
     });
@@ -69,9 +83,9 @@ projectRoutes.delete(
     },
   }),
   async (c) => {
-    const id = Number(c.req.param("id"));
-    if (isNaN(id)) {
-      return c.json({ error: "Invalid ID" }, 400);
+    const id = parsePositiveIntegerString(c.req.param("id"));
+    if (id === null) {
+      return c.json({ error: "id must be a positive integer" }, 400);
     }
 
     try {
@@ -80,8 +94,14 @@ projectRoutes.delete(
       });
 
       return c.json({ message: "Project deleted successfully" });
-    } catch (error) {
-      return c.json({ error: "Project not found or error deleting" }, 404);
+    } catch (error: unknown) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2025"
+      ) {
+        return c.json({ error: "Project not found" }, 404);
+      }
+      throw error;
     }
   },
 );
@@ -112,14 +132,17 @@ projectRoutes.patch(
     },
   }),
   async (c) => {
-    const id = Number(c.req.param("id"));
-    if (isNaN(id)) {
-      return c.json({ error: "Invalid ID" }, 400);
+    const id = parsePositiveIntegerString(c.req.param("id"));
+    if (id === null) {
+      return c.json({ error: "id must be a positive integer" }, 400);
     }
-    const body = await c.req.json();
-    const { name } = body;
-    if (!name) {
-      return c.json({ error: "name is required" }, 400);
+    const body = await readJsonObject(c.req);
+    if (!body || !hasOnlyKeys(body, ["name"])) {
+      return c.json({ error: "Invalid project payload" }, 400);
+    }
+    const name = parseName(body.name);
+    if (name === null) {
+      return c.json({ error: "name must be a non-empty string" }, 400);
     }
     try {
       const updatedProject = await prisma.project.update({
@@ -127,8 +150,14 @@ projectRoutes.patch(
         data: { name },
       });
       return c.json(updatedProject, 200);
-    } catch (error) {
-      return c.json({ error: "Project not found or error updating" }, 404);
+    } catch (error: unknown) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2025"
+      ) {
+        return c.json({ error: "Project not found" }, 404);
+      }
+      throw error;
     }
   },
 );

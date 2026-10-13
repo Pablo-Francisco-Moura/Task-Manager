@@ -23,10 +23,10 @@
 
 ### 4. Operação reproduzível
 
-- [ ] Criar CI para pull requests que instale dependências pelo lockfile (`npm ci`) e execute verificação de tipos, lint, testes e build.
-- [ ] Configurar no workflow um PostgreSQL temporário para os testes, sem usar dados de desenvolvimento.
-- [ ] Adicionar health check ao banco e garantir que a aplicação espere até ele estar pronto.
-- [ ] Validar build e lint no ambiente de produção e corrigir erros ou warnings que bloqueiem a compilação.
+- [x] Criar CI para pull requests que instale dependências pelo lockfile (`npm ci`) e execute verificação de tipos, lint, testes e build.
+- [x] Configurar no workflow um PostgreSQL temporário para os testes, sem usar dados de desenvolvimento.
+- [x] Adicionar health check ao banco e garantir que a aplicação espere até ele estar pronto.
+- [x] Validar build e lint no ambiente de produção e corrigir erros ou warnings que bloqueiem a compilação.
 
 ### 5. Renderização e arquitetura do frontend
 

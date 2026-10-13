@@ -1,8 +1,8 @@
-import type { HonoRequest } from "hono";
 import { MAX_NAME_LENGTH } from "@/constants";
-import type { SharedSchema } from "@/types";
+import type { HonoRequest } from "hono";
+import type { TypeSharedSchema } from "@/types";
 
-export const projectCreateSchema: SharedSchema = {
+export const projectCreateSchema: TypeSharedSchema = {
   type: "object",
   properties: {
     name: { type: "string", minLength: 1, maxLength: MAX_NAME_LENGTH },
@@ -11,7 +11,7 @@ export const projectCreateSchema: SharedSchema = {
   additionalProperties: false,
 };
 
-export const projectUpdateSchema: SharedSchema = {
+export const projectUpdateSchema: TypeSharedSchema = {
   type: "object",
   properties: {
     name: { type: "string", minLength: 1, maxLength: MAX_NAME_LENGTH },
@@ -19,7 +19,7 @@ export const projectUpdateSchema: SharedSchema = {
   additionalProperties: false,
 };
 
-export const taskCreateSchema: SharedSchema = {
+export const taskCreateSchema: TypeSharedSchema = {
   type: "object",
   properties: {
     name: { type: "string", minLength: 1, maxLength: MAX_NAME_LENGTH },
@@ -29,7 +29,7 @@ export const taskCreateSchema: SharedSchema = {
   additionalProperties: false,
 };
 
-export const taskUpdateSchema: SharedSchema = {
+export const taskUpdateSchema: TypeSharedSchema = {
   type: "object",
   properties: {
     name: { type: "string", minLength: 1, maxLength: MAX_NAME_LENGTH },
@@ -75,7 +75,7 @@ export function parseName(value: unknown): string | null {
 
 export function matchesJsonSchema(
   value: Record<string, unknown>,
-  schema: SharedSchema,
+  schema: TypeSharedSchema,
 ): boolean {
   if (schema.required) {
     for (const key of schema.required) {

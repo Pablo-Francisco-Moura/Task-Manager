@@ -1,4 +1,4 @@
-export type SharedSchema = {
+export type TypeSharedSchema = {
   type: "object";
   properties: Record<
     string,

@@ -1,11 +1,17 @@
 import { Hono } from "hono";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { describeRoute } from "hono-openapi";
+import {
+  hasOnlyKeys,
+  parseName,
+  parsePositiveInteger,
+  parsePositiveIntegerString,
+  readJsonObject,
+} from "@/server/validation";
 
 const taskRoutes = new Hono();
 
-// POST /api/task - Create a new task linked to a project.
-// Body: { name: string, projectId: number }
 taskRoutes.post(
   "/",
   describeRoute({
@@ -31,12 +37,16 @@ taskRoutes.post(
     },
   }),
   async (c) => {
-    const { name, projectId } = await c.req.json();
+    const body = await readJsonObject(c.req);
+    if (!body || !hasOnlyKeys(body, ["name", "projectId"])) {
+      return c.json({ error: "Invalid task payload" }, 400);
+    }
+    const name = parseName(body.name);
+    const projectId = parsePositiveInteger(body.projectId);
     if (!name || !projectId) {
-      return c.json({ error: "name and projectId are required" }, 400);
+      return c.json({ error: "name and projectId must be valid" }, 400);
     }
 
-    // Check if the project exists.
     const project = await prisma.project.findUnique({
       where: { id: projectId },
     });
@@ -50,12 +60,14 @@ taskRoutes.post(
         data: { name, projectId },
       });
       return c.json(task, 201);
-    } catch (err: any) {
-      // Handles foreign key errors. (project not found).
-      if (err?.code === "P2003") {
+    } catch (error: unknown) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2003"
+      ) {
         return c.json({ error: "Project not found" }, 404);
       }
-      throw err;
+      throw error;
     }
   },
 );
@@ -80,9 +92,9 @@ taskRoutes.get(
     },
   }),
   async (c) => {
-    const projectId = Number(c.req.query("projectId"));
+    const projectId = parsePositiveIntegerString(c.req.query("projectId"));
     if (!projectId) {
-      return c.json({ error: "projectId is required" }, 400);
+      return c.json({ error: "projectId must be a positive integer" }, 400);
     }
 
     // Check if the project exists.
@@ -113,16 +125,22 @@ taskRoutes.delete(
     },
   }),
   async (c) => {
-    const id = Number(c.req.param("id"));
+    const id = parsePositiveIntegerString(c.req.param("id"));
     if (!id) {
-      return c.json({ error: "id is required" }, 400);
+      return c.json({ error: "id must be a positive integer" }, 400);
     }
 
     try {
       await prisma.task.delete({ where: { id } });
       return c.json({ message: "Task deleted successfully" }, 200);
-    } catch (error) {
-      return c.json({ error: "Task not found" }, 404);
+    } catch (error: unknown) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2025"
+      ) {
+        return c.json({ error: "Task not found" }, 404);
+      }
+      throw error;
     }
   },
 );
@@ -155,22 +173,43 @@ taskRoutes.patch(
     },
   }),
   async (c) => {
-    const id = Number(c.req.param("id"));
+    const id = parsePositiveIntegerString(c.req.param("id"));
     if (!id) {
-      return c.json({ error: "id is required" }, 400);
+      return c.json({ error: "id must be a positive integer" }, 400);
     }
-    const body = await c.req.json();
-    const { name, projectId } = body;
-    if (!name && !projectId) {
+    const body = await readJsonObject(c.req);
+    if (!body || !hasOnlyKeys(body, ["name", "projectId"])) {
+      return c.json({ error: "Invalid task payload" }, 400);
+    }
+    const hasName = Object.hasOwn(body, "name");
+    const hasProjectId = Object.hasOwn(body, "projectId");
+    if (!hasName && !hasProjectId) {
       return c.json(
-        { error: "At least one of name or projectId is required" },
+        { error: "At least one valid task field is required" },
         400,
       );
     }
+    const updateData: Prisma.TaskUncheckedUpdateInput = {};
+    let parsedProjectId: number | undefined;
+    if (hasName) {
+      const name = parseName(body.name);
+      if (name === null) {
+        return c.json({ error: "name must be a non-empty string" }, 400);
+      }
+      updateData.name = name;
+    }
+    if (hasProjectId) {
+      const projectId = parsePositiveInteger(body.projectId);
+      if (projectId === null) {
+        return c.json({ error: "projectId must be a positive integer" }, 400);
+      }
+      updateData.projectId = projectId;
+      parsedProjectId = projectId;
+    }
     // If projectId is being updated, check if the new project exists
-    if (projectId) {
+    if (parsedProjectId !== undefined) {
       const project = await prisma.project.findUnique({
-        where: { id: projectId },
+        where: { id: parsedProjectId },
       });
       if (!project) {
         return c.json({ error: "Project not found" }, 404);
@@ -179,11 +218,17 @@ taskRoutes.patch(
     try {
       const updatedTask = await prisma.task.update({
         where: { id },
-        data: { ...(name && { name }), ...(projectId && { projectId }) },
+        data: updateData,
       });
       return c.json(updatedTask, 200);
-    } catch (error) {
-      return c.json({ error: "Task not found or error updating" }, 404);
+    } catch (error: unknown) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2025"
+      ) {
+        return c.json({ error: "Task not found" }, 404);
+      }
+      throw error;
     }
   },
 );

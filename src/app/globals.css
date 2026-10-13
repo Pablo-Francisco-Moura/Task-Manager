@@ -268,6 +268,14 @@ html.dark .app-brand-mark {
   padding: 1rem 0;
 }
 
+.status-message {
+  display: flex;
+  min-height: 3rem;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--muted);
+}
+
 .empty-state {
   display: flex;
   min-height: 15rem;

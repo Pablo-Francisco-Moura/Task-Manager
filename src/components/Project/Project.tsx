@@ -6,21 +6,27 @@ import { useMainStore } from "@/store/mainStore";
 import { updateProject } from "@/hooks";
 import { useTranslation } from "react-i18next";
 import { useProjectStore } from "@/store/projectStore";
+import { useFeedbackStore } from "@/store/feedbackStore";
 import { Project as TypeProject } from "@prisma/client";
 import { IconButton, Tooltip, Dialog } from "@mui/material";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import type { TypeProjectWithTasks } from "@/types";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import FolderOutlinedIcon from "@mui/icons-material/FolderOutlined";
 
-interface Props {
-  project: TypeProject;
+interface IProps {
+  project: TypeProjectWithTasks;
   setOpenDialog: (open: boolean) => void;
-  setProjectToDelete: (project: TypeProject | null) => void;
+  setProjectToDelete: (project: TypeProjectWithTasks | null) => void;
 }
 
-export function Project({ project, setOpenDialog, setProjectToDelete }: Props) {
+export function Project({
+  project,
+  setOpenDialog,
+  setProjectToDelete,
+}: IProps) {
   const setSelectedTab = useMainStore((s) => s.setSelectedTab);
   const selectedProject = useProjectStore((s) => s.selectedProject);
   const setSelectedProject = useProjectStore((s) => s.setSelectedProject);
@@ -30,6 +36,7 @@ export function Project({ project, setOpenDialog, setProjectToDelete }: Props) {
 
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const showFeedback = useFeedbackStore((state) => state.showFeedback);
 
   // Mutation to update project.
   const updateMutation = useMutation({
@@ -44,6 +51,7 @@ export function Project({ project, setOpenDialog, setProjectToDelete }: Props) {
 
       setEditProject(null);
       setOpenEditDialog(false);
+      showFeedback(t("projectUpdated"));
     },
   });
 
@@ -58,7 +66,7 @@ export function Project({ project, setOpenDialog, setProjectToDelete }: Props) {
   });
 
   // Handlers
-  const handleDeleteClick = (project: TypeProject) => {
+  const handleDeleteClick = (project: TypeProjectWithTasks) => {
     setProjectToDelete(project);
     setOpenDialog(true);
   };

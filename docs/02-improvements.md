@@ -18,7 +18,7 @@
 ### 3. Interface e acessibilidade
 
 - [x] Melhorar a hierarquia visual para destacar projeto, tarefa e ações principais.
-- [ ] Definir estados de carregamento, vazio, erro e sucesso de forma consistente.
+- [x] Definir estados de carregamento, vazio, erro e sucesso de forma consistente.
 - [ ] Verificar navegação por teclado, foco visível, rótulos, contraste e layouts responsivos.
 
 ### 4. Operação reproduzível

@@ -7,11 +7,12 @@ export function useTasks(projectId?: number) {
     data: tasks,
     isError,
     isLoading,
+    refetch,
   } = useQuery({
     queryKey: [QUERY_KEYS.TASKS, projectId],
     queryFn: () => getTasks(projectId),
     enabled: !!projectId,
   });
 
-  return { tasks, isError, isLoading };
+  return { tasks, isError, isLoading, refetch };
 }

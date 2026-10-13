@@ -13,6 +13,7 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useTranslation } from "react-i18next";
 import { useProjectStore } from "@/store/projectStore";
 import { Task as TypeTask } from "@prisma/client";
+import { useFeedbackStore } from "@/store/feedbackStore";
 import { useProjects, useTasks } from "@/hooks";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import AddIcon from "@mui/icons-material/Add";
@@ -30,6 +31,7 @@ export function Tasks() {
 
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const showFeedback = useFeedbackStore((state) => state.showFeedback);
 
   // Mutation to delete task.
   const deleteMutation = useMutation({
@@ -52,7 +54,9 @@ export function Tasks() {
       }
       setTaskToDelete(null);
       setOpenDialog(false);
+      showFeedback(t("taskDeleted"));
     },
+    onError: () => showFeedback(t("errorDeletingTask"), "error"),
   });
 
   // Mutation to edit task.
@@ -77,6 +81,7 @@ export function Tasks() {
 
       setEditTask(null);
       setOpenEditDialog(false);
+      showFeedback(t("taskUpdated"));
     },
   });
 
@@ -128,17 +133,36 @@ export function Tasks() {
     }
   };
 
-  const { projects, isLoading: isProjectsLoading } = useProjects();
+  const {
+    projects,
+    isError: isProjectsError,
+    isLoading: isProjectsLoading,
+    refetch: refetchProjects,
+  } = useProjects();
   const {
     tasks,
     isError,
     isLoading: isTasksLoading,
+    refetch: refetchTasks,
   } = useTasks(selectedProject?.id);
 
   if (isProjectsLoading && projects === undefined) {
     return (
       <div className="content-state" role="status">
-        <AlertMessage message={t("loadingProjects")} />
+        <AlertMessage type="loading" message={t("loadingProjects")} />
+      </div>
+    );
+  }
+
+  if (isProjectsError) {
+    return (
+      <div className="content-state">
+        <AlertMessage
+          type="error"
+          message={t("errorLoadingProjects")}
+          retryLabel={t("retry")}
+          onRetry={() => void refetchProjects()}
+        />
       </div>
     );
   }
@@ -170,15 +194,20 @@ export function Tasks() {
   if (isTasksLoading) {
     return (
       <div className="content-state" role="status">
-        <AlertMessage message={t("loadingTasks")} />
+        <AlertMessage type="loading" message={t("loadingTasks")} />
       </div>
     );
   }
 
   if (isError) {
     return (
-      <div className="content-state" role="alert">
-        <AlertMessage type="error" message={t("errorLoadingTasks")} />
+      <div className="content-state">
+        <AlertMessage
+          type="error"
+          message={t("errorLoadingTasks")}
+          retryLabel={t("retry")}
+          onRetry={() => void refetchTasks()}
+        />
       </div>
     );
   }
@@ -265,6 +294,7 @@ export function Tasks() {
         open={openDialog}
         onClose={handleCloseDialog}
         onConfirm={handleConfirmDelete}
+        isLoading={deleteMutation.isPending}
         description={`${t("confirmDeleteTask")} "${taskToDelete?.name}"? ${t("infoToDeleteTask")}`}
       />
     </div>

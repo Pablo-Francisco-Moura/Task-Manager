@@ -1,13 +1,42 @@
-interface Props {
+import Alert from "@mui/material/Alert";
+import Button from "@mui/material/Button";
+import CircularProgress from "@mui/material/CircularProgress";
+
+interface IProps {
   message: string;
-  type?: "info" | "error";
+  type?: "info" | "error" | "loading";
+  retryLabel?: string;
+  onRetry?: () => void;
 }
 
-export function AlertMessage({ message, type = "info" }: Props) {
-  const colorClass =
-    type === "error"
-      ? "text-red-800 dark:text-red-400"
-      : "text-blue-800 dark:text-blue-400";
+export function AlertMessage({
+  message,
+  type = "info",
+  retryLabel,
+  onRetry,
+}: IProps) {
+  if (type === "loading") {
+    return (
+      <div className="status-message" role="status" aria-live="polite">
+        <CircularProgress size={18} aria-label={message} />
+        <span>{message}</span>
+      </div>
+    );
+  }
 
-  return <div className={`${colorClass} pulse`}>{message}</div>;
+  return (
+    <Alert
+      severity={type}
+      role={type === "error" ? "alert" : "status"}
+      action={
+        onRetry && retryLabel ? (
+          <Button color="inherit" size="small" onClick={onRetry}>
+            {retryLabel}
+          </Button>
+        ) : undefined
+      }
+    >
+      {message}
+    </Alert>
+  );
 }

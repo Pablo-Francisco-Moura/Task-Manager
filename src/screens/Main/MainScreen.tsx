@@ -3,7 +3,7 @@
 import { TaskScreen } from "../Task";
 import { useMainStore } from "@/store/mainStore";
 import { ProjectScreen } from "../Project";
-import { AppBarTop, TabBar } from "@/components";
+import { AppBarTop, FeedbackSnackbar, TabBar } from "@/components";
 
 export function MainScreen() {
   const selectedTab = useMainStore((s) => s.selectedTab);
@@ -16,6 +16,7 @@ export function MainScreen() {
         <TabBar />
         {selectedTab === "project" ? <ProjectScreen /> : <TaskScreen />}
       </main>
+      <FeedbackSnackbar />
     </div>
   );
 }

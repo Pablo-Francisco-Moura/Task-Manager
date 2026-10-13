@@ -4,27 +4,29 @@ import { useState } from "react";
 import { QUERY_KEYS } from "@/constants/queryKeys";
 import { createProject } from "@/hooks/useProjects/useCase/createProject.api";
 import { useTranslation } from "react-i18next";
+import { useFeedbackStore } from "@/store/feedbackStore";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-interface Props {
+interface IProps {
   toggleOpenAddProject: (value: boolean) => void;
 }
 
-interface ProjectFormInputs {
+interface IProjectFormInputs {
   name: string;
 }
 
-export function ProjectForm({ toggleOpenAddProject }: Props) {
+export function ProjectForm({ toggleOpenAddProject }: IProps) {
   const {
     formState: { isSubmitting },
     reset,
     register,
     handleSubmit,
-  } = useForm<ProjectFormInputs>();
+  } = useForm<IProjectFormInputs>();
   const [error, setError] = useState<string | null>(null);
 
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const showFeedback = useFeedbackStore((state) => state.showFeedback);
 
   const mutation = useMutation({
     mutationFn: createProject,
@@ -35,13 +37,14 @@ export function ProjectForm({ toggleOpenAddProject }: Props) {
       reset();
       setError(null);
       toggleOpenAddProject(false);
+      showFeedback(t("projectCreated"));
     },
     onError: () => {
       setError(t("errorCreatingProject"));
     },
   });
 
-  const onSubmit = (data: ProjectFormInputs) => {
+  const onSubmit = (data: IProjectFormInputs) => {
     setError(null);
     mutation.mutate(data);
   };
@@ -55,7 +58,7 @@ export function ProjectForm({ toggleOpenAddProject }: Props) {
       register={register}
       submitLabel={t("registerProject")}
       placeholder={t("enterProjectName")}
-      isSubmitting={isSubmitting}
+      isSubmitting={isSubmitting || mutation.isPending}
     />
   );
 }

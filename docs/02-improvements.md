@@ -4,16 +4,16 @@
 
 ### 1. Contratos e erros da API
 
-- [x] Validar tipos, limites e campos aceitos nos payloads.
-- [x] Validar IDs como inteiros positivos; rejeitar valores como zero, decimais, expoentes e strings numéricas em campos JSON tipados como número.
-- [x] Distinguir entrada inválida (`400`), recurso inexistente (`404`) e erro inesperado (`500`), sem converter qualquer falha do banco em `404`.
+- [ ] Validar tipos, limites e campos aceitos nos payloads.
+- [ ] Validar IDs como inteiros positivos; rejeitar valores como zero, decimais, expoentes e strings numéricas em campos JSON tipados como número.
+- [ ] Distinguir entrada inválida (`400`), recurso inexistente (`404`) e erro inesperado (`500`), sem converter qualquer falha do banco em `404`.
 - [ ] Compartilhar schemas entre a validação das rotas e a documentação OpenAPI, para manter regra e documentação alinhadas.
 
 ### 2. Testes confiáveis
 
-- [ ] Fazer os testes de criação e listagem exigirem o resultado esperado, sem aceitar status ou quantidades alternativas.
-- [ ] Isolar o banco entre cada caso de teste para que a ordem de execução não altere os resultados.
-- [ ] Testar os casos inválidos, os limites dos campos e a montagem da API na rota real do Next.js.
+- [x] Fazer os testes de criação e listagem exigirem o resultado esperado, sem aceitar status ou quantidades alternativas.
+- [x] Isolar o banco entre cada caso de teste para que a ordem de execução não altere os resultados.
+- [x] Testar os casos inválidos, os limites dos campos e a montagem da API na rota real do Next.js.
 
 ### 3. Interface e acessibilidade
 

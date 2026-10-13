@@ -193,9 +193,9 @@ Boa sorte no desafio! 🚀
 
 - [x] [1º Autoavaliação](docs/01-autoavaliacao.md)
 - [ ] [2º Improvements](docs/02-improvements.md)
-  - [x] API: validar tipos e limites dos dados, IDs positivos e padronizar erros
+  - [ ] API: validar tipos e limites dos dados, IDs positivos e padronizar erros
   - [ ] API: compartilhar schemas entre validação e documentação OpenAPI
-  - [ ] Testes: exigir resultados específicos, isolar dados e cobrir a rota Next.js
+  - [x] Testes: exigir resultados específicos, isolar dados e cobrir a rota Next.js
   - [ ] Interface: melhorar hierarquia visual, estados de tela, acessibilidade e responsividade
   - [ ] Operação: adicionar CI, e health checks
   - [ ] Arquitetura: avaliar provedores de cliente e manter no servidor o que não exige interação

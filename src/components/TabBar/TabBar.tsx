@@ -9,7 +9,10 @@ export function TabBar() {
   const { t } = useTranslation();
 
   return (
-    <div className="flex px-4 flex gap-4 w-full justify-between py-2 bg-white dark:bg-gray-700 border-b border-gray-200">
+    <nav
+      aria-label={t("mainNavigation")}
+      className="app-nav mt-6 flex w-full items-center gap-2 border-b"
+    >
       <TabButton
         label={t("projects")}
         onClick={() => setSelectedTab("project")}
@@ -20,6 +23,6 @@ export function TabBar() {
         onClick={() => setSelectedTab("task")}
         selected={selectedTab === "task"}
       />
-    </div>
+    </nav>
   );
 }

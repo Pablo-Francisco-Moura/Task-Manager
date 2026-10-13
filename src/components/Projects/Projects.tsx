@@ -1,4 +1,3 @@
-import { Button } from "../Button";
 import { Project } from "../Project/Project";
 import { useState } from "react";
 import { QUERY_KEYS } from "@/constants/queryKeys";
@@ -52,35 +51,42 @@ export function Projects({ openAddProject, toggleOpenAddProject }: Props) {
 
   return (
     <>
-      {isLoading && <AlertMessage message={t("loadingProjects")} />}
-      {isError && <AlertMessage message={t("errorLoadingProjects")} />}
-      {projects && (
-        <div
-          className="w-full min-h-300 max-w-2xl bg-white dark:bg-gray-600 shadow-md rounded-md p-4 mb-4 mx-2
-     border border-grey-200 overflow-y-auto gap-4 flex flex-col items-center overflow-y-auto"
-        >
-          {projects.length > 0
-            ? projects
-                .sort((a, b) => a.name.localeCompare(b.name))
-                .map((project: TypeProject) => (
-                  <Project
-                    key={project.id}
-                    project={project}
-                    setOpenDialog={setOpenDialog}
-                    setProjectToDelete={setProjectToDelete}
-                  />
-                ))
-            : !isLoading && (
-                <div className="flex gap-4 flex-col items-center justify-center w-full p-4">
-                  <AlertMessage message={t("noProjectsFound")} />
-                  <Button
-                    full={false}
-                    label={t("addProject")}
-                    onClick={() => toggleOpenAddProject(true)}
-                    disabled={openAddProject}
-                  />
-                </div>
-              )}
+      {isLoading && (
+        <div className="content-state" role="status">
+          <AlertMessage message={t("loadingProjects")} />
+        </div>
+      )}
+      {isError && (
+        <div className="content-state" role="alert">
+          <AlertMessage type="error" message={t("errorLoadingProjects")} />
+        </div>
+      )}
+      {projects && projects.length > 0 && (
+        <div className="projects-grid">
+          {[...projects]
+            .sort((a, b) => a.name.localeCompare(b.name))
+            .map((project: TypeProject) => (
+              <Project
+                key={project.id}
+                project={project}
+                setOpenDialog={setOpenDialog}
+                setProjectToDelete={setProjectToDelete}
+              />
+            ))}
+        </div>
+      )}
+      {projects && projects.length === 0 && !isLoading && (
+        <div className="empty-state">
+          <span className="empty-state-mark">P</span>
+          <h3>{t("noProjectsFound")}</h3>
+          <button
+            type="button"
+            className="text-action"
+            onClick={() => toggleOpenAddProject(true)}
+            disabled={openAddProject}
+          >
+            {t("addProject")}
+          </button>
         </div>
       )}
       <ConfirmDialog

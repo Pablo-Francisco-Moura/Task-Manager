@@ -7,31 +7,38 @@ import DeleteIcon from "@mui/icons-material/Delete";
 
 interface Props {
   task: TypeTask;
+  position: number;
   onEditClick: (task: TypeTask) => void;
   onDeleteClick: (task: TypeTask) => void;
 }
 
-export function Task({ task, onEditClick, onDeleteClick }: Props) {
+export function Task({ task, position, onEditClick, onDeleteClick }: Props) {
   const { t } = useTranslation();
 
   return (
-    <div
-      key={task.id}
-      className="w-full flex justify-between items-center gap-4"
-    >
-      <li className="text-gray-800 dark:text-white mb-1">{task.name}</li>
-      <div>
+    <li className="task-row">
+      <span className="task-position">{String(position).padStart(2, "0")}</span>
+      <span className="task-name">{task.name}</span>
+      <div className="task-row-actions">
         <Tooltip arrow title={`${t("editTask")} ${task.name}`}>
-          <IconButton onClick={() => onEditClick(task)} size="small">
-            <EditIcon className="dark:text-white" fontSize="small" />
+          <IconButton
+            aria-label={`${t("editTask")} ${task.name}`}
+            onClick={() => onEditClick(task)}
+            size="small"
+          >
+            <EditIcon fontSize="small" />
           </IconButton>
         </Tooltip>
         <Tooltip arrow title={`${t("deleteTask")} ${task.name}`}>
-          <IconButton onClick={() => onDeleteClick(task)} size="small">
-            <DeleteIcon className="dark:text-white" fontSize="small" />
+          <IconButton
+            aria-label={`${t("deleteTask")} ${task.name}`}
+            onClick={() => onDeleteClick(task)}
+            size="small"
+          >
+            <DeleteIcon fontSize="small" />
           </IconButton>
         </Tooltip>
       </div>
-    </div>
+    </li>
   );
 }

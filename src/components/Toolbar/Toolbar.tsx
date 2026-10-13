@@ -7,7 +7,6 @@ import { useProjectStore } from "@/store/projectStore";
 import { CircularProgress } from "@mui/material";
 import Select, { SelectChangeEvent } from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
-import InputLabel from "@mui/material/InputLabel";
 import FormControl from "@mui/material/FormControl";
 
 export function Toolbar() {
@@ -31,7 +30,7 @@ export function Toolbar() {
     } else if (projects && projects.length === 0) {
       setSelectedProject(null);
     }
-  }, [projects]);
+  }, [projects, selectedProject, setSelectedProject]);
 
   const handleChange = (event: SelectChangeEvent) => {
     const id = Number(event.target.value);
@@ -40,18 +39,12 @@ export function Toolbar() {
   };
 
   return (
-    <div className="w-full border-b border-gray-200 py-4 px-4 flex items-center gap-4 bg-white dark:bg-gray-700 transition-colors">
-      <FormControl sx={{ minWidth: 200 }}>
-        <InputLabel
-          id="select-project-label"
-          sx={{ color: isDark ? "#fff" : undefined }}
-        >
-          {t("projectName")}
-        </InputLabel>
+    <div className="task-project-toolbar">
+      <p className="toolbar-caption">{t("projectName")}</p>
+      <FormControl className="task-project-select" sx={{ minWidth: 220 }}>
         <Select
+          aria-label={t("projectName")}
           value={selectedProject?.id?.toString() ?? ""}
-          label={t("projectName")}
-          labelId="select-project-label"
           onChange={handleChange}
           disabled={!projects || projects.length === 0 || isLoading}
           displayEmpty

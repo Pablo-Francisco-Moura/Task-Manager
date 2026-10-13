@@ -1,6 +1,11 @@
 {
   "add": "Adicionar",
   "projectManagement": "Gerenciamento de Projetos",
+  "mainNavigation": "Navegação principal",
+  "workspace": "Espaço de trabalho",
+  "projectSpace": "Projeto",
+  "taskCountSingular": "tarefa",
+  "taskCountPlural": "tarefas",
   "projects": "Projetos",
   "tasks": "Tarefas",
   "projectName": "Nome do Projeto",

@@ -9,9 +9,9 @@ export function TabButton({ label, selected, onClick }: Props) {
     <button
       type="button"
       onClick={onClick}
-      className={`w-full h-10 flex border-2 rounded dark:bg-gray-600 px-6 py-2 text-sm font-semibold transition-colors duration-150
-        ${selected ? "border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400 bg-blue-50 " : "border-gray-400 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700"}
-        hover:border-blue-600 hover:text-blue-600`}
+      aria-current={selected ? "page" : undefined}
+      className={`app-nav-button relative flex min-h-12 min-w-28 items-center justify-center px-5 text-sm font-semibold transition-colors duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2
+        ${selected ? "app-nav-button-selected" : ""}`}
     >
       {label}
     </button>

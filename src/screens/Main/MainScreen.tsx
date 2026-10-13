@@ -9,11 +9,13 @@ export function MainScreen() {
   const selectedTab = useMainStore((s) => s.selectedTab);
 
   return (
-    <div className="flex flex-col min-h-screen w-full items-center gap-4 bg-gray-50 dark:bg-gray-700 overflow-x-hidden transition-colors">
+    <div className="app-shell flex min-h-screen w-full flex-col overflow-x-hidden transition-colors">
       <AppBarTop />
-      <TabBar />
 
-      {selectedTab === "project" ? <ProjectScreen /> : <TaskScreen />}
+      <main className="app-main mx-auto flex w-full max-w-6xl flex-1 flex-col px-4 pb-12 sm:px-6 lg:px-8">
+        <TabBar />
+        {selectedTab === "project" ? <ProjectScreen /> : <TaskScreen />}
+      </main>
     </div>
   );
 }

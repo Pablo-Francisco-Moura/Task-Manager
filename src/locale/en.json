@@ -1,6 +1,11 @@
 {
   "add": "Add",
   "projectManagement": "Project Management",
+  "mainNavigation": "Main navigation",
+  "workspace": "Workspace",
+  "projectSpace": "Project",
+  "taskCountSingular": "task",
+  "taskCountPlural": "tasks",
   "projects": "Projects",
   "tasks": "Tasks",
   "projectName": "Project Name",

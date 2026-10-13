@@ -1,10 +1,10 @@
-interface Props {
+interface IProps {
   label: string;
   selected: boolean;
   onClick: () => void;
 }
 
-export function TabButton({ label, selected, onClick }: Props) {
+export function TabButton({ label, selected, onClick }: IProps) {
   return (
     <button
       type="button"

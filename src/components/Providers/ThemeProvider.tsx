@@ -2,18 +2,18 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 
-interface ThemeContextProps {
+interface IThemeContextProps {
   theme: "light" | "dark";
   toggleTheme: () => void;
 }
 
-interface ThemeProviderProps {
+interface IThemeProviderProps {
   children: React.ReactNode;
 }
 
-const ThemeContext = createContext<ThemeContextProps | undefined>(undefined);
+const ThemeContext = createContext<IThemeContextProps | undefined>(undefined);
 
-export const ThemeProvider = ({ children }: ThemeProviderProps) => {
+export const ThemeProvider = ({ children }: IThemeProviderProps) => {
   const [theme, setTheme] = useState<"light" | "dark">(() => {
     if (typeof window !== "undefined") {
       return (localStorage.getItem("theme") as "light" | "dark") || "light";

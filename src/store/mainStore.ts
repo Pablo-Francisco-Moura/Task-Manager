@@ -2,12 +2,12 @@ import { create } from "zustand";
 import { TypeTab } from "@/types/Main";
 import { defaultSelectedTab } from "@/constants/app";
 
-interface MainState {
+interface IMainState {
   selectedTab: TypeTab;
   setSelectedTab: (tab: TypeTab) => void;
 }
 
-export const useMainStore = create<MainState>((set) => ({
+export const useMainStore = create<IMainState>((set) => ({
   selectedTab: defaultSelectedTab,
   setSelectedTab: (tab) => set({ selectedTab: tab }),
 }));

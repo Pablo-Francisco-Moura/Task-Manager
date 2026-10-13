@@ -4,11 +4,11 @@ import { I18nextProvider } from "react-i18next";
 import React, { useEffect, useState } from "react";
 import i18n from "./i18n";
 
-interface Props {
+interface IProps {
   children: React.ReactNode;
 }
 
-export default function ClientI18nProvider({ children }: Props) {
+export default function ClientI18nProvider({ children }: IProps) {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {

@@ -5,14 +5,14 @@ import React from "react";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 
-interface Props {
+interface IProps {
   task: TypeTask;
   position: number;
   onEditClick: (task: TypeTask) => void;
   onDeleteClick: (task: TypeTask) => void;
 }
 
-export function Task({ task, position, onEditClick, onDeleteClick }: Props) {
+export function Task({ task, position, onEditClick, onDeleteClick }: IProps) {
   const { t } = useTranslation();
 
   return (

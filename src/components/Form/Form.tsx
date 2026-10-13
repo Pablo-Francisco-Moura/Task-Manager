@@ -3,7 +3,7 @@ import { IconButton, Tooltip } from "@mui/material";
 import { FieldPath, FieldValues, UseFormRegister } from "react-hook-form";
 import CloseIcon from "@mui/icons-material/Close";
 
-interface Props<TFieldValues extends FieldValues & { name: string }> {
+interface IProps<TFieldValues extends FieldValues & { name: string }> {
   title: string;
   placeholder: string;
   submitLabel: string;
@@ -23,7 +23,7 @@ export function Form<TFieldValues extends FieldValues & { name: string }>({
   onClose,
   onSubmit,
   register,
-}: Props<TFieldValues>) {
+}: IProps<TFieldValues>) {
   const { t } = useTranslation();
 
   return (

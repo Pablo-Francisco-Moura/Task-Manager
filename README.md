@@ -93,43 +93,29 @@ Desenvolver um sistema full stack de gerenciamento de projetos e tarefas utiliza
    ```sh
    cd desafio-tecnico-one-fullstack
    ```
-3. Instale as dependências:
+3. **Certifique-se de que o Docker e o Docker Compose estão instalados em seu sistema.**
+4. Inicie a aplicação e o banco de dados:
    ```sh
-   npm install
+   docker compose up --build -d
    ```
-4. Configure as variáveis de ambiente:
-   Crie os arquivos de ambiente `.env` e `.env.test` seguindo as orientações em `.env.example`:
-
-   ```env
-    DATABASE_URL="postgresql://POSTGRES_USER:POSTGRES_PASSWORD@localhost:5432/dev_db" # only in .env
-    DATABASE_URL="postgresql://POSTGRES_USER:POSTGRES_PASSWORD@localhost:5432/test_db" # only in .env.test
-    POSTGRES_USER=
-    POSTGRES_PASSWORD=
-    POSTGRES_DB= dev_db # only in .env
-    POSTGRES_DB= test_db # only in .env.test
-   ```
-
-5. **Certifique-se de que o Docker e o Docker Compose estão instalados em seu sistema.**
-6. Execute o docker do banco de dados da aplicação:
+   O Compose aguarda o PostgreSQL ficar pronto, aplica as migrations e inicia a
+   aplicação. Acesse http://localhost:3000.
+5. (Opcional) Preencha o banco com algumas informações iniciais:
    ```sh
-   docker compose up -d
+   docker compose exec app npm run db:seed
    ```
-7. Execute as migrações do banco de dados:
+6. Para desenvolvimento diretamente no host ou para executar testes, instale as
+   dependências com `npm ci` e crie cada arquivo a partir de seu próprio exemplo:
    ```sh
-   npm run migrate
+   cp .env.example .env
+   cp .env.test.example .env.test
    ```
-8. (Opcional) Execute o comando de seed para preencher o banco com algumas informações iniciais:
-   ```sh
-   npm run db:seed
-   ```
-9. (Opcional) Execute o comando de teste:
+   `.env.example` aponta para `dev_db`; `.env.test.example` aponta para
+   `test_db`. Depois, use `npm run dev` ou `npm run test`.
+7. (Opcional) Execute os testes:
    ```sh
    npm run test
    ```
-10. Inicie o servidor:
-    ```sh
-    npm run dev
-    ```
 
 ## Estrutura do Projeto
 

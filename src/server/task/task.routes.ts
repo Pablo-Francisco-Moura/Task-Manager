@@ -3,11 +3,13 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { describeRoute } from "hono-openapi";
 import {
-  hasOnlyKeys,
+  matchesJsonSchema,
   parseName,
   parsePositiveInteger,
   parsePositiveIntegerString,
   readJsonObject,
+  taskCreateSchema,
+  taskUpdateSchema,
 } from "@/server/validation";
 
 const taskRoutes = new Hono();
@@ -19,16 +21,7 @@ taskRoutes.post(
     summary: "Create a new task linked to a project",
     requestBody: {
       content: {
-        "application/json": {
-          schema: {
-            type: "object",
-            properties: {
-              name: { type: "string" },
-              projectId: { type: "integer" },
-            },
-            required: ["name", "projectId"],
-          },
-        },
+        "application/json": { schema: taskCreateSchema },
       },
     },
     responses: {
@@ -38,7 +31,7 @@ taskRoutes.post(
   }),
   async (c) => {
     const body = await readJsonObject(c.req);
-    if (!body || !hasOnlyKeys(body, ["name", "projectId"])) {
+    if (!body || !matchesJsonSchema(body, taskCreateSchema)) {
       return c.json({ error: "Invalid task payload" }, 400);
     }
     const name = parseName(body.name);
@@ -156,15 +149,7 @@ taskRoutes.patch(
     ],
     requestBody: {
       content: {
-        "application/json": {
-          schema: {
-            type: "object",
-            properties: {
-              name: { type: "string" },
-              projectId: { type: "integer" },
-            },
-          },
-        },
+        "application/json": { schema: taskUpdateSchema },
       },
     },
     responses: {
@@ -178,7 +163,7 @@ taskRoutes.patch(
       return c.json({ error: "id must be a positive integer" }, 400);
     }
     const body = await readJsonObject(c.req);
-    if (!body || !hasOnlyKeys(body, ["name", "projectId"])) {
+    if (!body || !matchesJsonSchema(body, taskUpdateSchema)) {
       return c.json({ error: "Invalid task payload" }, 400);
     }
     const hasName = Object.hasOwn(body, "name");

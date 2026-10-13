@@ -7,7 +7,7 @@
 - [x] Validar tipos, limites e campos aceitos nos payloads.
 - [x] Validar IDs como inteiros positivos; rejeitar valores como zero, decimais, expoentes e strings numéricas em campos JSON tipados como número.
 - [x] Distinguir entrada inválida (`400`), recurso inexistente (`404`) e erro inesperado (`500`), sem converter qualquer falha do banco em `404`.
-- [ ] Compartilhar schemas entre a validação das rotas e a documentação OpenAPI, para manter regra e documentação alinhadas.
+- [x] Compartilhar schemas entre a validação das rotas e a documentação OpenAPI, para manter regra e documentação alinhadas.
 
 ### 2. Testes confiáveis
 

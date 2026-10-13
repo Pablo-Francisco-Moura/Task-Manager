@@ -3,9 +3,11 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { describeRoute } from "hono-openapi";
 import {
-  hasOnlyKeys,
+  matchesJsonSchema,
   parseName,
   parsePositiveIntegerString,
+  projectCreateSchema,
+  projectUpdateSchema,
   readJsonObject,
 } from "@/server/validation";
 
@@ -19,13 +21,7 @@ projectRoutes.post(
     summary: "Create new project",
     requestBody: {
       content: {
-        "application/json": {
-          schema: {
-            type: "object",
-            properties: { name: { type: "string" } },
-            required: ["name"],
-          },
-        },
+        "application/json": { schema: projectCreateSchema },
       },
     },
     responses: {
@@ -34,7 +30,7 @@ projectRoutes.post(
   }),
   async (c) => {
     const body = await readJsonObject(c.req);
-    if (!body || !hasOnlyKeys(body, ["name"])) {
+    if (!body || !matchesJsonSchema(body, projectCreateSchema)) {
       return c.json({ error: "Invalid project payload" }, 400);
     }
     const name = parseName(body.name);
@@ -117,13 +113,7 @@ projectRoutes.patch(
     ],
     requestBody: {
       content: {
-        "application/json": {
-          schema: {
-            type: "object",
-            properties: { name: { type: "string" } },
-            required: ["name"],
-          },
-        },
+        "application/json": { schema: projectUpdateSchema },
       },
     },
     responses: {
@@ -137,7 +127,7 @@ projectRoutes.patch(
       return c.json({ error: "id must be a positive integer" }, 400);
     }
     const body = await readJsonObject(c.req);
-    if (!body || !hasOnlyKeys(body, ["name"])) {
+    if (!body || !matchesJsonSchema(body, projectUpdateSchema)) {
       return c.json({ error: "Invalid project payload" }, 400);
     }
     const name = parseName(body.name);

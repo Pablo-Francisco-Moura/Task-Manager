@@ -32,6 +32,14 @@ export const taskUpdateSchema = z.strictObject({
   description: descriptionSchema,
   status: taskStatusSchema.optional(),
 });
+export const taskReorderSchema = z.strictObject({
+  projectId: projectIdSchema,
+  orderedTaskIdsByStatus: z.strictObject({
+    todo: z.array(projectIdSchema),
+    in_progress: z.array(projectIdSchema),
+    done: z.array(projectIdSchema),
+  }),
+});
 
 const openApiSchemaOptions = { target: "openapi-3.0" as const };
 export const projectCreateOpenApiSchema = z.toJSONSchema(
@@ -48,6 +56,10 @@ export const taskCreateOpenApiSchema = z.toJSONSchema(
 ) as unknown as TypeSharedSchema;
 export const taskUpdateOpenApiSchema = z.toJSONSchema(
   taskUpdateSchema,
+  openApiSchemaOptions,
+) as unknown as TypeSharedSchema;
+export const taskReorderOpenApiSchema = z.toJSONSchema(
+  taskReorderSchema,
   openApiSchemaOptions,
 ) as unknown as TypeSharedSchema;
 

@@ -31,4 +31,4 @@
 ### 5. Renderização e arquitetura do frontend
 
 - [x] Avaliar quais provedores precisam envolver a aplicação e manter cada um no menor escopo necessário.
-- [ ] Manter no servidor o conteúdo que não exige interação e usar componentes cliente apenas para as partes interativas.
+- [x] Manter no servidor o conteúdo que não exige interação e usar componentes cliente apenas para as partes interativas.

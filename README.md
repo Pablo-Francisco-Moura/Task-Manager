@@ -177,8 +177,9 @@ Boa sorte no desafio! 🚀
 
 ## Minha checklist
 
-- [x] [1º Autoavaliação](docs/01-autoavaliacao.md)
-- [x] [2º Improvements](docs/02-improvements.md)
+- [x] <a id="autoavaliacao"></a>[1º Autoavaliação](docs/01-autoavaliacao.md)
+
+- [x] <a id="improvements"></a>[2º Improvements](docs/02-improvements.md)
   - [x] API: validar tipos e limites dos dados, IDs positivos e padronizar erros
   - [x] API: compartilhar schemas entre validação e documentação OpenAPI
   - [x] Testes: exigir resultados específicos, isolar dados e cobrir a rota Next.js
@@ -187,5 +188,7 @@ Boa sorte no desafio! 🚀
   - [x] Operação: validar build e lint em produção e corrigir warnings/erros que bloqueiem a compilação
   - [x] Arquitetura: avaliar provedores de cliente e manter no servidor o que não exige interação
 
-- [ ] [3º News](docs/news.md)
-  - [ ] Validar o CI no GitHub Actions
+- [ ] <a id="news"></a>[3º News](docs/03-news.md)
+  - [x] [Validar o CI no GitHub Actions](docs/03-news.md#validar-o-ci-no-github-actions)
+  - [x] [Adicionar descrição opcional às tarefas e projetos](docs/03-news.md#descricao-opcional)
+  - [ ] Adicionar status às tarefas (`todo`, `in_progress`, `done`)

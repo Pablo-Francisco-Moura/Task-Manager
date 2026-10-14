@@ -5,6 +5,7 @@ import { createTask } from "@/hooks/useTasks/useCase/createTask.api";
 import { QUERY_KEYS } from "@/constants/queryKeys";
 import { useTranslation } from "react-i18next";
 import { useFeedbackStore } from "@/store/feedbackStore";
+import { MAX_DESCRIPTION_LENGTH } from "@/constants";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 interface IProps {
@@ -14,6 +15,7 @@ interface IProps {
 
 interface ITaskFormInputs {
   name: string;
+  description: string;
 }
 
 export function TaskForm({ projectId, onClose }: IProps) {
@@ -22,7 +24,9 @@ export function TaskForm({ projectId, onClose }: IProps) {
     reset,
     register,
     handleSubmit,
-  } = useForm<ITaskFormInputs>();
+  } = useForm<ITaskFormInputs>({
+    defaultValues: { name: "", description: "" },
+  });
   const [error, setError] = useState<string | null>(null);
 
   const { t } = useTranslation();
@@ -66,6 +70,12 @@ export function TaskForm({ projectId, onClose }: IProps) {
       register={register}
       submitLabel={t("registerTask")}
       placeholder={t("enterTaskName")}
+      descriptionField={{
+        inputId: "task-create-description",
+        label: t("taskDescription"),
+        placeholder: t("enterTaskDescription"),
+        maxLength: MAX_DESCRIPTION_LENGTH,
+      }}
       isSubmitting={isSubmitting || mutation.isPending}
     />
   );

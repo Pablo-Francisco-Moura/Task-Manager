@@ -5,6 +5,7 @@ import { QUERY_KEYS } from "@/constants/queryKeys";
 import { createProject } from "@/hooks/useProjects/useCase/createProject.api";
 import { useTranslation } from "react-i18next";
 import { useFeedbackStore } from "@/store/feedbackStore";
+import { MAX_DESCRIPTION_LENGTH } from "@/constants";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 interface IProps {
@@ -13,6 +14,7 @@ interface IProps {
 
 interface IProjectFormInputs {
   name: string;
+  description: string;
 }
 
 export function ProjectForm({ toggleOpenAddProject }: IProps) {
@@ -21,7 +23,9 @@ export function ProjectForm({ toggleOpenAddProject }: IProps) {
     reset,
     register,
     handleSubmit,
-  } = useForm<IProjectFormInputs>();
+  } = useForm<IProjectFormInputs>({
+    defaultValues: { name: "", description: "" },
+  });
   const [error, setError] = useState<string | null>(null);
 
   const { t } = useTranslation();
@@ -59,6 +63,12 @@ export function ProjectForm({ toggleOpenAddProject }: IProps) {
       register={register}
       submitLabel={t("registerProject")}
       placeholder={t("enterProjectName")}
+      descriptionField={{
+        inputId: "project-create-description",
+        label: t("projectDescription"),
+        placeholder: t("enterProjectDescription"),
+        maxLength: MAX_DESCRIPTION_LENGTH,
+      }}
       isSubmitting={isSubmitting || mutation.isPending}
     />
   );

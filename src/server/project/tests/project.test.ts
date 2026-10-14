@@ -8,9 +8,9 @@ import {
 } from "vitest";
 import { Hono } from "hono";
 import { prisma } from "@/lib/prisma";
-import { POST as nextApiPost } from "@/app/api/[[...route]]/route";
 import { projectRoutes } from "../project.routes";
 import { cleanDatabase } from "@/utils";
+import { POST as nextApiPost } from "@/app/api/[[...route]]/route";
 
 const app = new Hono();
 app.route("/projects", projectRoutes);
@@ -35,6 +35,8 @@ describe("Project API", () => {
     { name: 123 },
     { name: "Valid name", extra: true },
     { name: "x".repeat(201) },
+    { name: "Project", description: 42 },
+    { name: "Project", description: "x".repeat(2001) },
   ])("should reject invalid project payloads: %o", async (body) => {
     const response = await app.request("/projects", {
       method: "POST",
@@ -73,6 +75,8 @@ describe("Project API", () => {
     { name: 123 },
     { name: "Valid name", extra: true },
     { name: "x".repeat(201) },
+    { description: 42 },
+    { description: "x".repeat(2001) },
   ])("should reject invalid project updates: %o", async (body) => {
     const response = await app.request("/projects/1", {
       method: "PATCH",
@@ -87,7 +91,10 @@ describe("Project API", () => {
     const response = await nextApiPost(
       new Request("http://localhost/api/project", {
         method: "POST",
-        body: JSON.stringify({ name: "Project through Next" }),
+        body: JSON.stringify({
+          name: "Project through Next",
+          description: "Created through the Next route",
+        }),
         headers: { "Content-Type": "application/json" },
       }),
     );
@@ -96,6 +103,7 @@ describe("Project API", () => {
     expect(await response.json()).toMatchObject({
       id: expect.any(Number),
       name: "Project through Next",
+      description: "Created through the Next route",
     });
   });
 
@@ -111,6 +119,18 @@ describe("Project API", () => {
     expect(await response.json()).toMatchObject({ name });
   });
 
+  test("should accept a project description at the maximum allowed length", async () => {
+    const description = "x".repeat(2000);
+    const response = await app.request("/projects", {
+      method: "POST",
+      body: JSON.stringify({ name: "Project", description }),
+      headers: { "Content-Type": "application/json" },
+    });
+
+    expect(response.status).toBe(201);
+    expect(await response.json()).toMatchObject({ description });
+  });
+
   // POST /api/project - Create new project.
   test("should create a new project", async () => {
     const mockProject = { name: "Test Project" };
@@ -121,10 +141,13 @@ describe("Project API", () => {
       headers: { "Content-Type": "application/json" },
     });
 
-    const expectedResponse = { ...mockProject, id: 1 };
-
     expect(res.status).toBe(201);
-    expect(await res.json()).toEqual(expectedResponse);
+    expect(await res.json()).toMatchObject({
+      ...mockProject,
+      id: 1,
+      createdAt: expect.any(String),
+      updatedAt: expect.any(String),
+    });
   });
 
   // GET /api/project - Get all projects with their tasks.
@@ -138,14 +161,18 @@ describe("Project API", () => {
       data: mockProjects,
     });
 
-    const expectedResponse = mockProjects.map((project) => ({
-      ...project,
-      tasks: [],
-    }));
-
     const res = await app.request("/projects");
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual(expectedResponse);
+    expect(await res.json()).toEqual(
+      mockProjects.map((project) =>
+        expect.objectContaining({
+          ...project,
+          tasks: [],
+          createdAt: expect.any(String),
+          updatedAt: expect.any(String),
+        }),
+      ),
+    );
   });
 
   // DELETE /api/project/:id - Delete project and its linked tasks.
@@ -198,6 +225,33 @@ describe("Project API", () => {
     expect(res.status).toBe(200);
     const json = await res.json();
     expect(json).toMatchObject({ id: project.id, name: newName });
+  });
+
+  test("should update and clear a project description", async () => {
+    const project = await prisma.project.create({
+      data: {
+        name: "Project with description",
+        description: "Initial context",
+      },
+    });
+
+    const updateResponse = await app.request(`/projects/${project.id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ description: "Updated context" }),
+      headers: { "Content-Type": "application/json" },
+    });
+    expect(updateResponse.status).toBe(200);
+    expect(await updateResponse.json()).toMatchObject({
+      description: "Updated context",
+    });
+
+    const clearResponse = await app.request(`/projects/${project.id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ description: "   " }),
+      headers: { "Content-Type": "application/json" },
+    });
+    expect(clearResponse.status).toBe(200);
+    expect(await clearResponse.json()).toMatchObject({ description: null });
   });
 
   test("should return 404 if project does not exist on edit", async () => {

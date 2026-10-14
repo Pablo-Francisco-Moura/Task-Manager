@@ -3,6 +3,7 @@ import {
   readJsonObject,
   projectCreateSchema,
   projectUpdateSchema,
+  normalizeDescription,
   parsePositiveIntegerString,
   projectCreateOpenApiSchema,
   projectUpdateOpenApiSchema,
@@ -43,7 +44,10 @@ projectRoutes.post(
       return c.json({ error: "name must be a non-empty string" }, 400);
     }
     const project = await prisma.project.create({
-      data: { name },
+      data: {
+        name,
+        description: normalizeDescription(parsedBody.data.description),
+      },
     });
 
     return c.json(project, 201);
@@ -139,14 +143,28 @@ projectRoutes.patch(
     if (!parsedBody.success) {
       return c.json({ error: "Invalid project payload" }, 400);
     }
-    const name = parseName(parsedBody.data.name);
-    if (name === null) {
-      return c.json({ error: "name must be a non-empty string" }, 400);
+    const { name, description } = parsedBody.data;
+    if (name === undefined && description === undefined) {
+      return c.json(
+        { error: "At least one valid project field is required" },
+        400,
+      );
+    }
+    const updateData: Prisma.ProjectUpdateInput = {};
+    if (name !== undefined) {
+      const parsedName = parseName(name);
+      if (parsedName === null) {
+        return c.json({ error: "name must be a non-empty string" }, 400);
+      }
+      updateData.name = parsedName;
+    }
+    if (description !== undefined) {
+      updateData.description = normalizeDescription(description);
     }
     try {
       const updatedProject = await prisma.project.update({
         where: { id },
-        data: { name },
+        data: updateData,
       });
       return c.json(updatedProject, 200);
     } catch (error: unknown) {

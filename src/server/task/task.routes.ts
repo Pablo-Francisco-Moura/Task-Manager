@@ -3,6 +3,7 @@ import {
   readJsonObject,
   taskCreateSchema,
   taskUpdateSchema,
+  normalizeDescription,
   taskCreateOpenApiSchema,
   taskUpdateOpenApiSchema,
   parsePositiveIntegerString,
@@ -54,7 +55,11 @@ taskRoutes.post(
     // Create the task.
     try {
       const task = await prisma.task.create({
-        data: { name, projectId },
+        data: {
+          name,
+          projectId,
+          description: normalizeDescription(parsedBody.data.description),
+        },
       });
       return c.json(task, 201);
     } catch (error: unknown) {
@@ -174,8 +179,12 @@ taskRoutes.patch(
     if (!parsedBody.success) {
       return c.json({ error: "Invalid task payload" }, 400);
     }
-    const { name, projectId } = parsedBody.data;
-    if (name === undefined && projectId === undefined) {
+    const { name, projectId, description } = parsedBody.data;
+    if (
+      name === undefined &&
+      projectId === undefined &&
+      description === undefined
+    ) {
       return c.json(
         { error: "At least one valid task field is required" },
         400,
@@ -193,6 +202,9 @@ taskRoutes.patch(
     if (projectId !== undefined) {
       updateData.projectId = projectId;
       parsedProjectId = projectId;
+    }
+    if (description !== undefined) {
+      updateData.description = normalizeDescription(description);
     }
     // If projectId is being updated, check if the new project exists
     if (parsedProjectId !== undefined) {

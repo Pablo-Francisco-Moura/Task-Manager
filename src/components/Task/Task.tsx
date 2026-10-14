@@ -18,7 +18,12 @@ export function Task({ task, position, onEditClick, onDeleteClick }: IProps) {
   return (
     <li className="task-row">
       <span className="task-position">{String(position).padStart(2, "0")}</span>
-      <span className="task-name">{task.name}</span>
+      <div className="task-copy">
+        <span className="task-name">{task.name}</span>
+        {task.description && (
+          <span className="task-description">{task.description}</span>
+        )}
+      </div>
       <div className="task-row-actions">
         <Tooltip arrow title={`${t("editTask")} ${task.name}`}>
           <IconButton

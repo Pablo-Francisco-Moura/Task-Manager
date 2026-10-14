@@ -13,6 +13,12 @@ interface IProps<TFieldValues extends FieldValues & { name: string }> {
   register: UseFormRegister<TFieldValues>;
   onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
   onClose?: () => void;
+  descriptionField?: {
+    inputId: string;
+    label: string;
+    placeholder: string;
+    maxLength: number;
+  };
 }
 
 export function Form<TFieldValues extends FieldValues & { name: string }>({
@@ -25,6 +31,7 @@ export function Form<TFieldValues extends FieldValues & { name: string }>({
   onClose,
   onSubmit,
   register,
+  descriptionField,
 }: IProps<TFieldValues>) {
   const { t } = useTranslation();
 
@@ -60,6 +67,23 @@ export function Form<TFieldValues extends FieldValues & { name: string }>({
         className="app-form-input"
         placeholder={placeholder}
       />
+
+      {descriptionField && (
+        <div className="app-form-description-field">
+          <label htmlFor={descriptionField.inputId} className="app-form-title">
+            {descriptionField.label}
+          </label>
+          <textarea
+            id={descriptionField.inputId}
+            {...register("description" as FieldPath<TFieldValues>)}
+            disabled={isSubmitting}
+            className="app-form-input app-form-textarea"
+            placeholder={descriptionField.placeholder}
+            maxLength={descriptionField.maxLength}
+            rows={4}
+          />
+        </div>
+      )}
 
       <button type="submit" className="app-form-submit" disabled={isSubmitting}>
         {isSubmitting ? t("saving") : submitLabel}

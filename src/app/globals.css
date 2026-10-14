@@ -257,6 +257,13 @@ html.dark .app-brand-mark {
   white-space: nowrap;
 }
 
+.project-card-description {
+  color: var(--muted);
+  font-size: 0.85rem;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
 .project-card-arrow {
   flex: 0 0 auto;
   color: var(--muted);
@@ -407,6 +414,17 @@ html.dark .app-brand-mark {
   color: var(--muted);
 }
 
+.app-form-description-field {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.app-form-textarea {
+  min-height: 6rem;
+  resize: vertical;
+  font: inherit;
+}
+
 .app-form-submit {
   min-height: 2.65rem;
   border-radius: 5px;
@@ -544,6 +562,20 @@ html.dark .app-brand-mark {
   font-size: 0.95rem;
   font-weight: 600;
   overflow-wrap: anywhere;
+}
+
+.task-copy {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  gap: 0.2rem;
+}
+
+.task-description {
+  color: var(--muted);
+  font-size: 0.85rem;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
 }
 
 .task-row-actions {

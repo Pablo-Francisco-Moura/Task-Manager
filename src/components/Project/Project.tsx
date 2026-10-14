@@ -7,6 +7,7 @@ import { updateProject } from "@/hooks";
 import { useTranslation } from "react-i18next";
 import { useProjectStore } from "@/store/projectStore";
 import { useFeedbackStore } from "@/store/feedbackStore";
+import { MAX_DESCRIPTION_LENGTH } from "@/constants";
 import { Project as TypeProject } from "@prisma/client";
 import { IconButton, Tooltip, Dialog } from "@mui/material";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -61,8 +62,8 @@ export function Project({
     handleSubmit,
     reset,
     formState: { isSubmitting },
-  } = useForm<{ name: string }>({
-    defaultValues: { name: "" },
+  } = useForm<{ name: string; description: string }>({
+    defaultValues: { name: "", description: "" },
   });
 
   // Handlers
@@ -73,7 +74,7 @@ export function Project({
 
   const handleEditClick = (project: TypeProject) => {
     setEditProject(project);
-    reset({ name: project.name });
+    reset({ name: project.name, description: project.description ?? "" });
     setOpenEditDialog(true);
   };
 
@@ -82,9 +83,13 @@ export function Project({
     setEditProject(null);
   };
 
-  const onEditSubmit = async (data: { name: string }) => {
+  const onEditSubmit = async (data: { name: string; description: string }) => {
     if (editProject) {
-      await updateMutation.mutateAsync({ id: editProject.id, name: data.name });
+      await updateMutation.mutateAsync({
+        id: editProject.id,
+        name: data.name,
+        description: data.description,
+      });
     }
   };
 
@@ -104,6 +109,11 @@ export function Project({
         <span className="project-card-copy">
           <span className="project-card-label">{t("projectSpace")}</span>
           <span className="project-card-name">{project.name}</span>
+          {project.description && (
+            <span className="project-card-description">
+              {project.description}
+            </span>
+          )}
         </span>
         <ArrowForwardIcon className="project-card-arrow" fontSize="small" />
       </button>
@@ -129,6 +139,12 @@ export function Project({
             register={register}
             placeholder={t("projectName")}
             submitLabel={t("save")}
+            descriptionField={{
+              inputId: `project-edit-description-${project.id}`,
+              label: t("projectDescription"),
+              placeholder: t("enterProjectDescription"),
+              maxLength: MAX_DESCRIPTION_LENGTH,
+            }}
             isSubmitting={isSubmitting || updateMutation.isPending}
           />
         </Dialog>

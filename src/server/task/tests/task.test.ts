@@ -1,8 +1,8 @@
 import { Hono } from "hono";
 import { prisma } from "@/lib/prisma";
+import { taskRoutes } from "../task.routes";
 import { cleanDatabase } from "@/utils";
 import { POST as nextApiPost } from "@/app/api/[[...route]]/route";
-import { taskRoutes } from "../task.routes";
 import { expect, test, describe, afterAll, beforeEach } from "vitest";
 
 const app = new Hono();
@@ -21,6 +21,8 @@ describe("Task API", () => {
     [{ name: "", projectId: 1 }],
     [{ name: "Task", projectId: "1" }],
     [{ name: "Task", projectId: 0 }],
+    [{ name: "Task", projectId: 1, description: 42 }],
+    [{ name: "Task", projectId: 1, description: "x".repeat(2001) }],
     [{ name: "Task", projectId: 1, unexpected: true }],
     [{ name: "x".repeat(201), projectId: 1 }],
   ])("should reject invalid task payloads: %o", async (body) => {
@@ -38,6 +40,8 @@ describe("Task API", () => {
     { name: "   " },
     { name: 123 },
     { projectId: "1" },
+    { description: 42 },
+    { description: "x".repeat(2001) },
     { name: "Task", extra: true },
     { name: "x".repeat(201) },
   ])("should reject invalid task updates: %o", async (body) => {
@@ -76,6 +80,7 @@ describe("Task API", () => {
         body: JSON.stringify({
           name: "Task through Next",
           projectId: project.id,
+          description: "Created through the Next route",
         }),
         headers: { "Content-Type": "application/json" },
       }),
@@ -85,6 +90,7 @@ describe("Task API", () => {
     expect(await response.json()).toMatchObject({
       name: "Task through Next",
       projectId: project.id,
+      description: "Created through the Next route",
     });
   });
 
@@ -106,12 +112,35 @@ describe("Task API", () => {
     });
   });
 
+  test("should accept a task description at the maximum allowed length", async () => {
+    const project = await prisma.project.create({
+      data: { name: "Project for maximum description" },
+    });
+    const description = "x".repeat(2000);
+    const response = await app.request("/tasks", {
+      method: "POST",
+      body: JSON.stringify({
+        name: "Task",
+        projectId: project.id,
+        description,
+      }),
+      headers: { "Content-Type": "application/json" },
+    });
+
+    expect(response.status).toBe(201);
+    expect(await response.json()).toMatchObject({ description });
+  });
+
   // POST /api/task - Create new task.
   test("should create a new task for a project", async () => {
     const project = await prisma.project.create({
       data: { name: "Project for Task" },
     });
-    const mockTask = { name: "Test Task", projectId: project.id };
+    const mockTask = {
+      name: "Test Task",
+      projectId: project.id,
+      description: "Additional task context",
+    };
 
     const res = await app.request("/tasks", {
       method: "POST",
@@ -124,7 +153,51 @@ describe("Task API", () => {
     expect(json).toMatchObject({
       name: mockTask.name,
       projectId: project.id,
+      description: mockTask.description,
     });
+  });
+
+  test("should create a task without a description", async () => {
+    const project = await prisma.project.create({
+      data: { name: "Project without description" },
+    });
+    const response = await app.request("/tasks", {
+      method: "POST",
+      body: JSON.stringify({ name: "Task", projectId: project.id }),
+      headers: { "Content-Type": "application/json" },
+    });
+
+    expect(response.status).toBe(201);
+    expect(await response.json()).toMatchObject({ description: null });
+  });
+
+  test("should update and clear a task description", async () => {
+    const project = await prisma.project.create({ data: { name: "Project" } });
+    const task = await prisma.task.create({
+      data: {
+        name: "Task with description",
+        projectId: project.id,
+        description: "Initial context",
+      },
+    });
+
+    const updateResponse = await app.request(`/tasks/${task.id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ description: "Updated context" }),
+      headers: { "Content-Type": "application/json" },
+    });
+    expect(updateResponse.status).toBe(200);
+    expect(await updateResponse.json()).toMatchObject({
+      description: "Updated context",
+    });
+
+    const clearResponse = await app.request(`/tasks/${task.id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ description: "   " }),
+      headers: { "Content-Type": "application/json" },
+    });
+    expect(clearResponse.status).toBe(200);
+    expect(await clearResponse.json()).toMatchObject({ description: null });
   });
 
   // GET /api/tasks?projectId=ID - List tasks by project.

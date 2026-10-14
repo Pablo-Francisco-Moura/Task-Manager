@@ -6,12 +6,14 @@ export async function updateTask({
   id,
   name,
   projectId,
+  description,
 }: TypeUpdateTaskInput): Promise<TypeUpdateTaskResponse> {
   const response = await api.patch<TypeUpdateTaskResponse>(
     `${ROUTES.TASK}/${id}`,
     {
       name,
       projectId,
+      description,
     },
   );
   return response.data;

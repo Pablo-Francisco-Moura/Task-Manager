@@ -15,6 +15,7 @@ import { useProjectStore } from "@/store/projectStore";
 import { Task as TypeTask } from "@prisma/client";
 import { useFeedbackStore } from "@/store/feedbackStore";
 import { useProjects, useTasks } from "@/hooks";
+import { MAX_DESCRIPTION_LENGTH } from "@/constants";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import AddIcon from "@mui/icons-material/Add";
 import ChecklistOutlinedIcon from "@mui/icons-material/ChecklistOutlined";
@@ -92,8 +93,8 @@ export function Tasks() {
     handleSubmit,
     reset,
     formState: { isSubmitting },
-  } = useForm<{ name: string }>({
-    defaultValues: { name: "" },
+  } = useForm<{ name: string; description: string }>({
+    defaultValues: { name: "", description: "" },
   });
 
   // Handlers
@@ -115,7 +116,7 @@ export function Tasks() {
 
   const handleEditClick = (task: TypeTask) => {
     setEditTask(task);
-    reset({ name: task.name });
+    reset({ name: task.name, description: task.description ?? "" });
     setOpenEditDialog(true);
   };
 
@@ -124,12 +125,13 @@ export function Tasks() {
     setEditTask(null);
   };
 
-  const onEditSubmit = async (data: { name: string }) => {
+  const onEditSubmit = async (data: { name: string; description: string }) => {
     if (editTask) {
       await updateMutation.mutateAsync({
         id: editTask.id,
         name: data.name,
         projectId: editTask.projectId,
+        description: data.description,
       });
     }
   };
@@ -290,6 +292,12 @@ export function Tasks() {
           onSubmit={handleSubmit(onEditSubmit)}
           placeholder={t("taskName")}
           submitLabel={t("save")}
+          descriptionField={{
+            inputId: `task-edit-description-${editTask?.id ?? "pending"}`,
+            label: t("taskDescription"),
+            placeholder: t("enterTaskDescription"),
+            maxLength: MAX_DESCRIPTION_LENGTH,
+          }}
           isSubmitting={isSubmitting || updateMutation.isPending}
         />
       </Dialog>

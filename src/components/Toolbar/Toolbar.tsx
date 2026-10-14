@@ -27,7 +27,9 @@ export function Toolbar() {
     if (projects && projects.length > 0) {
       const projectToSelect =
         projects.find((project: Project) => project.id === selectedProjectId) ??
-        projects.find((project: Project) => project.id === selectedProject?.id) ??
+        projects.find(
+          (project: Project) => project.id === selectedProject?.id,
+        ) ??
         projects[0];
       if (
         selectedProject?.id !== projectToSelect.id ||

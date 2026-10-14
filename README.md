@@ -183,8 +183,8 @@ Boa sorte no desafio! 🚀
   - [x] API: compartilhar schemas entre validação e documentação OpenAPI
   - [x] Testes: exigir resultados específicos, isolar dados e cobrir a rota Next.js
   - [x] Interface: melhorar hierarquia visual, estados de tela, acessibilidade e responsividade
-  - [ ] Operação: adicionar CI, e health checks
-  - [ ] Operação: validar build e lint em produção e corrigir warnings/erros que bloqueiem a compilação
+  - [x] Operação: adicionar CI, e health checks
+  - [x] Operação: validar build e lint em produção e corrigir warnings/erros que bloqueiem a compilação
   - [ ] Arquitetura: avaliar provedores de cliente e manter no servidor o que não exige interação
 
 - [ ] 3º News

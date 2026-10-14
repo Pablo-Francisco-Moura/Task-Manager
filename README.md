@@ -193,3 +193,4 @@ Boa sorte no desafio! 🚀
   - [x] [Adicionar descrição opcional às tarefas e projetos](docs/03-news.md#descricao-opcional)
   - [x] [Adicionar status às tarefas (`todo`, `in_progress`, `done`)](docs/03-news.md#task-status)
   - [ ] [Adicionar prioridade às tarefas (`low`, `normal`, `high`)](docs/03-news.md#task-priority)
+  - [x] [Exibir tarefas em quadro Kanban nas telas maiores](docs/03-news.md#task-kanban)

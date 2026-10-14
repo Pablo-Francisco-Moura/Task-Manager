@@ -88,6 +88,16 @@
       "inProgress": "In progress",
       "done": "Done",
       "updated": "Task status updated."
+    },
+    "board": "Task board",
+    "dragHandle": "Move {{name}}",
+    "dragInstructions": "Focus a task's move button and press Space to pick it up. Use the arrow keys to move it, Space to place it, or Escape to cancel.",
+    "dragStarted": "{{name}} picked up.",
+    "dragOver": "{{name}} over {{status}}.",
+    "dragCompleted": "{{name}} moved to {{status}}.",
+    "dragCancelled": "Moving {{name}} was cancelled.",
+    "reorder": {
+      "error": "Could not save the task order. The board has been refreshed."
     }
   },
   "theme": {

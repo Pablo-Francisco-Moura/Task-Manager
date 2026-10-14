@@ -1,17 +1,113 @@
 import { Hono } from "hono";
 import { prisma } from "@/lib/prisma";
+import { cleanDatabase } from "@/utils";
+import { POST as nextApiPost } from "@/app/api/[[...route]]/route";
 import { taskRoutes } from "../task.routes";
-import { expect, test, describe, afterAll } from "vitest";
+import { expect, test, describe, afterAll, beforeEach } from "vitest";
 
 const app = new Hono();
 app.route("/tasks", taskRoutes);
 
-afterAll(async () => {});
+beforeEach(async () => {
+  await cleanDatabase();
+});
+
+afterAll(async () => {
+  await cleanDatabase();
+});
 
 describe("Task API", () => {
+  test.each([
+    [{ name: "", projectId: 1 }],
+    [{ name: "Task", projectId: "1" }],
+    [{ name: "Task", projectId: 0 }],
+    [{ name: "Task", projectId: 1, unexpected: true }],
+    [{ name: "x".repeat(201), projectId: 1 }],
+  ])("should reject invalid task payloads: %o", async (body) => {
+    const res = await app.request("/tasks", {
+      method: "POST",
+      body: JSON.stringify(body),
+      headers: { "Content-Type": "application/json" },
+    });
+
+    expect(res.status).toBe(400);
+  });
+
+  test.each([
+    {},
+    { name: "   " },
+    { name: 123 },
+    { projectId: "1" },
+    { name: "Task", extra: true },
+    { name: "x".repeat(201) },
+  ])("should reject invalid task updates: %o", async (body) => {
+    const res = await app.request("/tasks/1", {
+      method: "PATCH",
+      body: JSON.stringify(body),
+      headers: { "Content-Type": "application/json" },
+    });
+
+    expect(res.status).toBe(400);
+  });
+
+  test.each(["0", "-1", "1.5", "1e2", "not-an-id"])(
+    "should reject invalid projectId query values: %s",
+    async (projectId) => {
+      const res = await app.request(`/tasks?projectId=${projectId}`);
+      expect(res.status).toBe(400);
+    },
+  );
+
+  test.each(["0", "-1", "1.5", "1e2", "not-an-id"])(
+    "should reject invalid task IDs on delete: %s",
+    async (id) => {
+      const res = await app.request(`/tasks/${id}`, { method: "DELETE" });
+      expect(res.status).toBe(400);
+    },
+  );
+
+  test("should create a task through the Next.js API route", async () => {
+    const project = await prisma.project.create({
+      data: { name: "Project for Next route" },
+    });
+    const response = await nextApiPost(
+      new Request("http://localhost/api/task", {
+        method: "POST",
+        body: JSON.stringify({
+          name: "Task through Next",
+          projectId: project.id,
+        }),
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+
+    expect(response.status).toBe(201);
+    expect(await response.json()).toMatchObject({
+      name: "Task through Next",
+      projectId: project.id,
+    });
+  });
+
+  test("should accept a task name at the maximum allowed length", async () => {
+    const project = await prisma.project.create({
+      data: { name: "Project for maximum task name" },
+    });
+    const name = "x".repeat(200);
+    const response = await app.request("/tasks", {
+      method: "POST",
+      body: JSON.stringify({ name, projectId: project.id }),
+      headers: { "Content-Type": "application/json" },
+    });
+
+    expect(response.status).toBe(201);
+    expect(await response.json()).toMatchObject({
+      name,
+      projectId: project.id,
+    });
+  });
+
   // POST /api/task - Create new task.
   test("should create a new task for a project", async () => {
-    // Create project to link the task.
     const project = await prisma.project.create({
       data: { name: "Project for Task" },
     });
@@ -23,37 +119,37 @@ describe("Task API", () => {
       headers: { "Content-Type": "application/json" },
     });
 
-    expect([201, 404]).toContain(res.status);
+    expect(res.status).toBe(201);
     const json = await res.json();
-    if (res.status === 201) {
-      expect(json).toMatchObject({
-        name: mockTask.name,
-        projectId: project.id,
-      });
-    } else if (res.status === 404) {
-      expect(json).toMatchObject({ error: "Project not found" });
-    }
+    expect(json).toMatchObject({
+      name: mockTask.name,
+      projectId: project.id,
+    });
   });
 
   // GET /api/tasks?projectId=ID - List tasks by project.
   test("should list all tasks for a project", async () => {
-    // Create a project and two tasks.
     const project = await prisma.project.create({
       data: { name: "Project for List" },
     });
 
-    const res = await app.request(`/tasks?projectId=${project.id}`);
-    expect([200, 404]).toContain(res.status);
-    const json = await res.json();
-    if (res.status === 200) {
-      expect(Array.isArray(json)).toBe(true);
-      expect([2, 0]).toContain(json.length);
+    await prisma.task.createMany({
+      data: [
+        { name: "First task", projectId: project.id },
+        { name: "Second task", projectId: project.id },
+      ],
+    });
 
-      expect(json[0]).toHaveProperty("name");
-      expect(json[0]).toHaveProperty("projectId", project.id);
-    } else if (res.status === 404) {
-      expect(json).toMatchObject({ error: "Project not found" });
-    }
+    const res = await app.request(`/tasks?projectId=${project.id}`);
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json).toHaveLength(2);
+    expect(json).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ name: "First task", projectId: project.id }),
+        expect.objectContaining({ name: "Second task", projectId: project.id }),
+      ]),
+    );
   });
   // DELETE /api/task/:id - Delete a task by id.
   test("should delete a task by id", async () => {

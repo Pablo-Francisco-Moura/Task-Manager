@@ -15,3 +15,4 @@ export * from "./ProjectForm";
 export * from "./ThemeSwitch";
 export * from "./AlertMessage";
 export * from "./ConfirmDialog";
+export * from "./FeedbackSnackbar";

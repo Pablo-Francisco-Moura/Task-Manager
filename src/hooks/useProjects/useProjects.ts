@@ -7,10 +7,11 @@ export function useProjects() {
     data: projects,
     isError,
     isLoading,
+    refetch,
   } = useQuery({
     queryKey: [QUERY_KEYS.PROJECTS],
     queryFn: getProjects,
   });
 
-  return { projects, isError, isLoading };
+  return { projects, isError, isLoading, refetch };
 }

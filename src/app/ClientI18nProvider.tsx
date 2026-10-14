@@ -1,22 +1,17 @@
 "use client";
 
 import { I18nextProvider } from "react-i18next";
-import React, { useEffect, useState } from "react";
-import i18n from "./i18n";
+import { createI18nInstance } from "./i18n";
+import React, { useState } from "react";
+import type { TypeLocale } from "@/types";
 
-interface Props {
+interface IProps {
   children: React.ReactNode;
+  language: TypeLocale;
 }
 
-export default function ClientI18nProvider({ children }: Props) {
-  const [ready, setReady] = useState(false);
-
-  useEffect(() => {
-    if (i18n.isInitialized) setReady(true);
-    else i18n.on("initialized", () => setReady(true));
-  }, []);
-
-  if (!ready) return null;
+export default function ClientI18nProvider({ children, language }: IProps) {
+  const [i18n] = useState(() => createI18nInstance(language));
 
   return <I18nextProvider i18n={i18n}>{children}</I18nextProvider>;
 }

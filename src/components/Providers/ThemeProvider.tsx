@@ -2,26 +2,30 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 
-interface ThemeContextProps {
+interface IThemeContextProps {
   theme: "light" | "dark";
   toggleTheme: () => void;
 }
 
-interface ThemeProviderProps {
+interface IThemeProviderProps {
   children: React.ReactNode;
 }
 
-const ThemeContext = createContext<ThemeContextProps | undefined>(undefined);
+const ThemeContext = createContext<IThemeContextProps | undefined>(undefined);
 
-export const ThemeProvider = ({ children }: ThemeProviderProps) => {
-  const [theme, setTheme] = useState<"light" | "dark">(() => {
-    if (typeof window !== "undefined") {
-      return (localStorage.getItem("theme") as "light" | "dark") || "light";
-    }
-    return "light";
-  });
+export const ThemeProvider = ({ children }: IThemeProviderProps) => {
+  const [theme, setTheme] = useState<"light" | "dark">("light");
 
   useEffect(() => {
+    const savedTheme = localStorage.getItem("theme");
+    if (
+      (savedTheme === "light" || savedTheme === "dark") &&
+      savedTheme !== theme
+    ) {
+      setTheme(savedTheme);
+      return;
+    }
+
     document.documentElement.classList.remove(
       theme === "light" ? "dark" : "light",
     );

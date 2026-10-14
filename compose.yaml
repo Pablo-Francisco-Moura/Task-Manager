@@ -4,12 +4,18 @@ services:
     container_name: desafio-tecnico-one-db
     restart: always
     ports:
-      - "5434:5432"
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
     volumes:
       - pg-data:/var/lib/postgresql/data
       - ./database/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
-    env_file:
-      - .env
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d dev_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   app:
     build: .
@@ -17,12 +23,15 @@ services:
     restart: always
     ports:
       - "3000:3000"
-    env_file:
-      - .env
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/dev_db
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     volumes:
       - ./:/app
+      - /app/node_modules
+      - /app/.next
 
 volumes:
   pg-data:

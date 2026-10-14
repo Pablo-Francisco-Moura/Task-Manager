@@ -8,6 +8,7 @@ import {
 } from "vitest";
 import { Hono } from "hono";
 import { prisma } from "@/lib/prisma";
+import { POST as nextApiPost } from "@/app/api/[[...route]]/route";
 import { projectRoutes } from "../project.routes";
 import { cleanDatabase } from "@/utils";
 
@@ -27,6 +28,89 @@ afterAll(async () => {
 });
 
 describe("Project API", () => {
+  test.each([
+    {},
+    { name: "" },
+    { name: "   " },
+    { name: 123 },
+    { name: "Valid name", extra: true },
+    { name: "x".repeat(201) },
+  ])("should reject invalid project payloads: %o", async (body) => {
+    const response = await app.request("/projects", {
+      method: "POST",
+      body: JSON.stringify(body),
+      headers: { "Content-Type": "application/json" },
+    });
+
+    expect(response.status).toBe(400);
+  });
+
+  test.each(["0", "-1", "1.5", "1e2", "not-an-id"])(
+    "should reject invalid project IDs on delete: %s",
+    async (id) => {
+      const response = await app.request(`/projects/${id}`, {
+        method: "DELETE",
+      });
+      expect(response.status).toBe(400);
+    },
+  );
+
+  test.each(["0", "-1", "1.5", "1e2", "not-an-id"])(
+    "should reject invalid project IDs on update: %s",
+    async (id) => {
+      const response = await app.request(`/projects/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ name: "Updated name" }),
+        headers: { "Content-Type": "application/json" },
+      });
+      expect(response.status).toBe(400);
+    },
+  );
+
+  test.each([
+    {},
+    { name: "   " },
+    { name: 123 },
+    { name: "Valid name", extra: true },
+    { name: "x".repeat(201) },
+  ])("should reject invalid project updates: %o", async (body) => {
+    const response = await app.request("/projects/1", {
+      method: "PATCH",
+      body: JSON.stringify(body),
+      headers: { "Content-Type": "application/json" },
+    });
+
+    expect(response.status).toBe(400);
+  });
+
+  test("should create a project through the Next.js API route", async () => {
+    const response = await nextApiPost(
+      new Request("http://localhost/api/project", {
+        method: "POST",
+        body: JSON.stringify({ name: "Project through Next" }),
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+
+    expect(response.status).toBe(201);
+    expect(await response.json()).toMatchObject({
+      id: expect.any(Number),
+      name: "Project through Next",
+    });
+  });
+
+  test("should accept a project name at the maximum allowed length", async () => {
+    const name = "x".repeat(200);
+    const response = await app.request("/projects", {
+      method: "POST",
+      body: JSON.stringify({ name }),
+      headers: { "Content-Type": "application/json" },
+    });
+
+    expect(response.status).toBe(201);
+    expect(await response.json()).toMatchObject({ name });
+  });
+
   // POST /api/project - Create new project.
   test("should create a new project", async () => {
     const mockProject = { name: "Test Project" };

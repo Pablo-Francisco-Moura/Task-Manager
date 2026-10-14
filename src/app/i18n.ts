@@ -1,24 +1,23 @@
+import { createInstance } from "i18next";
 import { initReactI18next } from "react-i18next";
+import type { TypeLocale } from "@/types";
 import pt from "../locale/pt.json";
 import en from "../locale/en.json";
-import i18n from "i18next";
-
-const getBrowserLanguage = () => {
-  if (typeof window === "undefined") return "pt";
-  const lang = window.navigator.language.split("-")[0];
-  return ["pt", "en"].includes(lang) ? lang : "pt";
-};
 
 const resources = {
   pt: { translation: pt },
   en: { translation: en },
 };
 
-i18n.use(initReactI18next).init({
-  resources,
-  lng: getBrowserLanguage(),
-  fallbackLng: "pt",
-  interpolation: { escapeValue: false },
-});
+export function createI18nInstance(language: TypeLocale) {
+  const instance = createInstance();
+  void instance.use(initReactI18next).init({
+    resources,
+    lng: language,
+    fallbackLng: "pt",
+    initImmediate: false,
+    interpolation: { escapeValue: false },
+  });
 
-export default i18n;
+  return instance;
+}

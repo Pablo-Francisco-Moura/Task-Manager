@@ -1,43 +1,47 @@
 import { useTranslation } from "react-i18next";
-import { UseFormRegister } from "react-hook-form";
 import { IconButton, Tooltip } from "@mui/material";
+import { FieldPath, FieldValues, UseFormRegister } from "react-hook-form";
 import CloseIcon from "@mui/icons-material/Close";
 
-interface Props {
+interface IProps<TFieldValues extends FieldValues & { name: string }> {
   title: string;
+  inputId: string;
   placeholder: string;
   submitLabel: string;
   error?: string | null;
   isSubmitting?: boolean;
-  register: UseFormRegister<any>;
+  register: UseFormRegister<TFieldValues>;
   onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
   onClose?: () => void;
 }
 
-export function Form({
+export function Form<TFieldValues extends FieldValues & { name: string }>({
   title,
   error,
+  inputId,
   placeholder,
   submitLabel,
   isSubmitting,
   onClose,
   onSubmit,
   register,
-}: Props) {
+}: IProps<TFieldValues>) {
   const { t } = useTranslation();
 
   return (
-    <form
-      onSubmit={onSubmit}
-      className="flex flex-col gap-2 w-full max-w-md p-4 bg-gray-100 dark:bg-gray-500 rounded shadow"
-    >
-      <div className="flex flex-col gap-2 md:flex-row md:justify-between md:items-center">
-        <label className="font-medium text-gray-700 dark:text-gray-100">
+    <form onSubmit={onSubmit} className="app-form">
+      <div className="app-form-heading">
+        <label htmlFor={inputId} className="app-form-title">
           {title}
         </label>
         {onClose && (
           <Tooltip arrow title={t("close")}>
-            <IconButton color="error" onClick={onClose} className="mb-4">
+            <IconButton
+              type="button"
+              color="error"
+              onClick={onClose}
+              aria-label={t("close")}
+            >
               <CloseIcon />
             </IconButton>
           </Tooltip>
@@ -45,22 +49,26 @@ export function Form({
       </div>
 
       <input
-        id="name"
+        id={inputId}
         type="text"
-        {...register("name", { required: t("nameRequired") })}
+        {...register("name" as FieldPath<TFieldValues>, {
+          required: t("nameRequired"),
+        })}
         disabled={isSubmitting}
-        className="text-black border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-500 dark:text-gray-100"
+        aria-invalid={Boolean(error)}
+        aria-describedby={error ? `${inputId}-error` : undefined}
+        className="app-form-input"
         placeholder={placeholder}
       />
 
-      <button
-        type="submit"
-        className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
-        disabled={isSubmitting}
-      >
+      <button type="submit" className="app-form-submit" disabled={isSubmitting}>
         {isSubmitting ? t("saving") : submitLabel}
       </button>
-      {error && <div className="text-red-500 text-sm mt-1">{error}</div>}
+      {error && (
+        <div id={`${inputId}-error`} className="app-form-error" role="alert">
+          {error}
+        </div>
+      )}
     </form>
   );
 }

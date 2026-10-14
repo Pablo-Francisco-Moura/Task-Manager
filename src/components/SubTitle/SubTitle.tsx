@@ -3,12 +3,12 @@ import { useTranslation } from "react-i18next";
 import AddIcon from "@mui/icons-material/Add";
 import IconButton from "@mui/material/IconButton";
 
-interface Props {
+interface IProps {
   label: string;
   onClick: () => void;
 }
 
-export function SubTitle({ label, onClick }: Props) {
+export function SubTitle({ label, onClick }: IProps) {
   const { t } = useTranslation();
 
   return (

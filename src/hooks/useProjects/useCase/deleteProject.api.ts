@@ -1,9 +1,9 @@
 import { api } from "@/lib/axios";
 import { ROUTES } from "@/constants";
-import { DeleteProjectResponse } from "./deleteProject.types";
+import type { TypeDeleteProjectResponse } from "@/types";
 
 export async function deleteProject(id: number) {
-  const response = await api.delete<DeleteProjectResponse>(
+  const response = await api.delete<TypeDeleteProjectResponse>(
     `${ROUTES.PROJECT}/${id}`,
   );
   return response.data;

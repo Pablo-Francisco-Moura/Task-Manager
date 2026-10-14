@@ -1,15 +1,26 @@
+"use client";
+
 import { ThemeSwitch } from "../ThemeSwitch";
 import { useTranslation } from "react-i18next";
+import WorkspacesOutlinedIcon from "@mui/icons-material/WorkspacesOutlined";
 
 export function AppBarTop() {
   const { t } = useTranslation();
 
   return (
-    <header className="w-full bg-blue-600 dark:bg-gray-800 shadow-md transition-colors">
-      <div className="w-full py-3 px-4 flex items-center justify-between">
-        <h1 className="text-white dark:text-gray-100 text-lg font-bold tracking-wide">
-          {t("projectManagement")}
-        </h1>
+    <header className="app-header w-full transition-colors">
+      <div className="app-header-inner mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+        <div className="flex min-w-0 items-center gap-3">
+          <span className="app-brand-mark flex h-10 w-10 shrink-0 items-center justify-center rounded-xl">
+            <WorkspacesOutlinedIcon fontSize="small" />
+          </span>
+          <div className="min-w-0">
+            <p className="app-brand-kicker">Workspace</p>
+            <h1 className="app-brand-title truncate">
+              {t("projectManagement")}
+            </h1>
+          </div>
+        </div>
         <ThemeSwitch />
       </div>
     </header>

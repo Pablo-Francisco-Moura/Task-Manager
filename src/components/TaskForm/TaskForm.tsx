@@ -4,31 +4,33 @@ import { useState } from "react";
 import { createTask } from "@/hooks/useTasks/useCase/createTask.api";
 import { QUERY_KEYS } from "@/constants/queryKeys";
 import { useTranslation } from "react-i18next";
+import { useFeedbackStore } from "@/store/feedbackStore";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-interface TaskFormProps {
+interface IProps {
   projectId: number;
   onClose: () => void;
 }
 
-interface TaskFormInputs {
+interface ITaskFormInputs {
   name: string;
 }
 
-export function TaskForm({ projectId, onClose }: TaskFormProps) {
+export function TaskForm({ projectId, onClose }: IProps) {
   const {
     formState: { isSubmitting },
     reset,
     register,
     handleSubmit,
-  } = useForm<TaskFormInputs>();
+  } = useForm<ITaskFormInputs>();
   const [error, setError] = useState<string | null>(null);
 
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const showFeedback = useFeedbackStore((state) => state.showFeedback);
 
   const mutation = useMutation({
-    mutationFn: async (data: TaskFormInputs) => {
+    mutationFn: async (data: ITaskFormInputs) => {
       return createTask({ ...data, projectId });
     },
     onSuccess: async () => {
@@ -42,13 +44,14 @@ export function TaskForm({ projectId, onClose }: TaskFormProps) {
       reset();
       setError(null);
       onClose();
+      showFeedback(t("taskCreated"));
     },
     onError: () => {
       setError(t("errorCreatingTask"));
     },
   });
 
-  const onSubmit = (data: TaskFormInputs) => {
+  const onSubmit = (data: ITaskFormInputs) => {
     setError(null);
     mutation.mutate(data);
   };
@@ -57,12 +60,13 @@ export function TaskForm({ projectId, onClose }: TaskFormProps) {
     <Form
       title={t("taskName")}
       error={error}
+      inputId="task-create-name"
       onClose={onClose}
       onSubmit={handleSubmit(onSubmit)}
       register={register}
       submitLabel={t("registerTask")}
       placeholder={t("enterTaskName")}
-      isSubmitting={isSubmitting}
+      isSubmitting={isSubmitting || mutation.isPending}
     />
   );
 }

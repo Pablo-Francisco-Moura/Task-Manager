@@ -1,11 +1,11 @@
-interface Props {
+interface IProps {
   label: string;
   full?: boolean;
   disabled?: boolean;
   onClick: () => void;
 }
 
-export function Button({ label, full, disabled, onClick }: Props) {
+export function Button({ label, full, disabled, onClick }: IProps) {
   return (
     <button
       onClick={onClick}

@@ -1,9 +1,9 @@
 import { api } from "@/lib/axios";
 import { ROUTES } from "@/constants";
-import { GetProjectResponse } from "./getProjects.types";
+import type { TypeGetProjectResponse } from "@/types";
 
 export async function getProjects() {
-  const response = await api.get<GetProjectResponse>(ROUTES.PROJECT);
+  const response = await api.get<TypeGetProjectResponse>(ROUTES.PROJECT);
   const data = response.data;
 
   return data;

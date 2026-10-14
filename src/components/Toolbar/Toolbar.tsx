@@ -11,6 +11,8 @@ import FormControl from "@mui/material/FormControl";
 
 export function Toolbar() {
   const selectedProject = useProjectStore((s) => s.selectedProject);
+  const selectedProjectId = useProjectStore((s) => s.selectedProjectId);
+  const preferencesLoaded = useProjectStore((s) => s.preferencesLoaded);
   const setSelectedProject = useProjectStore((s) => s.setSelectedProject);
 
   const { t } = useTranslation();
@@ -20,17 +22,29 @@ export function Toolbar() {
   const isDark = theme === "dark";
 
   useEffect(() => {
+    if (!preferencesLoaded) return;
+
     if (projects && projects.length > 0) {
+      const projectToSelect =
+        projects.find((project: Project) => project.id === selectedProjectId) ??
+        projects.find((project: Project) => project.id === selectedProject?.id) ??
+        projects[0];
       if (
-        !selectedProject ||
-        !projects.some((p: Project) => p.id === selectedProject.id)
+        selectedProject?.id !== projectToSelect.id ||
+        selectedProjectId !== projectToSelect.id
       ) {
-        setSelectedProject(projects[0]);
+        setSelectedProject(projectToSelect);
       }
     } else if (projects && projects.length === 0) {
       setSelectedProject(null);
     }
-  }, [projects, selectedProject, setSelectedProject]);
+  }, [
+    projects,
+    preferencesLoaded,
+    selectedProject,
+    selectedProjectId,
+    setSelectedProject,
+  ]);
 
   const handleChange = (event: SelectChangeEvent) => {
     const id = Number(event.target.value);

@@ -40,10 +40,10 @@ export function Toolbar() {
 
   return (
     <div className="task-project-toolbar">
-      <p className="toolbar-caption">{t("projectName")}</p>
+      <p className="toolbar-caption">{t("project.name")}</p>
       <FormControl className="task-project-select" sx={{ minWidth: 220 }}>
         <Select
-          aria-label={t("projectName")}
+          aria-label={t("project.name")}
           value={selectedProject?.id?.toString() ?? ""}
           onChange={handleChange}
           disabled={!projects || projects.length === 0 || isLoading}
@@ -59,7 +59,7 @@ export function Toolbar() {
           }}
         >
           <MenuItem value="" disabled>
-            {isLoading ? t("loadingProjects") : t("selectProject")}
+            {isLoading ? t("project.loading") : t("project.select")}
           </MenuItem>
           {projects &&
             projects.map((project: Project) => (

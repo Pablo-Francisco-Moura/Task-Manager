@@ -56,9 +56,9 @@ export function Tasks() {
       }
       setTaskToDelete(null);
       setOpenDialog(false);
-      showFeedback(t("taskDeleted"));
+      showFeedback(t("task.delete.success"));
     },
-    onError: () => showFeedback(t("errorDeletingTask"), "error"),
+    onError: () => showFeedback(t("task.delete.error"), "error"),
   });
 
   // Mutation to edit task.
@@ -83,7 +83,7 @@ export function Tasks() {
 
       setEditTask(null);
       setOpenEditDialog(false);
-      showFeedback(t("taskUpdated"));
+      showFeedback(t("task.update.success"));
     },
   });
 
@@ -102,9 +102,9 @@ export function Tasks() {
           queryKey: [QUERY_KEYS.TASKS, selectedProject.id],
         });
       }
-      showFeedback(t("taskStatusUpdated"));
+      showFeedback(t("task.status.updated"));
     },
-    onError: () => showFeedback(t("errorUpdatingTask"), "error"),
+    onError: () => showFeedback(t("task.update.error"), "error"),
   });
 
   // Edit form.
@@ -112,8 +112,9 @@ export function Tasks() {
     register,
     handleSubmit,
     reset,
-    formState: { isSubmitting },
+    formState: { isSubmitting, isValid, errors },
   } = useForm<{ name: string; description: string }>({
+    mode: "onChange",
     defaultValues: { name: "", description: "" },
   });
 
@@ -176,7 +177,7 @@ export function Tasks() {
   if (isProjectsLoading && projects === undefined) {
     return (
       <div className="content-state" role="status">
-        <AlertMessage type="loading" message={t("loadingProjects")} />
+        <AlertMessage type="loading" message={t("project.loading")} />
       </div>
     );
   }
@@ -186,8 +187,8 @@ export function Tasks() {
       <div className="content-state">
         <AlertMessage
           type="error"
-          message={t("errorLoadingProjects")}
-          retryLabel={t("retry")}
+          message={t("project.loadError")}
+          retryLabel={t("common.retry")}
           onRetry={() => void refetchProjects()}
         />
       </div>
@@ -200,13 +201,13 @@ export function Tasks() {
         <span className="empty-state-mark" aria-hidden="true">
           <FolderOpenOutlinedIcon />
         </span>
-        <h3>{t("noProjectsFound")}</h3>
+        <h3>{t("project.empty")}</h3>
         <button
           type="button"
           className="text-action"
           onClick={() => setSelectedTab("project")}
         >
-          {t("addProject")}
+          {t("project.add")}
         </button>
       </div>
     );
@@ -215,7 +216,7 @@ export function Tasks() {
   if (projects && !selectedProject) {
     return (
       <div className="content-state" role="status">
-        <AlertMessage message={t("selectProject")} />
+        <AlertMessage message={t("project.select")} />
       </div>
     );
   }
@@ -223,7 +224,7 @@ export function Tasks() {
   if (isTasksLoading) {
     return (
       <div className="content-state" role="status">
-        <AlertMessage type="loading" message={t("loadingTasks")} />
+        <AlertMessage type="loading" message={t("task.loading")} />
       </div>
     );
   }
@@ -233,8 +234,8 @@ export function Tasks() {
       <div className="content-state">
         <AlertMessage
           type="error"
-          message={t("errorLoadingTasks")}
-          retryLabel={t("retry")}
+          message={t("task.loadError")}
+          retryLabel={t("common.retry")}
           onRetry={() => void refetchTasks()}
         />
       </div>
@@ -245,14 +246,14 @@ export function Tasks() {
     <div className="task-workspace">
       <div className="task-heading">
         <div>
-          <p className="screen-eyebrow">{t("tasks")}</p>
+          <p className="screen-eyebrow">{t("navigation.tasks")}</p>
           <h2 className="screen-title task-title">{selectedProject?.name}</h2>
           <p className="task-count">
             <span className="task-count-value">{tasks?.length ?? 0}</span>
             {t(
               (tasks?.length ?? 0) === 1
-                ? "taskCountSingular"
-                : "taskCountPlural",
+                ? "task.count.singular"
+                : "task.count.plural",
             )}
           </p>
         </div>
@@ -263,7 +264,7 @@ export function Tasks() {
           aria-expanded={openAddTask}
         >
           <AddIcon fontSize="small" />
-          <span>{t("registerTask")}</span>
+          <span>{t("task.create.submit")}</span>
         </button>
       </div>
 
@@ -296,31 +297,33 @@ export function Tasks() {
           <span className="empty-state-mark" aria-hidden="true">
             <ChecklistOutlinedIcon />
           </span>
-          <h3>{t("noTasks")}</h3>
+          <h3>{t("task.empty")}</h3>
           <button
             type="button"
             className="text-action"
             onClick={() => toggleOpenAddTask(true)}
           >
-            {t("registerTask")}
+            {t("task.create.submit")}
           </button>
         </div>
       )}
 
       <Dialog open={openEditDialog} onClose={handleEditClose}>
         <Form
-          title={t("editTask")}
-          error={updateMutation.isError ? t("errorUpdatingTask") : undefined}
+          title={t("task.update.label")}
+          error={updateMutation.isError ? t("task.update.error") : undefined}
+          nameError={errors.name?.message}
+          submitDisabled={!isValid}
           inputId={`task-edit-name-${editTask?.id ?? "pending"}`}
           onClose={handleEditClose}
           register={register}
           onSubmit={handleSubmit(onEditSubmit)}
-          placeholder={t("taskName")}
-          submitLabel={t("save")}
+          placeholder={t("task.name")}
+          submitLabel={t("common.save")}
           descriptionField={{
             inputId: `task-edit-description-${editTask?.id ?? "pending"}`,
-            label: t("taskDescription"),
-            placeholder: t("enterTaskDescription"),
+            label: t("task.description"),
+            placeholder: t("task.enterDescription"),
             maxLength: MAX_DESCRIPTION_LENGTH,
           }}
           isSubmitting={isSubmitting || updateMutation.isPending}
@@ -332,7 +335,7 @@ export function Tasks() {
         onClose={handleCloseDialog}
         onConfirm={handleConfirmDelete}
         isLoading={deleteMutation.isPending}
-        description={`${t("confirmDeleteTask")} "${taskToDelete?.name}"? ${t("infoToDeleteTask")}`}
+        description={`${t("task.delete.confirm")} "${taskToDelete?.name}"? ${t("task.delete.irreversible")}`}
       />
     </div>
   );

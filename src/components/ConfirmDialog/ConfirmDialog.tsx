@@ -52,7 +52,7 @@ export function ConfirmDialog({
     >
       <div className="dark:bg-gray-600">
         <DialogTitle className="dark:text-white">
-          {t("confirmDelete")}
+          {t("common.confirm")}
         </DialogTitle>
         <DialogContent>
           <DialogContentText className="dark:text-white">
@@ -67,8 +67,8 @@ export function ConfirmDialog({
                 sx={{ mt: 1, px: 0, textTransform: "none" }}
               >
                 {showRelatedItems
-                  ? t("hideRelatedItems")
-                  : `${t("viewRelatedItems")} (${relatedItems.length})`}
+                  ? t("project.hideTasks")
+                  : `${t("project.viewTasks")} (${relatedItems.length})`}
               </Button>
               <Collapse in={showRelatedItems}>
                 <div aria-label={relatedItemsLabel}>
@@ -99,7 +99,7 @@ export function ConfirmDialog({
             disabled={isLoading}
             ref={cancelButtonRef}
           >
-            {t("cancel")}
+            {t("common.cancel")}
           </Button>
           <Button
             onClick={onConfirm}
@@ -107,7 +107,7 @@ export function ConfirmDialog({
             variant="contained"
             disabled={isLoading}
           >
-            {isLoading ? t("deleting") : t("confirm")}
+            {isLoading ? t("common.deleting") : t("common.confirm")}
           </Button>
         </DialogActions>
       </div>

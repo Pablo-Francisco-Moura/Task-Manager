@@ -16,8 +16,8 @@ export function ProjectScreen() {
     <section className={`${styles.projectScreen} screen-content`}>
       <div className="screen-heading">
         <div>
-          <p className="screen-eyebrow">{t("workspace")}</p>
-          <h2 className="screen-title">{t("projects")}</h2>
+          <p className="screen-eyebrow">{t("app.workspace")}</p>
+          <h2 className="screen-title">{t("navigation.projects")}</h2>
         </div>
         <button
           type="button"
@@ -26,7 +26,7 @@ export function ProjectScreen() {
           aria-expanded={openAddProject}
         >
           <AddIcon fontSize="small" />
-          <span>{t("addProject")}</span>
+          <span>{t("project.add")}</span>
         </button>
       </div>
       {openAddProject && (

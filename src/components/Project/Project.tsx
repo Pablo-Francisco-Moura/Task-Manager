@@ -52,7 +52,7 @@ export function Project({
 
       setEditProject(null);
       setOpenEditDialog(false);
-      showFeedback(t("projectUpdated"));
+      showFeedback(t("project.update.success"));
     },
   });
 
@@ -61,8 +61,9 @@ export function Project({
     register,
     handleSubmit,
     reset,
-    formState: { isSubmitting },
+    formState: { isSubmitting, isValid, errors },
   } = useForm<{ name: string; description: string }>({
+    mode: "onChange",
     defaultValues: { name: "", description: "" },
   });
 
@@ -107,7 +108,7 @@ export function Project({
           <FolderOutlinedIcon />
         </span>
         <span className="project-card-copy">
-          <span className="project-card-label">{t("projectSpace")}</span>
+          <span className="project-card-label">{t("project.label")}</span>
           <span className="project-card-name">{project.name}</span>
           {project.description && (
             <span className="project-card-description">
@@ -118,9 +119,9 @@ export function Project({
         <ArrowForwardIcon className="project-card-arrow" fontSize="small" />
       </button>
       <div className="project-card-actions">
-        <Tooltip arrow title={`${t("editProject")}: ${project.name}`}>
+        <Tooltip arrow title={`${t("project.update.label")}: ${project.name}`}>
           <IconButton
-            aria-label={`${t("editProject")}: ${project.name}`}
+            aria-label={`${t("project.update.label")}: ${project.name}`}
             onClick={() => handleEditClick(project)}
             size="small"
           >
@@ -130,27 +131,29 @@ export function Project({
         <Dialog open={openEditDialog} onClose={handleEditClose}>
           <Form
             inputId={`project-edit-name-${project.id}`}
-            title={t("editProject")}
+            title={t("project.update.label")}
             error={
-              updateMutation.isError ? t("errorUpdatingProject") : undefined
+              updateMutation.isError ? t("project.update.error") : undefined
             }
+            nameError={errors.name?.message}
+            submitDisabled={!isValid}
             onClose={handleEditClose}
             onSubmit={handleSubmit(onEditSubmit)}
             register={register}
-            placeholder={t("projectName")}
-            submitLabel={t("save")}
+            placeholder={t("project.name")}
+            submitLabel={t("common.save")}
             descriptionField={{
               inputId: `project-edit-description-${project.id}`,
-              label: t("projectDescription"),
-              placeholder: t("enterProjectDescription"),
+              label: t("project.description"),
+              placeholder: t("project.enterDescription"),
               maxLength: MAX_DESCRIPTION_LENGTH,
             }}
             isSubmitting={isSubmitting || updateMutation.isPending}
           />
         </Dialog>
-        <Tooltip arrow title={`${t("deleteProject")}: ${project.name}`}>
+        <Tooltip arrow title={`${t("project.delete.label")}: ${project.name}`}>
           <IconButton
-            aria-label={`${t("deleteProject")}: ${project.name}`}
+            aria-label={`${t("project.delete.label")}: ${project.name}`}
             onClick={() => handleDeleteClick(project)}
             size="small"
           >

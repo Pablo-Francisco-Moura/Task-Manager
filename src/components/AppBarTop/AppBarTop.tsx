@@ -17,7 +17,7 @@ export function AppBarTop() {
           </span>
           <div className="min-w-0">
             <p className="app-brand-kicker">Workspace</p>
-            <h1 className="app-brand-title truncate">{t("projectManagement")}</h1>
+            <h1 className="app-brand-title truncate">{t("app.title")}</h1>
           </div>
         </div>
         <ThemeSwitch />

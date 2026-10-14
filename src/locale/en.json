@@ -1,69 +1,97 @@
 {
-  "add": "Add",
-  "projectManagement": "Project Management",
-  "mainNavigation": "Main navigation",
-  "workspace": "Workspace",
-  "projectSpace": "Project",
-  "taskCountSingular": "task",
-  "taskCountPlural": "tasks",
-  "projects": "Projects",
-  "tasks": "Tasks",
-  "projectName": "Project Name",
-  "projectDescription": "Project description (optional)",
-  "enterProjectDescription": "Add context for this project",
-  "errorCreatingProject": "Error creating project!",
-  "registerProject": "Register Project",
-  "enterProjectName": "Enter the project name",
-  "nameRequired": "Name is required",
-  "saving": "Saving...",
-  "deleting": "Deleting...",
-  "retry": "Try again",
-  "projectCreated": "Project created successfully.",
-  "projectUpdated": "Project updated successfully.",
-  "projectDeleted": "Project deleted successfully.",
-  "taskCreated": "Task created successfully.",
-  "taskUpdated": "Task updated successfully.",
-  "taskDeleted": "Task deleted successfully.",
-  "errorDeletingProject": "Could not delete the project.",
-  "errorDeletingTask": "Could not delete the task.",
-  "loadingProjects": "Loading projects...",
-  "errorLoadingProjects": "Error loading projects!",
-  "noProjectsFound": "No projects found!",
-  "addProject": "Add Project",
-  "confirmDeleteProject": "Are you sure you want to delete the project",
-  "inforToDeleteProject": "This action cannot be undone.",
-  "editProject": "Edit Project",
-  "errorUpdatingProject": "Error updating project!",
-  "save": "Save",
-  "deleteProject": "Delete Project",
-  "confirmDelete": "Confirm deletion",
-  "viewRelatedItems": "View tasks",
-  "hideRelatedItems": "Hide tasks",
-  "tasksToBeDeleted": "Tasks that will be deleted with this project",
-  "cancel": "Cancel",
-  "confirm": "Confirm",
-  "selectProject": "Select a project",
-  "errorLoadingTasks": "Error loading tasks!",
-  "noTasks": "No tasks associated with this project!",
-  "errorCreatingTask": "Error creating task!",
-  "taskName": "Task Name",
-  "taskDescription": "Description (optional)",
-  "enterTaskDescription": "Add context for this task",
-  "taskStatus": "Task status",
-  "statusTodo": "To do",
-  "statusInProgress": "In progress",
-  "statusDone": "Done",
-  "taskStatusUpdated": "Task status updated.",
-  "registerTask": "Register Task",
-  "enterTaskName": "Enter the task name",
-  "editTask": "Edit Task",
-  "deleteTask": "Delete Task",
-  "errorUpdatingTask": "Error updating task!",
-  "confirmDeleteTask": "Are you sure you want to delete the task",
-  "infoToDeleteTask": "This action cannot be undone.",
-  "delete": "Delete",
-  "noProjects": "No projects found!",
-  "lightMode": "Light Mode",
-  "darkMode": "Dark Mode",
-  "close": "Close"
+  "common": {
+    "add": "Add",
+    "save": "Save",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "close": "Close",
+    "delete": "Delete",
+    "saving": "Saving...",
+    "deleting": "Deleting...",
+    "retry": "Try again",
+    "nameRequired": "Name is required",
+    "nameTooLong": "Name must be 200 characters or fewer"
+  },
+  "navigation": {
+    "mainLabel": "Main navigation",
+    "projects": "Projects",
+    "tasks": "Tasks"
+  },
+  "app": {
+    "title": "Project Management",
+    "workspace": "Workspace"
+  },
+  "project": {
+    "label": "Project",
+    "name": "Project Name",
+    "description": "Project description (optional)",
+    "enterDescription": "Add context for this project",
+    "create": {
+      "submit": "Register Project",
+      "enterName": "Enter the project name",
+      "error": "Error creating project!",
+      "success": "Project created successfully."
+    },
+    "update": {
+      "label": "Edit Project",
+      "error": "Error updating project!",
+      "success": "Project updated successfully."
+    },
+    "delete": {
+      "label": "Delete Project",
+      "confirm": "Are you sure you want to delete the project",
+      "irreversible": "This action cannot be undone.",
+      "error": "Could not delete the project.",
+      "success": "Project deleted successfully."
+    },
+    "loadError": "Error loading projects!",
+    "loading": "Loading projects...",
+    "empty": "No projects found!",
+    "add": "Add Project",
+    "viewTasks": "View tasks",
+    "hideTasks": "Hide tasks",
+    "tasksDeletedWithProject": "Tasks that will be deleted with the project",
+    "select": "Select a project"
+  },
+  "task": {
+    "count": {
+      "singular": "task",
+      "plural": "tasks"
+    },
+    "name": "Task Name",
+    "description": "Description (optional)",
+    "enterDescription": "Add context for this task",
+    "create": {
+      "submit": "Register Task",
+      "enterName": "Enter the task name",
+      "error": "Error creating task!",
+      "success": "Task created successfully."
+    },
+    "update": {
+      "label": "Edit Task",
+      "error": "Error updating task!",
+      "success": "Task updated successfully."
+    },
+    "delete": {
+      "label": "Delete Task",
+      "confirm": "Are you sure you want to delete the task",
+      "irreversible": "This action cannot be undone.",
+      "error": "Could not delete the task.",
+      "success": "Task deleted successfully."
+    },
+    "loadError": "Error loading tasks!",
+    "loading": "Loading tasks...",
+    "empty": "No tasks associated with this project!",
+    "status": {
+      "label": "Task status",
+      "todo": "To do",
+      "inProgress": "In progress",
+      "done": "Done",
+      "updated": "Task status updated."
+    }
+  },
+  "theme": {
+    "light": "Light Mode",
+    "dark": "Dark Mode"
+  }
 }

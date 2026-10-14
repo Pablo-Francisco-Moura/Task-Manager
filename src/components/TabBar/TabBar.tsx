@@ -11,16 +11,16 @@ export function TabBar() {
 
   return (
     <nav
-      aria-label={t("mainNavigation")}
+      aria-label={t("navigation.mainLabel")}
       className={`${styles.navigation} app-nav mt-6 flex w-full items-center gap-2 border-b`}
     >
       <TabButton
-        label={t("projects")}
+        label={t("navigation.projects")}
         onClick={() => setSelectedTab("project")}
         selected={selectedTab === "project"}
       />
       <TabButton
-        label={t("tasks")}
+        label={t("navigation.tasks")}
         onClick={() => setSelectedTab("task")}
         selected={selectedTab === "task"}
       />

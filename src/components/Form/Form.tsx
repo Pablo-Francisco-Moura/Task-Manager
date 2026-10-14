@@ -47,12 +47,12 @@ export function Form<TFieldValues extends FieldValues & { name: string }>({
           {title}
         </label>
         {onClose && (
-          <Tooltip arrow title={t("close")}>
+          <Tooltip arrow title={t("common.close")}>
             <IconButton
               type="button"
               color="error"
               onClick={onClose}
-              aria-label={t("close")}
+              aria-label={t("common.close")}
             >
               <CloseIcon />
             </IconButton>
@@ -64,10 +64,10 @@ export function Form<TFieldValues extends FieldValues & { name: string }>({
         id={inputId}
         type="text"
         {...register("name" as FieldPath<TFieldValues>, {
-          required: t("nameRequired"),
+          required: t("common.nameRequired"),
           validate: (value: string) =>
-            value.trim().length > 0 || t("nameRequired"),
-          maxLength: { value: 200, message: t("nameRequired") },
+            value.trim().length > 0 || t("common.nameRequired"),
+          maxLength: { value: 200, message: t("common.nameTooLong") },
         })}
         disabled={isSubmitting}
         aria-invalid={Boolean(nameError)}
@@ -111,7 +111,7 @@ export function Form<TFieldValues extends FieldValues & { name: string }>({
         className={`${styles.submit} app-form-submit`}
         disabled={isSubmitting || submitDisabled}
       >
-        {isSubmitting ? t("saving") : submitLabel}
+        {isSubmitting ? t("common.saving") : submitLabel}
       </button>
       {error && (
         <div

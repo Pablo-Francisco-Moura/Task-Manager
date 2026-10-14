@@ -37,9 +37,9 @@ export function Projects({ openAddProject, toggleOpenAddProject }: IProps) {
 
       setProjectToDelete(null);
       setOpenDialog(false);
-      showFeedback(t("projectDeleted"));
+      showFeedback(t("project.delete.success"));
     },
-    onError: () => showFeedback(t("errorDeletingProject"), "error"),
+    onError: () => showFeedback(t("project.delete.error"), "error"),
   });
 
   const handleConfirmDelete = () => {
@@ -57,15 +57,15 @@ export function Projects({ openAddProject, toggleOpenAddProject }: IProps) {
     <>
       {isLoading && (
         <div className="content-state" role="status">
-          <AlertMessage type="loading" message={t("loadingProjects")} />
+          <AlertMessage type="loading" message={t("project.loading")} />
         </div>
       )}
       {isError && (
         <div className="content-state" role="alert">
           <AlertMessage
             type="error"
-            message={t("errorLoadingProjects")}
-            retryLabel={t("retry")}
+            message={t("project.loadError")}
+            retryLabel={t("common.retry")}
             onRetry={() => void refetch()}
           />
         </div>
@@ -89,14 +89,14 @@ export function Projects({ openAddProject, toggleOpenAddProject }: IProps) {
           <span className="empty-state-mark" aria-hidden="true">
             <FolderOpenOutlinedIcon />
           </span>
-          <h3>{t("noProjectsFound")}</h3>
+          <h3>{t("project.empty")}</h3>
           <button
             type="button"
             className="text-action"
             onClick={() => toggleOpenAddProject(true)}
             disabled={openAddProject}
           >
-            {t("addProject")}
+            {t("project.add")}
           </button>
         </div>
       )}
@@ -106,8 +106,8 @@ export function Projects({ openAddProject, toggleOpenAddProject }: IProps) {
         onConfirm={handleConfirmDelete}
         isLoading={deleteMutation.isPending}
         relatedItems={projectToDelete?.tasks.map((task) => task.name)}
-        relatedItemsLabel={t("tasksToBeDeleted")}
-        description={`${t("confirmDeleteProject")} "${projectToDelete?.name}"? ${t("inforToDeleteProject")}`}
+        relatedItemsLabel={t("project.tasksDeletedWithProject")}
+        description={`${t("project.delete.confirm")} "${projectToDelete?.name}"? ${t("project.delete.irreversible")}`}
       />
     </>
   );

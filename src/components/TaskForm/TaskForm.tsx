@@ -20,11 +20,12 @@ interface ITaskFormInputs {
 
 export function TaskForm({ projectId, onClose }: IProps) {
   const {
-    formState: { isSubmitting },
+    formState: { isSubmitting, isValid, errors },
     reset,
     register,
     handleSubmit,
   } = useForm<ITaskFormInputs>({
+    mode: "onChange",
     defaultValues: { name: "", description: "" },
   });
   const [error, setError] = useState<string | null>(null);
@@ -48,10 +49,10 @@ export function TaskForm({ projectId, onClose }: IProps) {
       reset();
       setError(null);
       onClose();
-      showFeedback(t("taskCreated"));
+      showFeedback(t("task.create.success"));
     },
     onError: () => {
-      setError(t("errorCreatingTask"));
+      setError(t("task.create.error"));
     },
   });
 
@@ -62,18 +63,20 @@ export function TaskForm({ projectId, onClose }: IProps) {
 
   return (
     <Form
-      title={t("taskName")}
+      title={t("task.name")}
       error={error}
+      nameError={errors.name?.message}
+      submitDisabled={!isValid}
       inputId="task-create-name"
       onClose={onClose}
       onSubmit={handleSubmit(onSubmit)}
       register={register}
-      submitLabel={t("registerTask")}
-      placeholder={t("enterTaskName")}
+      submitLabel={t("task.create.submit")}
+      placeholder={t("task.create.enterName")}
       descriptionField={{
         inputId: "task-create-description",
-        label: t("taskDescription"),
-        placeholder: t("enterTaskDescription"),
+        label: t("task.description"),
+        placeholder: t("task.enterDescription"),
         maxLength: MAX_DESCRIPTION_LENGTH,
       }}
       isSubmitting={isSubmitting || mutation.isPending}

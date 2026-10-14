@@ -40,29 +40,31 @@ export function Task({
       <FormControl className="task-status-control" size="small">
         <Select
           value={task.status}
-          inputProps={{ "aria-label": `${t("taskStatus")}: ${task.name}` }}
+          inputProps={{
+            "aria-label": `${t("task.status.label")}: ${task.name}`,
+          }}
           onChange={(event) =>
             onStatusChange(task, event.target.value as TaskStatus)
           }
         >
-          <MenuItem value="todo">{t("statusTodo")}</MenuItem>
-          <MenuItem value="in_progress">{t("statusInProgress")}</MenuItem>
-          <MenuItem value="done">{t("statusDone")}</MenuItem>
+          <MenuItem value="todo">{t("task.status.todo")}</MenuItem>
+          <MenuItem value="in_progress">{t("task.status.inProgress")}</MenuItem>
+          <MenuItem value="done">{t("task.status.done")}</MenuItem>
         </Select>
       </FormControl>
       <div className="task-row-actions">
-        <Tooltip arrow title={`${t("editTask")} ${task.name}`}>
+        <Tooltip arrow title={`${t("task.update.label")} ${task.name}`}>
           <IconButton
-            aria-label={`${t("editTask")} ${task.name}`}
+            aria-label={`${t("task.update.label")} ${task.name}`}
             onClick={() => onEditClick(task)}
             size="small"
           >
             <EditIcon fontSize="small" />
           </IconButton>
         </Tooltip>
-        <Tooltip arrow title={`${t("deleteTask")} ${task.name}`}>
+        <Tooltip arrow title={`${t("task.delete.label")} ${task.name}`}>
           <IconButton
-            aria-label={`${t("deleteTask")} ${task.name}`}
+            aria-label={`${t("task.delete.label")} ${task.name}`}
             onClick={() => onDeleteClick(task)}
             size="small"
           >

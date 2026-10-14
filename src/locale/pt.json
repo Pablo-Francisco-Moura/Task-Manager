@@ -1,69 +1,97 @@
 {
-  "add": "Adicionar",
-  "projectManagement": "Gerenciamento de Projetos",
-  "mainNavigation": "Navegação principal",
-  "workspace": "Espaço de trabalho",
-  "projectSpace": "Projeto",
-  "taskCountSingular": "tarefa",
-  "taskCountPlural": "tarefas",
-  "projects": "Projetos",
-  "tasks": "Tarefas",
-  "projectName": "Nome do Projeto",
-  "projectDescription": "Descrição do projeto (opcional)",
-  "enterProjectDescription": "Adicione contexto para este projeto",
-  "errorCreatingProject": "Erro ao cadastrar projeto!",
-  "registerProject": "Cadastrar Projeto",
-  "enterProjectName": "Digite o nome do projeto",
-  "nameRequired": "Nome é obrigatório",
-  "saving": "Salvando...",
-  "deleting": "Excluindo...",
-  "retry": "Tentar novamente",
-  "projectCreated": "Projeto criado com sucesso.",
-  "projectUpdated": "Projeto atualizado com sucesso.",
-  "projectDeleted": "Projeto excluído com sucesso.",
-  "taskCreated": "Tarefa criada com sucesso.",
-  "taskUpdated": "Tarefa atualizada com sucesso.",
-  "taskDeleted": "Tarefa excluída com sucesso.",
-  "errorDeletingProject": "Não foi possível excluir o projeto.",
-  "errorDeletingTask": "Não foi possível excluir a tarefa.",
-  "loadingProjects": "Carregando projetos...",
-  "errorLoadingProjects": "Erro ao carregar projetos!",
-  "noProjectsFound": "Nenhum projeto encontrado!",
-  "addProject": "Adicionar Projeto",
-  "confirmDeleteProject": "Tem certeza que deseja deletar o projeto",
-  "inforToDeleteProject": "Essa ação não pode ser desfeita.",
-  "editProject": "Editar Projeto",
-  "errorUpdatingProject": "Erro ao atualizar projeto!",
-  "save": "Salvar",
-  "deleteProject": "Deletar Projeto",
-  "confirmDelete": "Confirmar deleção",
-  "viewRelatedItems": "Ver tarefas",
-  "hideRelatedItems": "Ocultar tarefas",
-  "tasksToBeDeleted": "Tarefas que serão excluídas junto com o projeto",
-  "cancel": "Cancelar",
-  "confirm": "Confirmar",
-  "selectProject": "Selecione um projeto",
-  "errorLoadingTasks": "Erro ao carregar tarefas!",
-  "noTasks": "Nenhuma tarefa associada a este projeto!",
-  "errorCreatingTask": "Erro ao cadastrar tarefa!",
-  "taskName": "Nome da Tarefa",
-  "taskDescription": "Descrição (opcional)",
-  "enterTaskDescription": "Adicione contexto para esta tarefa",
-  "taskStatus": "Status da tarefa",
-  "statusTodo": "A fazer",
-  "statusInProgress": "Em andamento",
-  "statusDone": "Concluída",
-  "taskStatusUpdated": "Status da tarefa atualizado.",
-  "registerTask": "Cadastrar Tarefa",
-  "enterTaskName": "Digite o nome da tarefa",
-  "editTask": "Editar tarefa",
-  "deleteTask": "Deletar tarefa",
-  "errorUpdatingTask": "Erro ao atualizar tarefa!",
-  "confirmDeleteTask": "Tem certeza que deseja deletar a tarefa",
-  "infoToDeleteTask": "Essa ação não pode ser desfeita.",
-  "delete": "Deletar",
-  "noProjects": "Nenhum projeto encontrado!",
-  "lightMode": "Modo Claro",
-  "darkMode": "Modo Escuro",
-  "close": "Fechar"
+  "common": {
+    "add": "Adicionar",
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "close": "Fechar",
+    "delete": "Deletar",
+    "saving": "Salvando...",
+    "deleting": "Excluindo...",
+    "retry": "Tentar novamente",
+    "nameRequired": "Nome é obrigatório",
+    "nameTooLong": "O nome deve ter no máximo 200 caracteres"
+  },
+  "navigation": {
+    "mainLabel": "Navegação principal",
+    "projects": "Projetos",
+    "tasks": "Tarefas"
+  },
+  "app": {
+    "title": "Gerenciamento de Projetos",
+    "workspace": "Espaço de trabalho"
+  },
+  "project": {
+    "label": "Projeto",
+    "name": "Nome do Projeto",
+    "description": "Descrição do projeto (opcional)",
+    "enterDescription": "Adicione contexto para este projeto",
+    "create": {
+      "submit": "Cadastrar Projeto",
+      "enterName": "Digite o nome do projeto",
+      "error": "Erro ao cadastrar projeto!",
+      "success": "Projeto criado com sucesso."
+    },
+    "update": {
+      "label": "Editar Projeto",
+      "error": "Erro ao atualizar projeto!",
+      "success": "Projeto atualizado com sucesso."
+    },
+    "delete": {
+      "label": "Deletar Projeto",
+      "confirm": "Tem certeza que deseja deletar o projeto",
+      "irreversible": "Essa ação não pode ser desfeita.",
+      "error": "Não foi possível excluir o projeto.",
+      "success": "Projeto excluído com sucesso."
+    },
+    "loadError": "Erro ao carregar projetos!",
+    "loading": "Carregando projetos...",
+    "empty": "Nenhum projeto encontrado!",
+    "add": "Adicionar Projeto",
+    "viewTasks": "Ver tarefas",
+    "hideTasks": "Ocultar tarefas",
+    "tasksDeletedWithProject": "Tarefas que serão excluídas junto com o projeto",
+    "select": "Selecione um projeto"
+  },
+  "task": {
+    "count": {
+      "singular": "tarefa",
+      "plural": "tarefas"
+    },
+    "name": "Nome da Tarefa",
+    "description": "Descrição (opcional)",
+    "enterDescription": "Adicione contexto para esta tarefa",
+    "create": {
+      "submit": "Cadastrar Tarefa",
+      "enterName": "Digite o nome da tarefa",
+      "error": "Erro ao cadastrar tarefa!",
+      "success": "Tarefa criada com sucesso."
+    },
+    "update": {
+      "label": "Editar tarefa",
+      "error": "Erro ao atualizar tarefa!",
+      "success": "Tarefa atualizada com sucesso."
+    },
+    "delete": {
+      "label": "Deletar tarefa",
+      "confirm": "Tem certeza que deseja deletar a tarefa",
+      "irreversible": "Essa ação não pode ser desfeita.",
+      "error": "Não foi possível excluir a tarefa.",
+      "success": "Tarefa excluída com sucesso."
+    },
+    "loadError": "Erro ao carregar tarefas!",
+    "loading": "Carregando tarefas...",
+    "empty": "Nenhuma tarefa associada a este projeto!",
+    "status": {
+      "label": "Status da tarefa",
+      "todo": "A fazer",
+      "inProgress": "Em andamento",
+      "done": "Concluída",
+      "updated": "Status da tarefa atualizado."
+    }
+  },
+  "theme": {
+    "light": "Modo Claro",
+    "dark": "Modo Escuro"
+  }
 }

@@ -1,0 +1,27 @@
+.navigation {
+  width: 100%;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.navigation :global(.app-nav-button) {
+  color: var(--muted);
+}
+
+.navigation :global(.app-nav-button:hover),
+.navigation :global(.app-nav-button-selected) {
+  color: var(--brand);
+}
+
+.navigation :global(.app-nav-button-selected::after) {
+  position: absolute;
+  right: 1rem;
+  bottom: -1px;
+  left: 1rem;
+  height: 3px;
+  border-radius: 3px 3px 0 0;
+  background: var(--accent);
+  content: "";
+}

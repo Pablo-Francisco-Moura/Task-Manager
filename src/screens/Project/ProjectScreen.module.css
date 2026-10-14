@@ -1,0 +1,126 @@
+.projectScreen :global(.projects-grid) {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.projectScreen :global(.project-card) {
+  display: flex;
+  min-width: 0;
+  align-items: stretch;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: 0 2px 5px rgba(26, 45, 34, 0.035);
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.projectScreen :global(.project-card:hover) {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--brand) 38%, var(--line));
+  box-shadow: 0 8px 22px rgba(26, 45, 34, 0.08);
+}
+
+.projectScreen :global(.project-card-main) {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem;
+  text-align: left;
+}
+
+.projectScreen :global(.project-card-icon) {
+  display: flex;
+  width: 2.75rem;
+  height: 2.75rem;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border-radius: 7px;
+  background: var(--brand-soft);
+  color: var(--brand);
+}
+
+.projectScreen :global(.project-card-copy) {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.projectScreen :global(.project-card-label) {
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.projectScreen :global(.project-card-name) {
+  overflow: hidden;
+  color: var(--foreground);
+  font-size: 1rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.projectScreen :global(.project-card-description) {
+  color: var(--muted);
+  font-size: 0.85rem;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.projectScreen :global(.project-card-arrow) {
+  flex: 0 0 auto;
+  color: var(--muted);
+  transition:
+    transform 150ms ease,
+    color 150ms ease;
+}
+
+.projectScreen :global(.project-card-main:hover .project-card-arrow) {
+  transform: translateX(3px);
+  color: var(--accent);
+}
+
+.projectScreen :global(.project-card-actions) {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.1rem;
+  border-left: 1px solid var(--line);
+  padding: 0 0.6rem;
+  color: var(--muted);
+}
+
+.projectScreen :global(.project-card-actions .MuiIconButton-root) {
+  color: inherit;
+}
+
+.projectScreen :global(.project-card-actions .MuiIconButton-root:hover) {
+  color: var(--accent);
+}
+
+@media (max-width: 640px) {
+  .projectScreen :global(.projects-grid) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .projectScreen :global(.project-card-main) {
+    gap: 0.7rem;
+    padding: 0.9rem;
+  }
+
+  .projectScreen :global(.project-card-actions) {
+    gap: 0;
+    padding: 0 0.35rem;
+  }
+}

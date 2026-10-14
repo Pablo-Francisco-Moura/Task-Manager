@@ -1,0 +1,67 @@
+.header {
+  width: 100%;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+
+.header :global(.app-brand-mark) {
+  background: var(--brand);
+  color: #fff;
+}
+
+:global(html.dark) .header :global(.app-brand-mark) {
+  color: #17221b;
+}
+
+.header :global(.app-brand-kicker) {
+  color: var(--accent);
+  font-size: 0.65rem;
+  font-weight: 800;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.header :global(.app-brand-title) {
+  color: var(--foreground);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.header :global(.MuiFormControlLabel-root) {
+  margin: 0;
+  color: var(--muted);
+}
+
+.header :global(.MuiFormControlLabel-label) {
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.header :global(.MuiSwitch-switchBase:focus-visible) {
+  outline: 3px solid color-mix(in srgb, var(--accent) 65%, transparent);
+  outline-offset: 3px;
+}
+
+@media (max-width: 640px) {
+  .header :global(.app-header-inner) {
+    gap: 0.75rem;
+    padding-top: 0.8rem;
+    padding-bottom: 0.8rem;
+  }
+
+  .header :global(.app-brand-title) {
+    max-width: 12rem;
+    font-size: 0.95rem;
+  }
+
+  .header :global(.MuiFormControlLabel-label) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}

@@ -1,0 +1,161 @@
+.workspace :global(.screen-content) {
+  width: 100%;
+  padding: 2.5rem 0 3rem;
+}
+
+.workspace :global(.screen-heading),
+.workspace :global(.task-heading) {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin-bottom: 1.75rem;
+}
+
+.workspace :global(.screen-eyebrow) {
+  margin-bottom: 0.45rem;
+  color: var(--accent);
+  font-size: 0.7rem;
+  font-weight: 800;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.workspace :global(.screen-title) {
+  color: var(--foreground);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.workspace :global(.primary-action) {
+  display: inline-flex;
+  min-height: 2.75rem;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  padding: 0.65rem 1rem;
+  background: var(--accent);
+  color: var(--accent-contrast);
+  font-size: 0.875rem;
+  font-weight: 700;
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    transform 150ms ease;
+}
+
+.workspace :global(.primary-action:hover) {
+  transform: translateY(-1px);
+  border-color: var(--accent-dark);
+  background: var(--accent-dark);
+}
+
+.workspace :global(.primary-action:focus-visible),
+.workspace :global(.text-action:focus-visible),
+.workspace :global(.project-card-main:focus-visible),
+.workspace :global(.project-card-actions .MuiIconButton-root:focus-visible),
+.workspace :global(.task-row-actions .MuiIconButton-root:focus-visible),
+.workspace :global(.app-form-submit:focus-visible) {
+  outline: 3px solid color-mix(in srgb, var(--accent) 65%, transparent);
+  outline-offset: 3px;
+}
+
+.workspace :global(.content-state) {
+  padding: 1rem 0;
+}
+
+.workspace :global(.empty-state) {
+  display: flex;
+  min-height: 15rem;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  padding: 2rem;
+  text-align: center;
+}
+
+.workspace :global(.empty-state-mark) {
+  display: grid;
+  width: 3rem;
+  height: 3rem;
+  place-items: center;
+  border-radius: 8px;
+  background: var(--brand-soft);
+  color: var(--brand);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.workspace :global(.empty-state h3) {
+  color: var(--foreground);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.workspace :global(.text-action) {
+  color: var(--accent);
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.workspace :global(.text-action:disabled) {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.workspace :global(.form-surface) {
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  padding: 1rem;
+}
+
+.workspace :global(.form-surface form) {
+  max-width: none;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+  box-shadow: none;
+}
+
+@media (max-width: 640px) {
+  .workspace :global(.screen-content) {
+    padding-top: 1.75rem;
+  }
+
+  .workspace :global(.screen-heading),
+  .workspace :global(.task-heading) {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .workspace :global(.screen-heading > div),
+  .workspace :global(.task-heading > div) {
+    min-width: 0;
+    flex: 1 1 10rem;
+  }
+
+  .workspace :global(.screen-title) {
+    overflow-wrap: anywhere;
+  }
+
+  .workspace :global(.primary-action) {
+    min-height: 2.5rem;
+    padding: 0.55rem 0.7rem;
+    font-size: 0.8rem;
+  }
+}

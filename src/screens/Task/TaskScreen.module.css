@@ -1,0 +1,171 @@
+.taskScreen {
+  padding-top: 1.5rem;
+}
+
+.taskScreen :global(.task-project-toolbar) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  border-bottom: 1px solid var(--line);
+  padding: 0 0 1.25rem;
+}
+
+.taskScreen :global(.toolbar-caption) {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.taskScreen :global(.task-project-select .MuiInputBase-root) {
+  background: var(--surface);
+  color: var(--foreground);
+}
+
+.taskScreen :global(.task-project-select .MuiOutlinedInput-notchedOutline) {
+  border-color: var(--line);
+}
+
+.taskScreen
+  :global(
+    .task-project-select
+      .MuiOutlinedInput-root.Mui-focused
+      .MuiOutlinedInput-notchedOutline
+  ) {
+  border-color: var(--accent);
+  border-width: 2px;
+}
+
+.taskScreen :global(.task-workspace) {
+  width: 100%;
+  padding-top: 2rem;
+}
+
+.taskScreen :global(.task-heading) {
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 1.5rem;
+}
+
+.taskScreen :global(.task-title) {
+  overflow-wrap: anywhere;
+}
+
+.taskScreen :global(.task-count) {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.taskScreen :global(.task-count-value) {
+  display: inline-grid;
+  min-width: 1.6rem;
+  height: 1.6rem;
+  place-items: center;
+  border-radius: 5px;
+  background: var(--brand-soft);
+  color: var(--brand);
+  font-weight: 800;
+}
+
+.taskScreen :global(.task-list) {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.taskScreen :global(.task-row) {
+  display: flex;
+  min-height: 4.25rem;
+  align-items: center;
+  gap: 1rem;
+  border-bottom: 1px solid var(--line);
+  padding: 0.65rem 0.25rem;
+}
+
+.taskScreen :global(.task-position) {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 5px;
+  background: var(--brand-soft);
+  color: var(--brand);
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.taskScreen :global(.task-name) {
+  min-width: 0;
+  flex: 1;
+  color: var(--foreground);
+  font-size: 0.95rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.taskScreen :global(.task-copy) {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  gap: 0.2rem;
+}
+
+.taskScreen :global(.task-status-control) {
+  flex: 0 0 9.5rem;
+}
+
+.taskScreen :global(.task-description) {
+  color: var(--muted);
+  font-size: 0.85rem;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.taskScreen :global(.task-row-actions) {
+  display: flex;
+  flex: 0 0 auto;
+  color: var(--muted);
+}
+
+.taskScreen :global(.task-row-actions .MuiIconButton-root) {
+  color: inherit;
+}
+
+.taskScreen :global(.task-row-actions .MuiIconButton-root:hover) {
+  color: var(--accent);
+}
+
+.taskScreen :global(.task-form-surface) {
+  margin-top: 1.25rem;
+}
+
+.taskScreen :global(.task-empty-state) {
+  margin-top: 1.5rem;
+}
+
+@media (max-width: 640px) {
+  .taskScreen :global(.task-project-toolbar) {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .taskScreen :global(.task-project-select) {
+    width: 100%;
+  }
+
+  .taskScreen :global(.task-workspace) {
+    padding-top: 1.5rem;
+  }
+
+  .taskScreen :global(.task-row) {
+    gap: 0.65rem;
+  }
+}

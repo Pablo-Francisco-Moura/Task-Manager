@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Projects } from "@/components/Projects/Projects";
 import { ProjectForm } from "@/components/ProjectForm/ProjectForm";
 import { useTranslation } from "react-i18next";
+import styles from "./ProjectScreen.module.css";
 import AddIcon from "@mui/icons-material/Add";
 
 export function ProjectScreen() {
@@ -12,7 +13,7 @@ export function ProjectScreen() {
   const { t } = useTranslation();
 
   return (
-    <section className="screen-content">
+    <section className={`${styles.projectScreen} screen-content`}>
       <div className="screen-heading">
         <div>
           <p className="screen-eyebrow">{t("workspace")}</p>

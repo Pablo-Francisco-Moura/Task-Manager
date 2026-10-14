@@ -1,6 +1,7 @@
 import { TabButton } from "../TabButton";
 import { useMainStore } from "@/store/mainStore";
 import { useTranslation } from "react-i18next";
+import styles from "./TabBar.module.css";
 
 export function TabBar() {
   const selectedTab = useMainStore((s) => s.selectedTab);
@@ -11,7 +12,7 @@ export function TabBar() {
   return (
     <nav
       aria-label={t("mainNavigation")}
-      className="app-nav mt-6 flex w-full items-center gap-2 border-b"
+      className={`${styles.navigation} app-nav mt-6 flex w-full items-center gap-2 border-b`}
     >
       <TabButton
         label={t("projects")}

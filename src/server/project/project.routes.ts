@@ -1,15 +1,16 @@
+import {
+  parseName,
+  readJsonObject,
+  projectCreateSchema,
+  projectUpdateSchema,
+  parsePositiveIntegerString,
+  projectCreateOpenApiSchema,
+  projectUpdateOpenApiSchema,
+} from "@/server/validation";
 import { Hono } from "hono";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { describeRoute } from "hono-openapi";
-import {
-  matchesJsonSchema,
-  parseName,
-  parsePositiveIntegerString,
-  projectCreateSchema,
-  projectUpdateSchema,
-  readJsonObject,
-} from "@/server/validation";
 
 const projectRoutes = new Hono();
 
@@ -21,7 +22,7 @@ projectRoutes.post(
     summary: "Create new project",
     requestBody: {
       content: {
-        "application/json": { schema: projectCreateSchema },
+        "application/json": { schema: projectCreateOpenApiSchema },
       },
     },
     responses: {
@@ -30,10 +31,14 @@ projectRoutes.post(
   }),
   async (c) => {
     const body = await readJsonObject(c.req);
-    if (!body || !matchesJsonSchema(body, projectCreateSchema)) {
+    if (!body) {
       return c.json({ error: "Invalid project payload" }, 400);
     }
-    const name = parseName(body.name);
+    const parsedBody = projectCreateSchema.safeParse(body);
+    if (!parsedBody.success) {
+      return c.json({ error: "Invalid project payload" }, 400);
+    }
+    const name = parseName(parsedBody.data.name);
     if (name === null) {
       return c.json({ error: "name must be a non-empty string" }, 400);
     }
@@ -113,7 +118,7 @@ projectRoutes.patch(
     ],
     requestBody: {
       content: {
-        "application/json": { schema: projectUpdateSchema },
+        "application/json": { schema: projectUpdateOpenApiSchema },
       },
     },
     responses: {
@@ -127,10 +132,14 @@ projectRoutes.patch(
       return c.json({ error: "id must be a positive integer" }, 400);
     }
     const body = await readJsonObject(c.req);
-    if (!body || !matchesJsonSchema(body, projectUpdateSchema)) {
+    if (!body) {
       return c.json({ error: "Invalid project payload" }, 400);
     }
-    const name = parseName(body.name);
+    const parsedBody = projectUpdateSchema.safeParse(body);
+    if (!parsedBody.success) {
+      return c.json({ error: "Invalid project payload" }, 400);
+    }
+    const name = parseName(parsedBody.data.name);
     if (name === null) {
       return c.json({ error: "name must be a non-empty string" }, 400);
     }

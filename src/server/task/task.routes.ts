@@ -3,8 +3,8 @@ import {
   readJsonObject,
   taskCreateSchema,
   taskUpdateSchema,
-  matchesJsonSchema,
-  parsePositiveInteger,
+  taskCreateOpenApiSchema,
+  taskUpdateOpenApiSchema,
   parsePositiveIntegerString,
 } from "@/server/validation";
 import { Hono } from "hono";
@@ -21,7 +21,7 @@ taskRoutes.post(
     summary: "Create a new task linked to a project",
     requestBody: {
       content: {
-        "application/json": { schema: taskCreateSchema },
+        "application/json": { schema: taskCreateOpenApiSchema },
       },
     },
     responses: {
@@ -31,12 +31,16 @@ taskRoutes.post(
   }),
   async (c) => {
     const body = await readJsonObject(c.req);
-    if (!body || !matchesJsonSchema(body, taskCreateSchema)) {
+    if (!body) {
       return c.json({ error: "Invalid task payload" }, 400);
     }
-    const name = parseName(body.name);
-    const projectId = parsePositiveInteger(body.projectId);
-    if (!name || !projectId) {
+    const parsedBody = taskCreateSchema.safeParse(body);
+    if (!parsedBody.success) {
+      return c.json({ error: "Invalid task payload" }, 400);
+    }
+    const name = parseName(parsedBody.data.name);
+    const projectId = parsedBody.data.projectId;
+    if (!name) {
       return c.json({ error: "name and projectId must be valid" }, 400);
     }
 
@@ -149,7 +153,7 @@ taskRoutes.patch(
     ],
     requestBody: {
       content: {
-        "application/json": { schema: taskUpdateSchema },
+        "application/json": { schema: taskUpdateOpenApiSchema },
       },
     },
     responses: {
@@ -163,12 +167,15 @@ taskRoutes.patch(
       return c.json({ error: "id must be a positive integer" }, 400);
     }
     const body = await readJsonObject(c.req);
-    if (!body || !matchesJsonSchema(body, taskUpdateSchema)) {
+    if (!body) {
       return c.json({ error: "Invalid task payload" }, 400);
     }
-    const hasName = Object.hasOwn(body, "name");
-    const hasProjectId = Object.hasOwn(body, "projectId");
-    if (!hasName && !hasProjectId) {
+    const parsedBody = taskUpdateSchema.safeParse(body);
+    if (!parsedBody.success) {
+      return c.json({ error: "Invalid task payload" }, 400);
+    }
+    const { name, projectId } = parsedBody.data;
+    if (name === undefined && projectId === undefined) {
       return c.json(
         { error: "At least one valid task field is required" },
         400,
@@ -176,18 +183,14 @@ taskRoutes.patch(
     }
     const updateData: Prisma.TaskUncheckedUpdateInput = {};
     let parsedProjectId: number | undefined;
-    if (hasName) {
-      const name = parseName(body.name);
-      if (name === null) {
+    if (name !== undefined) {
+      const parsedName = parseName(name);
+      if (parsedName === null) {
         return c.json({ error: "name must be a non-empty string" }, 400);
       }
-      updateData.name = name;
+      updateData.name = parsedName;
     }
-    if (hasProjectId) {
-      const projectId = parsePositiveInteger(body.projectId);
-      if (projectId === null) {
-        return c.json({ error: "projectId must be a positive integer" }, 400);
-      }
+    if (projectId !== undefined) {
       updateData.projectId = projectId;
       parsedProjectId = projectId;
     }

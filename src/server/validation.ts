@@ -1,42 +1,41 @@
+import { z } from "zod";
 import { MAX_NAME_LENGTH } from "@/constants";
+import type { TypeSharedSchema } from "@/types/validation";
 import type { HonoRequest } from "hono";
-import type { TypeSharedSchema } from "@/types";
 
-export const projectCreateSchema: TypeSharedSchema = {
-  type: "object",
-  properties: {
-    name: { type: "string", minLength: 1, maxLength: MAX_NAME_LENGTH },
-  },
-  required: ["name"],
-  additionalProperties: false,
-};
+const nameSchema = z.string().min(1).max(MAX_NAME_LENGTH).regex(/\S/);
+const projectIdSchema = z.int().positive();
 
-export const projectUpdateSchema: TypeSharedSchema = {
-  type: "object",
-  properties: {
-    name: { type: "string", minLength: 1, maxLength: MAX_NAME_LENGTH },
-  },
-  additionalProperties: false,
-};
+export const projectCreateSchema = z.strictObject({ name: nameSchema });
+export const projectUpdateSchema = z.strictObject({
+  name: nameSchema.optional(),
+});
+export const taskCreateSchema = z.strictObject({
+  name: nameSchema,
+  projectId: projectIdSchema,
+});
+export const taskUpdateSchema = z.strictObject({
+  name: nameSchema.optional(),
+  projectId: projectIdSchema.optional(),
+});
 
-export const taskCreateSchema: TypeSharedSchema = {
-  type: "object",
-  properties: {
-    name: { type: "string", minLength: 1, maxLength: MAX_NAME_LENGTH },
-    projectId: { type: "integer", minimum: 1 },
-  },
-  required: ["name", "projectId"],
-  additionalProperties: false,
-};
-
-export const taskUpdateSchema: TypeSharedSchema = {
-  type: "object",
-  properties: {
-    name: { type: "string", minLength: 1, maxLength: MAX_NAME_LENGTH },
-    projectId: { type: "integer", minimum: 1 },
-  },
-  additionalProperties: false,
-};
+const openApiSchemaOptions = { target: "openapi-3.0" as const };
+export const projectCreateOpenApiSchema = z.toJSONSchema(
+  projectCreateSchema,
+  openApiSchemaOptions,
+) as unknown as TypeSharedSchema;
+export const projectUpdateOpenApiSchema = z.toJSONSchema(
+  projectUpdateSchema,
+  openApiSchemaOptions,
+) as unknown as TypeSharedSchema;
+export const taskCreateOpenApiSchema = z.toJSONSchema(
+  taskCreateSchema,
+  openApiSchemaOptions,
+) as unknown as TypeSharedSchema;
+export const taskUpdateOpenApiSchema = z.toJSONSchema(
+  taskUpdateSchema,
+  openApiSchemaOptions,
+) as unknown as TypeSharedSchema;
 
 export async function readJsonObject(
   request: HonoRequest,
@@ -47,12 +46,6 @@ export async function readJsonObject(
   } catch {
     return null;
   }
-}
-
-export function parsePositiveInteger(value: unknown): number | null {
-  return typeof value === "number" && Number.isSafeInteger(value) && value > 0
-    ? value
-    : null;
 }
 
 export function parsePositiveIntegerString(value: unknown): number | null {
@@ -71,61 +64,6 @@ export function parseName(value: unknown): string | null {
 
   const name = value.trim();
   return name.length > 0 && name.length <= MAX_NAME_LENGTH ? name : null;
-}
-
-export function matchesJsonSchema(
-  value: Record<string, unknown>,
-  schema: TypeSharedSchema,
-): boolean {
-  if (schema.required) {
-    for (const key of schema.required) {
-      if (!(key in value)) {
-        return false;
-      }
-    }
-  }
-
-  for (const key of Object.keys(value)) {
-    if (schema.additionalProperties === false && !(key in schema.properties)) {
-      return false;
-    }
-  }
-
-  for (const [key, property] of Object.entries(schema.properties)) {
-    if (!(key in value)) {
-      continue;
-    }
-    const item = value[key];
-
-    if (property.type === "string") {
-      if (typeof item !== "string") {
-        return false;
-      }
-      if (
-        property.minLength !== undefined &&
-        item.trim().length < property.minLength
-      ) {
-        return false;
-      }
-      if (
-        property.maxLength !== undefined &&
-        item.length > property.maxLength
-      ) {
-        return false;
-      }
-    }
-
-    if (property.type === "integer") {
-      if (typeof item !== "number" || !Number.isInteger(item)) {
-        return false;
-      }
-      if (property.minimum !== undefined && item < property.minimum) {
-        return false;
-      }
-    }
-  }
-
-  return true;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

@@ -3,9 +3,11 @@ import {
   readJsonObject,
   taskCreateSchema,
   taskUpdateSchema,
+  taskReorderSchema,
   normalizeDescription,
   taskCreateOpenApiSchema,
   taskUpdateOpenApiSchema,
+  taskReorderOpenApiSchema,
   parsePositiveIntegerString,
 } from "@/server/validation";
 import { Hono } from "hono";
@@ -52,12 +54,20 @@ taskRoutes.post(
       return c.json({ error: "Project not found" }, 404);
     }
 
+    const status = parsedBody.data.status ?? "todo";
+    const lastTask = await prisma.task.findFirst({
+      where: { projectId, status },
+      orderBy: [{ position: "desc" }, { id: "desc" }],
+      select: { position: true },
+    });
+
     // Create the task.
     try {
       const task = await prisma.task.create({
         data: {
           name,
-          status: parsedBody.data.status ?? "todo",
+          status,
+          position: (lastTask?.position ?? -1) + 1,
           projectId,
           description: normalizeDescription(parsedBody.data.description),
         },
@@ -110,6 +120,92 @@ taskRoutes.get(
 
     const tasks = await prisma.task.findMany({ where: { projectId } });
     return c.json(tasks, 200);
+  },
+);
+
+taskRoutes.patch(
+  "/reorder",
+  describeRoute({
+    tags: ["Task"],
+    summary: "Persist task order for a project board",
+    requestBody: {
+      content: {
+        "application/json": { schema: taskReorderOpenApiSchema },
+      },
+    },
+    responses: {
+      200: { description: "Task order updated" },
+      400: { description: "Invalid task order payload" },
+      404: { description: "Project not found" },
+      409: { description: "Task list changed; reload the board" },
+    },
+  }),
+  async (c) => {
+    const body = await readJsonObject(c.req);
+    if (!body) {
+      return c.json({ error: "Invalid task order payload" }, 400);
+    }
+    const parsedBody = taskReorderSchema.safeParse(body);
+    if (!parsedBody.success) {
+      return c.json({ error: "Invalid task order payload" }, 400);
+    }
+
+    const { projectId, orderedTaskIdsByStatus } = parsedBody.data;
+    const submittedIds = [
+      ...orderedTaskIdsByStatus.todo,
+      ...orderedTaskIdsByStatus.in_progress,
+      ...orderedTaskIdsByStatus.done,
+    ];
+    if (new Set(submittedIds).size !== submittedIds.length) {
+      return c.json({ error: "A task can only appear once" }, 400);
+    }
+
+    const result = await prisma.$transaction(async (transaction) => {
+      const project = await transaction.project.findUnique({
+        where: { id: projectId },
+        select: { id: true },
+      });
+      if (!project) {
+        return { kind: "project-not-found" as const };
+      }
+
+      const existingTasks = await transaction.task.findMany({
+        where: { projectId },
+        select: { id: true },
+      });
+      const existingIds = new Set(existingTasks.map((task) => task.id));
+      if (
+        submittedIds.length !== existingTasks.length ||
+        submittedIds.some((id) => !existingIds.has(id))
+      ) {
+        return { kind: "task-list-changed" as const };
+      }
+
+      for (const status of ["todo", "in_progress", "done"] as const) {
+        await Promise.all(
+          orderedTaskIdsByStatus[status].map((id, position) =>
+            transaction.task.update({
+              where: { id },
+              data: { status, position },
+            }),
+          ),
+        );
+      }
+
+      const tasks = await transaction.task.findMany({
+        where: { projectId },
+        orderBy: [{ status: "asc" }, { position: "asc" }, { id: "asc" }],
+      });
+      return { kind: "success" as const, tasks };
+    });
+
+    if (result.kind === "project-not-found") {
+      return c.json({ error: "Project not found" }, 404);
+    }
+    if (result.kind === "task-list-changed") {
+      return c.json({ error: "Task list changed; reload the board" }, 409);
+    }
+    return c.json(result.tasks, 200);
   },
 );
 
@@ -192,6 +288,18 @@ taskRoutes.patch(
         400,
       );
     }
+
+    const currentTask =
+      status !== undefined || projectId !== undefined
+        ? await prisma.task.findUnique({
+            where: { id },
+            select: { projectId: true, status: true },
+          })
+        : null;
+    if ((status !== undefined || projectId !== undefined) && !currentTask) {
+      return c.json({ error: "Task not found" }, 404);
+    }
+
     const updateData: Prisma.TaskUncheckedUpdateInput = {};
     let parsedProjectId: number | undefined;
     if (name !== undefined) {
@@ -218,6 +326,21 @@ taskRoutes.patch(
       });
       if (!project) {
         return c.json({ error: "Project not found" }, 404);
+      }
+    }
+    if (currentTask) {
+      const destinationProjectId = parsedProjectId ?? currentTask.projectId;
+      const destinationStatus = status ?? currentTask.status;
+      if (
+        destinationProjectId !== currentTask.projectId ||
+        destinationStatus !== currentTask.status
+      ) {
+        const lastTask = await prisma.task.findFirst({
+          where: { projectId: destinationProjectId, status: destinationStatus },
+          orderBy: [{ position: "desc" }, { id: "desc" }],
+          select: { position: true },
+        });
+        updateData.position = (lastTask?.position ?? -1) + 1;
       }
     }
     try {

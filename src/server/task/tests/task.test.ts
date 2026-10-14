@@ -156,16 +156,52 @@ describe("Task API", () => {
     const json = await res.json();
     expect(json).toMatchObject({
       name: mockTask.name,
+      status: "todo",
+      position: 0,
       projectId: project.id,
       description: mockTask.description,
+    });
+  });
+
+  test("should append a newly created task to its status column", async () => {
+    const project = await prisma.project.create({ data: { name: "Project" } });
+    await prisma.task.create({
+      data: { name: "Existing task", projectId: project.id, position: 0 },
+    });
+
+    const response = await app.request("/tasks", {
+      method: "POST",
+      body: JSON.stringify({ name: "New task", projectId: project.id }),
+      headers: { "Content-Type": "application/json" },
+    });
+
+    expect(response.status).toBe(201);
+    expect(await response.json()).toMatchObject({
+      position: 1,
       status: "todo",
     });
   });
 
-  test("should update only a task status", async () => {
+  test("should append a status change to the destination column", async () => {
     const project = await prisma.project.create({ data: { name: "Project" } });
+    await prisma.task.createMany({
+      data: [
+        {
+          name: "Existing done task 1",
+          status: "done",
+          position: 0,
+          projectId: project.id,
+        },
+        {
+          name: "Existing done task 2",
+          status: "done",
+          position: 1,
+          projectId: project.id,
+        },
+      ],
+    });
     const task = await prisma.task.create({
-      data: { name: "Task", projectId: project.id },
+      data: { name: "Task", projectId: project.id, position: 0 },
     });
 
     const response = await app.request(`/tasks/${task.id}`, {
@@ -180,7 +216,115 @@ describe("Task API", () => {
       name: task.name,
       projectId: project.id,
       status: "done",
+      position: 2,
     });
+  });
+
+  test("should persist task order and status for every project task", async () => {
+    const project = await prisma.project.create({ data: { name: "Project" } });
+    const [firstTodo, secondTodo, inProgress, done] = await Promise.all([
+      prisma.task.create({
+        data: { name: "First todo", projectId: project.id, position: 0 },
+      }),
+      prisma.task.create({
+        data: { name: "Second todo", projectId: project.id, position: 1 },
+      }),
+      prisma.task.create({
+        data: {
+          name: "In progress",
+          status: "in_progress",
+          position: 0,
+          projectId: project.id,
+        },
+      }),
+      prisma.task.create({
+        data: {
+          name: "Done",
+          status: "done",
+          position: 0,
+          projectId: project.id,
+        },
+      }),
+    ]);
+
+    const response = await app.request("/tasks/reorder", {
+      method: "PATCH",
+      body: JSON.stringify({
+        projectId: project.id,
+        orderedTaskIdsByStatus: {
+          todo: [secondTodo.id, done.id],
+          in_progress: [firstTodo.id],
+          done: [inProgress.id],
+        },
+      }),
+      headers: { "Content-Type": "application/json" },
+    });
+
+    expect(response.status).toBe(200);
+    const tasks = (await response.json()) as Array<{
+      id: number;
+      status: string;
+      position: number;
+    }>;
+    expect(tasks.find((task) => task.id === secondTodo.id)).toMatchObject({
+      status: "todo",
+      position: 0,
+    });
+    expect(tasks.find((task) => task.id === done.id)).toMatchObject({
+      status: "todo",
+      position: 1,
+    });
+    expect(tasks.find((task) => task.id === firstTodo.id)).toMatchObject({
+      status: "in_progress",
+      position: 0,
+    });
+    expect(tasks.find((task) => task.id === inProgress.id)).toMatchObject({
+      status: "done",
+      position: 0,
+    });
+  });
+
+  test("should reject duplicate task IDs in a board order", async () => {
+    const project = await prisma.project.create({ data: { name: "Project" } });
+    const task = await prisma.task.create({
+      data: { name: "Task", projectId: project.id },
+    });
+
+    const response = await app.request("/tasks/reorder", {
+      method: "PATCH",
+      body: JSON.stringify({
+        projectId: project.id,
+        orderedTaskIdsByStatus: {
+          todo: [task.id],
+          in_progress: [task.id],
+          done: [],
+        },
+      }),
+      headers: { "Content-Type": "application/json" },
+    });
+
+    expect(response.status).toBe(400);
+  });
+
+  test("should reject a stale board task list without changing tasks", async () => {
+    const project = await prisma.project.create({ data: { name: "Project" } });
+    const task = await prisma.task.create({
+      data: { name: "Task", projectId: project.id },
+    });
+
+    const response = await app.request("/tasks/reorder", {
+      method: "PATCH",
+      body: JSON.stringify({
+        projectId: project.id,
+        orderedTaskIdsByStatus: { todo: [], in_progress: [], done: [] },
+      }),
+      headers: { "Content-Type": "application/json" },
+    });
+
+    expect(response.status).toBe(409);
+    expect(
+      await prisma.task.findUniqueOrThrow({ where: { id: task.id } }),
+    ).toMatchObject({ status: "todo", position: 0 });
   });
 
   test("should create a task without a description", async () => {

@@ -57,6 +57,7 @@ taskRoutes.post(
       const task = await prisma.task.create({
         data: {
           name,
+          status: parsedBody.data.status ?? "todo",
           projectId,
           description: normalizeDescription(parsedBody.data.description),
         },
@@ -179,11 +180,12 @@ taskRoutes.patch(
     if (!parsedBody.success) {
       return c.json({ error: "Invalid task payload" }, 400);
     }
-    const { name, projectId, description } = parsedBody.data;
+    const { name, projectId, description, status } = parsedBody.data;
     if (
       name === undefined &&
       projectId === undefined &&
-      description === undefined
+      description === undefined &&
+      status === undefined
     ) {
       return c.json(
         { error: "At least one valid task field is required" },
@@ -205,6 +207,9 @@ taskRoutes.patch(
     }
     if (description !== undefined) {
       updateData.description = normalizeDescription(description);
+    }
+    if (status !== undefined) {
+      updateData.status = status;
     }
     // If projectId is being updated, check if the new project exists
     if (parsedProjectId !== undefined) {

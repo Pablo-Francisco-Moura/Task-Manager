@@ -1,6 +1,12 @@
+import {
+  Select,
+  Tooltip,
+  MenuItem,
+  IconButton,
+  FormControl,
+} from "@mui/material";
 import { useTranslation } from "react-i18next";
-import { Task as TypeTask } from "@prisma/client";
-import { IconButton, Tooltip } from "@mui/material";
+import { Task as TypeTask, TaskStatus } from "@prisma/client";
 import React from "react";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -10,9 +16,16 @@ interface IProps {
   position: number;
   onEditClick: (task: TypeTask) => void;
   onDeleteClick: (task: TypeTask) => void;
+  onStatusChange: (task: TypeTask, status: TaskStatus) => void;
 }
 
-export function Task({ task, position, onEditClick, onDeleteClick }: IProps) {
+export function Task({
+  task,
+  position,
+  onEditClick,
+  onDeleteClick,
+  onStatusChange,
+}: IProps) {
   const { t } = useTranslation();
 
   return (
@@ -24,6 +37,19 @@ export function Task({ task, position, onEditClick, onDeleteClick }: IProps) {
           <span className="task-description">{task.description}</span>
         )}
       </div>
+      <FormControl className="task-status-control" size="small">
+        <Select
+          value={task.status}
+          inputProps={{ "aria-label": `${t("taskStatus")}: ${task.name}` }}
+          onChange={(event) =>
+            onStatusChange(task, event.target.value as TaskStatus)
+          }
+        >
+          <MenuItem value="todo">{t("statusTodo")}</MenuItem>
+          <MenuItem value="in_progress">{t("statusInProgress")}</MenuItem>
+          <MenuItem value="done">{t("statusDone")}</MenuItem>
+        </Select>
+      </FormControl>
       <div className="task-row-actions">
         <Tooltip arrow title={`${t("editTask")} ${task.name}`}>
           <IconButton

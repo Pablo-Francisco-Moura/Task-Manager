@@ -23,6 +23,7 @@ describe("Task API", () => {
     [{ name: "Task", projectId: 0 }],
     [{ name: "Task", projectId: 1, description: 42 }],
     [{ name: "Task", projectId: 1, description: "x".repeat(2001) }],
+    [{ name: "Task", projectId: 1, status: "blocked" }],
     [{ name: "Task", projectId: 1, unexpected: true }],
     [{ name: "x".repeat(201), projectId: 1 }],
   ])("should reject invalid task payloads: %o", async (body) => {
@@ -42,6 +43,7 @@ describe("Task API", () => {
     { projectId: "1" },
     { description: 42 },
     { description: "x".repeat(2001) },
+    { status: "blocked" },
     { name: "Task", extra: true },
     { name: "x".repeat(201) },
   ])("should reject invalid task updates: %o", async (body) => {
@@ -81,6 +83,7 @@ describe("Task API", () => {
           name: "Task through Next",
           projectId: project.id,
           description: "Created through the Next route",
+          status: "in_progress",
         }),
         headers: { "Content-Type": "application/json" },
       }),
@@ -91,6 +94,7 @@ describe("Task API", () => {
       name: "Task through Next",
       projectId: project.id,
       description: "Created through the Next route",
+      status: "in_progress",
     });
   });
 
@@ -154,6 +158,28 @@ describe("Task API", () => {
       name: mockTask.name,
       projectId: project.id,
       description: mockTask.description,
+      status: "todo",
+    });
+  });
+
+  test("should update only a task status", async () => {
+    const project = await prisma.project.create({ data: { name: "Project" } });
+    const task = await prisma.task.create({
+      data: { name: "Task", projectId: project.id },
+    });
+
+    const response = await app.request(`/tasks/${task.id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ status: "done" }),
+      headers: { "Content-Type": "application/json" },
+    });
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({
+      id: task.id,
+      name: task.name,
+      projectId: project.id,
+      status: "done",
     });
   });
 

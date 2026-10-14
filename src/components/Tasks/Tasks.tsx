@@ -12,11 +12,11 @@ import { useMainStore } from "@/store/mainStore";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useTranslation } from "react-i18next";
 import { useProjectStore } from "@/store/projectStore";
-import { Task as TypeTask } from "@prisma/client";
 import { useFeedbackStore } from "@/store/feedbackStore";
 import { useProjects, useTasks } from "@/hooks";
 import { MAX_DESCRIPTION_LENGTH } from "@/constants";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Task as TypeTask, TaskStatus } from "@prisma/client";
 import AddIcon from "@mui/icons-material/Add";
 import ChecklistOutlinedIcon from "@mui/icons-material/ChecklistOutlined";
 import FolderOpenOutlinedIcon from "@mui/icons-material/FolderOpenOutlined";
@@ -87,6 +87,26 @@ export function Tasks() {
     },
   });
 
+  const updateStatusMutation = useMutation({
+    mutationFn: updateTask,
+    onSuccess: async (updatedTask) => {
+      if (selectedProject?.id) {
+        queryClient.setQueryData<TypeTask[]>(
+          [QUERY_KEYS.TASKS, selectedProject.id],
+          (currentTasks) =>
+            currentTasks?.map((task) =>
+              task.id === updatedTask.id ? updatedTask : task,
+            ),
+        );
+        await queryClient.invalidateQueries({
+          queryKey: [QUERY_KEYS.TASKS, selectedProject.id],
+        });
+      }
+      showFeedback(t("taskStatusUpdated"));
+    },
+    onError: () => showFeedback(t("errorUpdatingTask"), "error"),
+  });
+
   // Edit form.
   const {
     register,
@@ -134,6 +154,10 @@ export function Tasks() {
         description: data.description,
       });
     }
+  };
+
+  const handleStatusChange = (task: TypeTask, status: TaskStatus) => {
+    updateStatusMutation.mutate({ id: task.id, status });
   };
 
   const {
@@ -263,6 +287,7 @@ export function Tasks() {
                 position={index + 1}
                 onEditClick={handleEditClick}
                 onDeleteClick={handleDeleteClick}
+                onStatusChange={handleStatusChange}
               />
             ))}
         </ul>

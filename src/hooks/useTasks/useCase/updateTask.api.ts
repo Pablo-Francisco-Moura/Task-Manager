@@ -5,6 +5,7 @@ import type { TypeUpdateTaskInput, TypeUpdateTaskResponse } from "@/types";
 export async function updateTask({
   id,
   name,
+  status,
   projectId,
   description,
 }: TypeUpdateTaskInput): Promise<TypeUpdateTaskResponse> {
@@ -12,6 +13,7 @@ export async function updateTask({
     `${ROUTES.TASK}/${id}`,
     {
       name,
+      status,
       projectId,
       description,
     },

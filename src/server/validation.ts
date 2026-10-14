@@ -5,6 +5,7 @@ import type { TypeSharedSchema } from "@/types/validation";
 
 const nameSchema = z.string().min(1).max(MAX_NAME_LENGTH).regex(/\S/);
 const projectIdSchema = z.int().positive();
+const taskStatusSchema = z.enum(["todo", "in_progress", "done"]);
 const descriptionSchema = z
   .string()
   .max(MAX_DESCRIPTION_LENGTH)
@@ -23,11 +24,13 @@ export const taskCreateSchema = z.strictObject({
   name: nameSchema,
   projectId: projectIdSchema,
   description: descriptionSchema,
+  status: taskStatusSchema.optional(),
 });
 export const taskUpdateSchema = z.strictObject({
   name: nameSchema.optional(),
   projectId: projectIdSchema.optional(),
   description: descriptionSchema,
+  status: taskStatusSchema.optional(),
 });
 
 const openApiSchemaOptions = { target: "openapi-3.0" as const };

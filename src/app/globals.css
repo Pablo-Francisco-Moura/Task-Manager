@@ -571,6 +571,10 @@ html.dark .app-brand-mark {
   gap: 0.2rem;
 }
 
+.task-status-control {
+  flex: 0 0 9.5rem;
+}
+
 .task-description {
   color: var(--muted);
   font-size: 0.85rem;

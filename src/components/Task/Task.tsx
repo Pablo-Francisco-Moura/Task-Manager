@@ -37,7 +37,11 @@ export function Task({
           <span className="task-description">{task.description}</span>
         )}
       </div>
-      <FormControl className="task-status-control" size="small">
+      <FormControl
+        className="task-status-control"
+        data-status={task.status}
+        size="small"
+      >
         <Select
           value={task.status}
           inputProps={{

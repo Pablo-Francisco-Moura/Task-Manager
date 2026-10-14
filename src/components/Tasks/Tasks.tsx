@@ -4,9 +4,11 @@ import { Dialog } from "@mui/material";
 import { useForm } from "react-hook-form";
 import { TaskForm } from "@/components/TaskForm";
 import { useState } from "react";
+import { TaskBoard } from "./TaskBoard";
 import { deleteTask } from "@/hooks/useTasks/useCase/deleteTask.api";
 import { QUERY_KEYS } from "@/constants/queryKeys";
 import { updateTask } from "@/hooks/useTasks/useCase/updateTask.api";
+import { reorderTasks } from "@/hooks/useTasks/useCase/reorderTasks.api";
 import { AlertMessage } from "@/components/AlertMessage";
 import { useMainStore } from "@/store/mainStore";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -17,6 +19,7 @@ import { useProjects, useTasks } from "@/hooks";
 import { MAX_DESCRIPTION_LENGTH } from "@/constants";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Task as TypeTask, TaskStatus } from "@prisma/client";
+import type { TypeReorderTasksInput } from "@/types";
 import AddIcon from "@mui/icons-material/Add";
 import ChecklistOutlinedIcon from "@mui/icons-material/ChecklistOutlined";
 import FolderOpenOutlinedIcon from "@mui/icons-material/FolderOpenOutlined";
@@ -105,6 +108,53 @@ export function Tasks() {
       showFeedback(t("task.status.updated"));
     },
     onError: () => showFeedback(t("task.update.error"), "error"),
+  });
+
+  const reorderTasksMutation = useMutation({
+    mutationFn: reorderTasks,
+    onMutate: async ({ projectId, orderedTaskIdsByStatus }) => {
+      const queryKey = [QUERY_KEYS.TASKS, projectId] as const;
+      await queryClient.cancelQueries({ queryKey });
+      const previousTasks = queryClient.getQueryData<TypeTask[]>(queryKey);
+
+      if (previousTasks) {
+        const positions = new Map<
+          number,
+          { status: TaskStatus; position: number }
+        >();
+        for (const status of ["todo", "in_progress", "done"] as const) {
+          orderedTaskIdsByStatus[status].forEach((id, position) => {
+            positions.set(id, { status, position });
+          });
+        }
+        queryClient.setQueryData<TypeTask[]>(
+          queryKey,
+          previousTasks.map((task) => {
+            const placement = positions.get(task.id);
+            return placement ? { ...task, ...placement } : task;
+          }),
+        );
+      }
+
+      return { queryKey, previousTasks };
+    },
+    onError: (_error, _variables, context) => {
+      if (context?.previousTasks) {
+        queryClient.setQueryData(context.queryKey, context.previousTasks);
+      }
+      showFeedback(t("task.reorder.error"), "error");
+    },
+    onSuccess: (orderedTasks, variables) => {
+      queryClient.setQueryData(
+        [QUERY_KEYS.TASKS, variables.projectId],
+        orderedTasks,
+      );
+    },
+    onSettled: async (_data, _error, variables) => {
+      await queryClient.invalidateQueries({
+        queryKey: [QUERY_KEYS.TASKS, variables.projectId],
+      });
+    },
   });
 
   // Edit form.
@@ -278,20 +328,38 @@ export function Tasks() {
       )}
 
       {tasks && tasks.length > 0 ? (
-        <ul className="task-list">
-          {[...tasks]
-            .sort((a, b) => a.name.localeCompare(b.name))
-            .map((task: TypeTask, index: number) => (
-              <Task
-                key={task.id}
-                task={task}
-                position={index + 1}
-                onEditClick={handleEditClick}
-                onDeleteClick={handleDeleteClick}
-                onStatusChange={handleStatusChange}
-              />
-            ))}
-        </ul>
+        <>
+          <div className="task-mobile-list">
+            <ul className="task-list">
+              {[...tasks]
+                .sort((a, b) => a.name.localeCompare(b.name))
+                .map((task: TypeTask, index: number) => (
+                  <Task
+                    key={task.id}
+                    task={task}
+                    position={index + 1}
+                    onEditClick={handleEditClick}
+                    onDeleteClick={handleDeleteClick}
+                    onStatusChange={handleStatusChange}
+                  />
+                ))}
+            </ul>
+          </div>
+          <TaskBoard
+            tasks={tasks}
+            isSaving={reorderTasksMutation.isPending}
+            onEditClick={handleEditClick}
+            onDeleteClick={handleDeleteClick}
+            onReorder={(orderedTaskIdsByStatus) => {
+              if (selectedProject) {
+                reorderTasksMutation.mutate({
+                  projectId: selectedProject.id,
+                  orderedTaskIdsByStatus,
+                } satisfies TypeReorderTasksInput);
+              }
+            }}
+          />
+        </>
       ) : (
         <div className="empty-state task-empty-state">
           <span className="empty-state-mark" aria-hidden="true">

@@ -191,4 +191,5 @@ Boa sorte no desafio! 🚀
 - [ ] <a id="news"></a>[3º News](docs/03-news.md)
   - [x] [Validar o CI no GitHub Actions](docs/03-news.md#validar-o-ci-no-github-actions)
   - [x] [Adicionar descrição opcional às tarefas e projetos](docs/03-news.md#descricao-opcional)
-  - [ ] Adicionar status às tarefas (`todo`, `in_progress`, `done`)
+  - [x] [Adicionar status às tarefas (`todo`, `in_progress`, `done`)](docs/03-news.md#task-status)
+  - [ ] [Adicionar prioridade às tarefas (`low`, `normal`, `high`)](docs/03-news.md#task-priority)

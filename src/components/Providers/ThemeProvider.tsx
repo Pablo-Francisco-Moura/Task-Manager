@@ -14,14 +14,18 @@ interface IThemeProviderProps {
 const ThemeContext = createContext<IThemeContextProps | undefined>(undefined);
 
 export const ThemeProvider = ({ children }: IThemeProviderProps) => {
-  const [theme, setTheme] = useState<"light" | "dark">(() => {
-    if (typeof window !== "undefined") {
-      return (localStorage.getItem("theme") as "light" | "dark") || "light";
-    }
-    return "light";
-  });
+  const [theme, setTheme] = useState<"light" | "dark">("light");
 
   useEffect(() => {
+    const savedTheme = localStorage.getItem("theme");
+    if (
+      (savedTheme === "light" || savedTheme === "dark") &&
+      savedTheme !== theme
+    ) {
+      setTheme(savedTheme);
+      return;
+    }
+
     document.documentElement.classList.remove(
       theme === "light" ? "dark" : "light",
     );

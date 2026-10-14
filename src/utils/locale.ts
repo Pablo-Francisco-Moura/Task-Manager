@@ -21,7 +21,9 @@ export function getLocaleFromAcceptLanguage(
       };
     })
     .filter((preference) => preference.quality > 0)
-    .sort((left, right) => right.quality - left.quality || left.order - right.order);
+    .sort(
+      (left, right) => right.quality - left.quality || left.order - right.order,
+    );
 
   const preferredLanguage = preferences.find((preference) =>
     ["en", "pt"].includes(preference.language),

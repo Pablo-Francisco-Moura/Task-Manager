@@ -1,6 +1,4 @@
 import type { Metadata } from "next";
-import { Providers } from "@/components/Providers/Providers";
-import { ThemeProvider } from "@/components/Providers/ThemeProvider";
 import { metadataTitle } from "../constants/app";
 import "./globals.css";
 
@@ -13,11 +11,7 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="pt-BR" data-lt-installed="true">
-      <body>
-        <ThemeProvider>
-          <Providers>{children}</Providers>
-        </ThemeProvider>
-      </body>
+      <body>{children}</body>
     </html>
   );
 }

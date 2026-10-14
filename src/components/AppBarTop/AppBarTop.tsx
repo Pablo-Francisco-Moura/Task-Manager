@@ -1,3 +1,5 @@
+"use client";
+
 import { ThemeSwitch } from "../ThemeSwitch";
 import { useTranslation } from "react-i18next";
 import WorkspacesOutlinedIcon from "@mui/icons-material/WorkspacesOutlined";

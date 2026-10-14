@@ -9,6 +9,7 @@ import { useTranslation } from "react-i18next";
 import { useFeedbackStore } from "@/store/feedbackStore";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { TypeProjectWithTasks } from "@/types";
+import FolderOpenOutlinedIcon from "@mui/icons-material/FolderOpenOutlined";
 
 interface IProps {
   openAddProject: boolean;
@@ -85,7 +86,9 @@ export function Projects({ openAddProject, toggleOpenAddProject }: IProps) {
       )}
       {projects && projects.length === 0 && !isLoading && (
         <div className="empty-state">
-          <span className="empty-state-mark">P</span>
+          <span className="empty-state-mark" aria-hidden="true">
+            <FolderOpenOutlinedIcon />
+          </span>
           <h3>{t("noProjectsFound")}</h3>
           <button
             type="button"

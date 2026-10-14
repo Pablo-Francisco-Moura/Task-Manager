@@ -18,6 +18,7 @@ import { useProjects, useTasks } from "@/hooks";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import AddIcon from "@mui/icons-material/Add";
 import ChecklistOutlinedIcon from "@mui/icons-material/ChecklistOutlined";
+import FolderOpenOutlinedIcon from "@mui/icons-material/FolderOpenOutlined";
 
 export function Tasks() {
   const setSelectedTab = useMainStore((s) => s.setSelectedTab);
@@ -170,7 +171,9 @@ export function Tasks() {
   if (projects && projects.length === 0) {
     return (
       <div className="empty-state">
-        <span className="empty-state-mark">P</span>
+        <span className="empty-state-mark" aria-hidden="true">
+          <FolderOpenOutlinedIcon />
+        </span>
         <h3>{t("noProjectsFound")}</h3>
         <button
           type="button"
@@ -263,7 +266,7 @@ export function Tasks() {
         </ul>
       ) : (
         <div className="empty-state task-empty-state">
-          <span className="empty-state-mark">
+          <span className="empty-state-mark" aria-hidden="true">
             <ChecklistOutlinedIcon />
           </span>
           <h3>{t("noTasks")}</h3>

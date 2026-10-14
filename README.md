@@ -178,14 +178,14 @@ Boa sorte no desafio! 🚀
 ## Minha checklist
 
 - [x] [1º Autoavaliação](docs/01-autoavaliacao.md)
-- [ ] [2º Improvements](docs/02-improvements.md)
+- [x] [2º Improvements](docs/02-improvements.md)
   - [x] API: validar tipos e limites dos dados, IDs positivos e padronizar erros
   - [x] API: compartilhar schemas entre validação e documentação OpenAPI
   - [x] Testes: exigir resultados específicos, isolar dados e cobrir a rota Next.js
   - [x] Interface: melhorar hierarquia visual, estados de tela, acessibilidade e responsividade
   - [x] Operação: adicionar CI, e health checks
   - [x] Operação: validar build e lint em produção e corrigir warnings/erros que bloqueiem a compilação
-  - [ ] Arquitetura: avaliar provedores de cliente e manter no servidor o que não exige interação
+  - [x] Arquitetura: avaliar provedores de cliente e manter no servidor o que não exige interação
 
-- [ ] 3º News
-  - [ ] Registrar novas ideias e evoluções
+- [ ] [3º News](docs/news.md)
+  - [ ] Validar o CI no GitHub Actions

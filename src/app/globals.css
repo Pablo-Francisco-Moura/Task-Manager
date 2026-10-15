@@ -15,6 +15,8 @@
   --brand-contrast: #ffffff;
   --brand-soft: #e8f0eb;
   --danger-text: #b53d35;
+  --scrollbar-thumb: #aab6ad;
+  --scrollbar-thumb-hover: #849389;
 }
 
 html.dark {
@@ -30,6 +32,34 @@ html.dark {
   --brand-contrast: #171e1b;
   --brand-soft: #2a3930;
   --danger-text: #ff9388;
+  --scrollbar-thumb: #526158;
+  --scrollbar-thumb-hover: #708176;
+}
+
+* {
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+  scrollbar-width: thin;
+}
+
+*::-webkit-scrollbar {
+  width: 1px;
+  height: 1px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: var(--scrollbar-thumb);
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+  background-clip: padding-box;
 }
 
 body {

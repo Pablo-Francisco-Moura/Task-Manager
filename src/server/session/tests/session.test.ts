@@ -1,6 +1,7 @@
 import {
   POST,
   GET as nextApiGet,
+  PATCH as nextApiPatch,
   DELETE as nextApiDelete,
 } from "@/app/api/[[...route]]/route";
 import { prisma } from "@/lib/prisma";
@@ -121,6 +122,19 @@ describe("Guest workspace session", () => {
     const project = await createResponse.json();
     expect(project.workspaceId).toBe(firstBody.workspaceId);
 
+    const taskCreateResponse = await POST(
+      apiRequest("task", firstCookie, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: "Private guest task",
+          projectId: project.id,
+        }),
+      }),
+    );
+    expect(taskCreateResponse.status).toBe(201);
+    const task = await taskCreateResponse.json();
+
     const secondSession = await POST(
       apiRequest("session/guest", undefined, { method: "POST" }),
     );
@@ -133,6 +147,43 @@ describe("Guest workspace session", () => {
     );
     expect(secondProjectsResponse.status).toBe(200);
     expect(await secondProjectsResponse.json()).toEqual([]);
+
+    const foreignTasksResponse = await nextApiGet(
+      apiRequest(`task?projectId=${project.id}`, secondCookie),
+    );
+    expect(foreignTasksResponse.status).toBe(404);
+
+    const foreignTaskCreate = await POST(
+      apiRequest("task", secondCookie, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: "Unauthorized task",
+          projectId: project.id,
+        }),
+      }),
+    );
+    expect(foreignTaskCreate.status).toBe(404);
+
+    const foreignTaskUpdate = await nextApiPatch(
+      apiRequest(`task/${task.id}`, secondCookie, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: "Unauthorized update" }),
+      }),
+    );
+    expect(foreignTaskUpdate.status).toBe(404);
+
+    const foreignTaskDelete = await nextApiDelete(
+      apiRequest(`task/${task.id}`, secondCookie, { method: "DELETE" }),
+    );
+    expect(foreignTaskDelete.status).toBe(404);
+    expect(
+      await prisma.task.findUnique({ where: { id: task.id } }),
+    ).toMatchObject({
+      name: "Private guest task",
+      projectId: project.id,
+    });
 
     const foreignProjectDelete = await nextApiDelete(
       apiRequest(`project/${project.id}`, secondCookie, { method: "DELETE" }),

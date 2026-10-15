@@ -102,7 +102,10 @@
     },
     "dueDate": {
       "label": "Prazo",
-      "overdue": "Atrasado"
+      "dateLabel": "Data",
+      "overdue": "Atrasado",
+      "timeLabel": "Hora",
+      "dateRequired": "Escolha uma data para o horário selecionado."
     },
     "board": "Quadro de tarefas",
     "dragHandle": "Mover {{name}}",

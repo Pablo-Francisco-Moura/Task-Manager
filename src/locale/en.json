@@ -102,7 +102,10 @@
     },
     "dueDate": {
       "label": "Due date",
-      "overdue": "Overdue"
+      "dateLabel": "Date",
+      "overdue": "Overdue",
+      "timeLabel": "Time",
+      "dateRequired": "Choose a date for the selected time."
     },
     "board": "Task board",
     "dragHandle": "Move {{name}}",

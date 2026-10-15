@@ -25,6 +25,10 @@
   "project": {
     "label": "Projeto",
     "name": "Nome do Projeto",
+    "count": {
+      "singular": "projeto",
+      "plural": "projetos"
+    },
     "description": "Descrição do projeto (opcional)",
     "enterDescription": "Adicione contexto para este projeto",
     "create": {

@@ -89,6 +89,12 @@
       "done": "Concluída",
       "updated": "Status da tarefa atualizado."
     },
+    "priority": {
+      "label": "Prioridade",
+      "low": "Baixa",
+      "normal": "Normal",
+      "high": "Alta"
+    },
     "board": "Quadro de tarefas",
     "dragHandle": "Mover {{name}}",
     "dragInstructions": "Foque o botão de mover da tarefa e pressione Espaço para selecioná-la. Use as setas para movê-la, Espaço para soltá-la ou Escape para cancelar.",

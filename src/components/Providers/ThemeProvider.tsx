@@ -1,9 +1,36 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, {
+  useState,
+  useEffect,
+  useContext,
+  createContext,
+  useLayoutEffect,
+} from "react";
+import type { TypeTheme } from "@/types";
+
+const useIsomorphicLayoutEffect =
+  typeof window === "undefined" ? useEffect : useLayoutEffect;
+
+function readStoredTheme(): TypeTheme {
+  try {
+    const savedTheme = window.localStorage.getItem("theme");
+    return savedTheme === "dark" || savedTheme === "light"
+      ? savedTheme
+      : "light";
+  } catch {
+    return "light";
+  }
+}
+
+function applyThemeClass(theme: TypeTheme) {
+  const root = document.documentElement;
+  root.classList.remove("light", "dark");
+  root.classList.add(theme);
+}
 
 interface IThemeContextProps {
-  theme: "light" | "dark";
+  theme: TypeTheme;
   toggleTheme: () => void;
 }
 
@@ -14,24 +41,26 @@ interface IThemeProviderProps {
 const ThemeContext = createContext<IThemeContextProps | undefined>(undefined);
 
 export const ThemeProvider = ({ children }: IThemeProviderProps) => {
-  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [theme, setTheme] = useState<TypeTheme>("light");
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  useEffect(() => {
-    const savedTheme = localStorage.getItem("theme");
-    if (
-      (savedTheme === "light" || savedTheme === "dark") &&
-      savedTheme !== theme
-    ) {
-      setTheme(savedTheme);
-      return;
+  useIsomorphicLayoutEffect(() => {
+    const initialTheme = readStoredTheme();
+    setTheme(initialTheme);
+    applyThemeClass(initialTheme);
+    setIsInitialized(true);
+  }, []);
+
+  useIsomorphicLayoutEffect(() => {
+    if (!isInitialized) return;
+
+    applyThemeClass(theme);
+    try {
+      window.localStorage.setItem("theme", theme);
+    } catch {
+      // Keep the in-memory theme usable when storage is unavailable.
     }
-
-    document.documentElement.classList.remove(
-      theme === "light" ? "dark" : "light",
-    );
-    document.documentElement.classList.add(theme);
-    localStorage.setItem("theme", theme);
-  }, [theme]);
+  }, [isInitialized, theme]);
 
   const toggleTheme = () =>
     setTheme((prev) => (prev === "light" ? "dark" : "light"));

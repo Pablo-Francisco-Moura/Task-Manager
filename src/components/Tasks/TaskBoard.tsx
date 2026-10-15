@@ -114,6 +114,7 @@ function SortableTaskCard({
             size="small"
             aria-label={t("task.dragHandle", { name: task.name })}
             disabled={isSaving}
+            disableRipple
           >
             <DragIndicatorIcon fontSize="small" />
           </IconButton>

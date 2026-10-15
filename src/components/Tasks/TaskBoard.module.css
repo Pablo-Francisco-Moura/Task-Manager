@@ -107,7 +107,7 @@
 
 .card {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: 2.25rem minmax(0, 1fr) auto;
   align-items: start;
   gap: 0.4rem;
   border: 1px solid var(--line);
@@ -152,9 +152,24 @@
 }
 
 .dragHandle {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  align-self: center;
+  justify-self: center;
+  place-items: center;
+  padding: 0;
   cursor: grab;
   touch-action: none;
   color: var(--muted);
+  transition:
+    color 140ms ease,
+    background-color 140ms ease;
+}
+
+.dragHandle:hover {
+  background: var(--brand-soft);
+  color: var(--accent);
 }
 
 .dragHandle:active {
@@ -170,6 +185,22 @@
   display: flex;
   align-items: flex-start;
   color: var(--muted);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 140ms ease;
+}
+
+.card:hover .cardActions,
+.card:focus-within .cardActions {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+@media (hover: none) {
+  .cardActions {
+    opacity: 1;
+    pointer-events: auto;
+  }
 }
 
 .cardActions :global(.MuiIconButton-root) {
@@ -192,7 +223,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .cards {
+  .cards,
+  .cardActions,
+  .dragHandle {
     transition: none;
   }
 }

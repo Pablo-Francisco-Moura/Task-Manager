@@ -170,6 +170,22 @@
   display: flex;
   flex: 0 0 auto;
   color: var(--muted);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 140ms ease;
+}
+
+.taskScreen :global(.task-row:hover .task-row-actions),
+.taskScreen :global(.task-row:focus-within .task-row-actions) {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+@media (hover: none) {
+  .taskScreen :global(.task-row-actions) {
+    opacity: 1;
+    pointer-events: auto;
+  }
 }
 
 .taskScreen :global(.task-row-actions .MuiIconButton-root) {
@@ -182,6 +198,12 @@
 
 .taskScreen :global(.task-empty-state) {
   margin-top: 1.5rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .taskScreen :global(.task-row-actions) {
+    transition: none;
+  }
 }
 
 @media (min-width: 900px) {

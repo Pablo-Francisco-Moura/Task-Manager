@@ -16,6 +16,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useTranslation } from "react-i18next";
+import { TaskPriorityBadge } from "@/components/TaskPriorityBadge";
 import { IconButton, Tooltip } from "@mui/material";
 import type { Task as TypeTask, TaskStatus } from "@prisma/client";
 import type { DragEndEvent, UniqueIdentifier } from "@dnd-kit/core";
@@ -111,6 +112,7 @@ function SortableTaskCard({
         </Tooltip>
         <div className={styles.cardCopy}>
           <h4 className={styles.cardTitle}>{task.name}</h4>
+          <TaskPriorityBadge priority={task.priority} />
           {task.description && (
             <p className={styles.cardDescription}>{task.description}</p>
           )}

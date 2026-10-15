@@ -6,6 +6,7 @@ import {
   FormControl,
 } from "@mui/material";
 import { useTranslation } from "react-i18next";
+import { TaskPriorityBadge } from "@/components/TaskPriorityBadge";
 import { Task as TypeTask, TaskStatus } from "@prisma/client";
 import React from "react";
 import EditIcon from "@mui/icons-material/Edit";
@@ -33,6 +34,7 @@ export function Task({
       <span className="task-position">{String(position).padStart(2, "0")}</span>
       <div className="task-copy">
         <span className="task-name">{task.name}</span>
+        <TaskPriorityBadge priority={task.priority} />
         {task.description && (
           <span className="task-description">{task.description}</span>
         )}

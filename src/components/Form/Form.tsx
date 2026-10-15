@@ -16,6 +16,12 @@ interface IProps<TFieldValues extends FieldValues & { name: string }> {
   register: UseFormRegister<TFieldValues>;
   onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
   onClose?: () => void;
+  priorityField?: {
+    label: string;
+    inputId: string;
+    options: Array<{ value: string; label: string }>;
+    defaultValue: string;
+  };
   descriptionField?: {
     label: string;
     inputId: string;
@@ -32,6 +38,7 @@ export function Form<TFieldValues extends FieldValues & { name: string }>({
   placeholder,
   submitLabel,
   isSubmitting,
+  priorityField,
   submitDisabled,
   descriptionField,
   onClose,
@@ -103,6 +110,32 @@ export function Form<TFieldValues extends FieldValues & { name: string }>({
             maxLength={descriptionField.maxLength}
             rows={4}
           />
+        </div>
+      )}
+
+      {priorityField && (
+        <div
+          className={`${styles.descriptionField} app-form-description-field`}
+        >
+          <label
+            htmlFor={priorityField.inputId}
+            className={`${styles.title} app-form-title`}
+          >
+            {priorityField.label}
+          </label>
+          <select
+            id={priorityField.inputId}
+            defaultValue={priorityField.defaultValue}
+            {...register("priority" as FieldPath<TFieldValues>)}
+            disabled={isSubmitting}
+            className={`${styles.input} app-form-input`}
+          >
+            {priorityField.options.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
         </div>
       )}
 

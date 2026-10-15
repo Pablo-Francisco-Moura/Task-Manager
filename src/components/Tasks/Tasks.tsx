@@ -16,6 +16,7 @@ import { useTranslation } from "react-i18next";
 import { useProjectStore } from "@/store/projectStore";
 import { useFeedbackStore } from "@/store/feedbackStore";
 import { useProjects, useTasks } from "@/hooks";
+import { normalizeTaskPriority } from "@/utils/taskPriority";
 import { MAX_DESCRIPTION_LENGTH } from "@/constants";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Task as TypeTask, TaskStatus } from "@prisma/client";
@@ -163,9 +164,13 @@ export function Tasks() {
     handleSubmit,
     reset,
     formState: { isSubmitting, isValid, errors },
-  } = useForm<{ name: string; description: string }>({
+  } = useForm<{
+    name: string;
+    description: string;
+    priority: TypeTask["priority"];
+  }>({
     mode: "onChange",
-    defaultValues: { name: "", description: "" },
+    defaultValues: { name: "", description: "", priority: "normal" },
   });
 
   // Handlers
@@ -187,7 +192,11 @@ export function Tasks() {
 
   const handleEditClick = (task: TypeTask) => {
     setEditTask(task);
-    reset({ name: task.name, description: task.description ?? "" });
+    reset({
+      name: task.name,
+      description: task.description ?? "",
+      priority: normalizeTaskPriority(task.priority),
+    });
     setOpenEditDialog(true);
   };
 
@@ -196,13 +205,18 @@ export function Tasks() {
     setEditTask(null);
   };
 
-  const onEditSubmit = async (data: { name: string; description: string }) => {
+  const onEditSubmit = async (data: {
+    name: string;
+    description: string;
+    priority: TypeTask["priority"];
+  }) => {
     if (editTask) {
       await updateMutation.mutateAsync({
         id: editTask.id,
         name: data.name,
         projectId: editTask.projectId,
         description: data.description,
+        priority: data.priority,
       });
     }
   };
@@ -393,6 +407,16 @@ export function Tasks() {
             label: t("task.description"),
             placeholder: t("task.enterDescription"),
             maxLength: MAX_DESCRIPTION_LENGTH,
+          }}
+          priorityField={{
+            inputId: `task-edit-priority-${editTask?.id ?? "pending"}`,
+            label: t("task.priority.label"),
+            defaultValue: editTask?.priority ?? "normal",
+            options: [
+              { value: "low", label: t("task.priority.low") },
+              { value: "normal", label: t("task.priority.normal") },
+              { value: "high", label: t("task.priority.high") },
+            ],
           }}
           isSubmitting={isSubmitting || updateMutation.isPending}
         />

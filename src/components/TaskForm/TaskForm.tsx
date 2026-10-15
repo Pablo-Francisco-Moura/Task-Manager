@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import { useFeedbackStore } from "@/store/feedbackStore";
 import { MAX_DESCRIPTION_LENGTH } from "@/constants";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import type { TaskPriority } from "@prisma/client";
 
 interface IProps {
   projectId: number;
@@ -15,6 +16,7 @@ interface IProps {
 
 interface ITaskFormInputs {
   name: string;
+  priority: TaskPriority;
   description: string;
 }
 
@@ -26,7 +28,7 @@ export function TaskForm({ projectId, onClose }: IProps) {
     handleSubmit,
   } = useForm<ITaskFormInputs>({
     mode: "onChange",
-    defaultValues: { name: "", description: "" },
+    defaultValues: { name: "", description: "", priority: "normal" },
   });
   const [error, setError] = useState<string | null>(null);
 
@@ -78,6 +80,16 @@ export function TaskForm({ projectId, onClose }: IProps) {
         label: t("task.description"),
         placeholder: t("task.enterDescription"),
         maxLength: MAX_DESCRIPTION_LENGTH,
+      }}
+      priorityField={{
+        inputId: "task-create-priority",
+        label: t("task.priority.label"),
+        defaultValue: "normal",
+        options: [
+          { value: "low", label: t("task.priority.low") },
+          { value: "normal", label: t("task.priority.normal") },
+          { value: "high", label: t("task.priority.high") },
+        ],
       }}
       isSubmitting={isSubmitting || mutation.isPending}
     />

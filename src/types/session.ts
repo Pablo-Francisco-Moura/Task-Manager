@@ -15,3 +15,5 @@ export type TypeAccountSessionState = {
 export type TypeGuestProfileState = {
   displayName: string;
 };
+
+export type TypeAccountDialogMode = "signIn" | "signUp";

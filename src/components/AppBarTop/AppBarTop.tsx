@@ -16,6 +16,11 @@ import {
   DialogActions,
   DialogContent,
 } from "@mui/material";
+import type {
+  TypeAccountDialogMode,
+  TypeGuestProfileState,
+  TypeAccountSessionState,
+} from "@/types";
 import {
   GUEST_PROFILE_STORAGE_KEY,
   ACCOUNT_IMPORT_STORAGE_KEY,
@@ -27,16 +32,13 @@ import { useTranslation } from "react-i18next";
 import { LOCAL_STORAGE_KEY } from "@/constants/localData";
 import { useEffect, useState } from "react";
 import { importLocalWorkspaceData } from "@/lib/localDataRepository";
-import type { TypeAccountSessionState, TypeGuestProfileState } from "@/types";
 import styles from "./AppBarTop.module.css";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import WorkspacesOutlinedIcon from "@mui/icons-material/WorkspacesOutlined";
 import AccountCircleOutlinedIcon from "@mui/icons-material/AccountCircleOutlined";
 
-type AccountDialogMode = "signIn" | "signUp";
-
 export function resolveAccountDialogContent(
-  mode: AccountDialogMode,
+  mode: TypeAccountDialogMode,
   t: (key: string) => string,
 ) {
   const isSignIn = mode === "signIn";
@@ -56,7 +58,7 @@ export function AppBarTop() {
   const [workspaceName, setWorkspaceName] = useState("");
   const [isCreateAccountOpen, setIsCreateAccountOpen] = useState(false);
   const [accountDialogMode, setAccountDialogMode] =
-    useState<AccountDialogMode>("signUp");
+    useState<TypeAccountDialogMode>("signUp");
   const accountDialogContent = resolveAccountDialogContent(accountDialogMode, t);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [profileAnchor, setProfileAnchor] = useState<HTMLElement | null>(null);
@@ -262,7 +264,7 @@ export function AppBarTop() {
     }
   };
 
-  const openCreateAccountDialog = (mode: AccountDialogMode = "signUp") => {
+  const openCreateAccountDialog = (mode: TypeAccountDialogMode = "signUp") => {
     setAccountDialogMode(mode);
     setDisplayName(
       accountSession?.displayName ||

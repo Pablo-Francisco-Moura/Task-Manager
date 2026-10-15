@@ -63,6 +63,7 @@ export function Toolbar({ openAddTask, onToggleAddTask }: IProps) {
       <FormControl className="task-project-select" sx={{ minWidth: 220 }}>
         <InputLabel
           id="task-project-select-label"
+          shrink
           sx={{
             color: "var(--muted)",
             "&.Mui-focused": { color: "var(--accent)" },
@@ -93,8 +94,11 @@ export function Toolbar({ openAddTask, onToggleAddTask }: IProps) {
             ".MuiOutlinedInput-notchedOutline": {
               borderColor: "var(--line)",
             },
-            "&:hover .MuiOutlinedInput-notchedOutline": {
+            "&:not(.Mui-disabled):hover .MuiOutlinedInput-notchedOutline": {
               borderColor: "var(--accent)",
+            },
+            "&.Mui-disabled .MuiOutlinedInput-notchedOutline": {
+              borderColor: "var(--line)",
             },
             "& .MuiSvgIcon-root": {
               color: "var(--foreground)",
@@ -106,7 +110,11 @@ export function Toolbar({ openAddTask, onToggleAddTask }: IProps) {
           }}
         >
           <MenuItem value="" disabled>
-            {isLoading ? t("project.loading") : t("project.select")}
+            {isLoading
+              ? t("project.loading")
+              : projects?.length === 0
+                ? t("project.noneAvailable")
+                : t("project.select")}
           </MenuItem>
           {projects &&
             projects.map((project: Project) => (

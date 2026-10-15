@@ -55,6 +55,7 @@
     "loadError": "Erro ao carregar projetos!",
     "loading": "Carregando projetos...",
     "empty": "Nenhum projeto encontrado!",
+    "noneAvailable": "Nenhum projeto disponível",
     "add": "Adicionar Projeto",
     "viewTasks": "Ver tarefas",
     "hideTasks": "Ocultar tarefas",

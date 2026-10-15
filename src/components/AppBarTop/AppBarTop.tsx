@@ -33,6 +33,20 @@ import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import WorkspacesOutlinedIcon from "@mui/icons-material/WorkspacesOutlined";
 import AccountCircleOutlinedIcon from "@mui/icons-material/AccountCircleOutlined";
 
+type AccountDialogMode = "signIn" | "signUp";
+
+export function resolveAccountDialogContent(
+  mode: AccountDialogMode,
+  t: (key: string) => string,
+) {
+  const isSignIn = mode === "signIn";
+
+  return {
+    title: isSignIn ? t("account.signIn.title") : t("account.create.title"),
+    submit: isSignIn ? t("account.signIn.submit") : t("account.create.submit"),
+  };
+}
+
 export function AppBarTop() {
   const { t, i18n } = useTranslation();
   const language = i18n.language.startsWith("en") ? "en" : "pt";
@@ -41,6 +55,9 @@ export function AppBarTop() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [workspaceName, setWorkspaceName] = useState("");
   const [isCreateAccountOpen, setIsCreateAccountOpen] = useState(false);
+  const [accountDialogMode, setAccountDialogMode] =
+    useState<AccountDialogMode>("signUp");
+  const accountDialogContent = resolveAccountDialogContent(accountDialogMode, t);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [profileAnchor, setProfileAnchor] = useState<HTMLElement | null>(null);
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
@@ -245,7 +262,8 @@ export function AppBarTop() {
     }
   };
 
-  const openCreateAccountDialog = () => {
+  const openCreateAccountDialog = (mode: AccountDialogMode = "signUp") => {
+    setAccountDialogMode(mode);
     setDisplayName(
       accountSession?.displayName ||
         guestProfile.displayName ||
@@ -274,6 +292,7 @@ export function AppBarTop() {
   const closeCreateAccountDialog = () => {
     setIsCreateAccountOpen(false);
     setSubmitError(null);
+    setAccountDialogMode("signUp");
   };
 
   const handleCreateAccount = async () => {
@@ -368,13 +387,22 @@ export function AppBarTop() {
                 variant="outlined"
               />
             ) : (
-              <Button
-                size="small"
-                variant="outlined"
-                onClick={openCreateAccountDialog}
-              >
-                {t("account.create.button")}
-              </Button>
+              <Stack direction="row" spacing={1}>
+                <Button
+                  size="small"
+                  variant="text"
+                  onClick={() => openCreateAccountDialog("signIn")}
+                >
+                  {t("account.signIn.button")}
+                </Button>
+                <Button
+                  size="small"
+                  variant="contained"
+                  onClick={() => openCreateAccountDialog("signUp")}
+                >
+                  {t("account.create.button")}
+                </Button>
+              </Stack>
             )}
             <ButtonGroup size="small" aria-label={t("app.language")}>
               <Button
@@ -412,7 +440,7 @@ export function AppBarTop() {
         fullWidth
         maxWidth="sm"
       >
-        <DialogTitle>{t("account.create.title")}</DialogTitle>
+        <DialogTitle>{accountDialogContent.title}</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ pt: 1 }}>
             <TextField
@@ -467,7 +495,7 @@ export function AppBarTop() {
             onClick={handleCreateAccount}
             disabled={isSubmitting}
           >
-            {isSubmitting ? t("common.saving") : t("account.create.submit")}
+            {isSubmitting ? t("common.saving") : accountDialogContent.submit}
           </Button>
         </DialogActions>
       </Dialog>
@@ -536,14 +564,24 @@ export function AppBarTop() {
           ) : null}
         </Box>
         {!accountSession ? (
-          <MenuItem
-            onClick={() => {
-              setProfileAnchor(null);
-              openCreateAccountDialog();
-            }}
-          >
-            {t("account.create.button")}
-          </MenuItem>
+          <>
+            <MenuItem
+              onClick={() => {
+                setProfileAnchor(null);
+                openCreateAccountDialog("signIn");
+              }}
+            >
+              {t("account.signIn.button")}
+            </MenuItem>
+            <MenuItem
+              onClick={() => {
+                setProfileAnchor(null);
+                openCreateAccountDialog("signUp");
+              }}
+            >
+              {t("account.create.button")}
+            </MenuItem>
+          </>
         ) : null}
       </Menu>
 

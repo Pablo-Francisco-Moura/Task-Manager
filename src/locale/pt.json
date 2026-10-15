@@ -35,6 +35,11 @@
     "editTitle": "Editar perfil"
   },
   "account": {
+    "signIn": {
+      "button": "Entrar",
+      "title": "Entrar na sua conta",
+      "submit": "Entrar"
+    },
     "create": {
       "button": "Criar conta",
       "title": "Crie sua conta",

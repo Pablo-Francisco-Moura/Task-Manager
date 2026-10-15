@@ -19,37 +19,38 @@
 }
 
 .badge[data-priority="high"] {
-  --priority-ink: #a62e2e;
-  --priority-tint: #fff0ed;
-  --priority-line: #e9aaa2;
+  --priority-ink: #8c0e05;
+  --priority-tint: #ffeded;
+  --priority-line: #f57d7d;
 }
 
 .badge[data-priority="normal"] {
-  --priority-ink: #805b08;
-  --priority-tint: #fff6d9;
-  --priority-line: #e2c66d;
+  --priority-ink: #ffa600;
+  --priority-tint: #fff7e8;
+  --priority-line: #f2ad42;
+  font-weight: 800;
 }
 
 .badge[data-priority="low"] {
-  --priority-ink: #35647c;
-  --priority-tint: #edf5f8;
-  --priority-line: #b5d0dc;
+  --priority-ink: #c7c227;
+  --priority-tint: #fff7cc;
+  --priority-line: #efcc3f;
 }
 
 :global(html.dark) .badge[data-priority="high"] {
-  --priority-ink: #ffaaa0;
-  --priority-tint: #402724;
-  --priority-line: #804841;
+  --priority-ink: #ff8585;
+  --priority-tint: #442424;
+  --priority-line: #9b4c4c;
 }
 
 :global(html.dark) .badge[data-priority="normal"] {
-  --priority-ink: #f0d17e;
-  --priority-tint: #3b321e;
-  --priority-line: #796538;
+  --priority-ink: #ffc266;
+  --priority-tint: #43321b;
+  --priority-line: #9b6b2b;
 }
 
 :global(html.dark) .badge[data-priority="low"] {
-  --priority-ink: #a6d0e2;
-  --priority-tint: #20333b;
-  --priority-line: #426575;
+  --priority-ink: #f0d77c;
+  --priority-tint: #3c351e;
+  --priority-line: #776639;
 }

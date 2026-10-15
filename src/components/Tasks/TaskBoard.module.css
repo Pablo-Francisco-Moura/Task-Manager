@@ -18,27 +18,27 @@
 }
 
 .column[data-status="todo"] {
-  --column-accent: #956014;
-  --column-tint: #fbf3e4;
-  --column-line: #dfc18a;
+  --column-accent: #73449c;
+  --column-tint: #f2ebfc;
+  --column-line: #c4a9e8;
 }
 
 .column[data-status="in_progress"] {
-  --column-accent: #28688c;
+  --column-accent: #2c44ae;
   --column-tint: #eaf4fa;
   --column-line: #a6ccdf;
 }
 
 .column[data-status="done"] {
-  --column-accent: #2e7049;
+  --column-accent: #25862a;
   --column-tint: #eaf4ed;
   --column-line: #a8d0b2;
 }
 
 :global(html.dark) .column[data-status="todo"] {
-  --column-accent: #edbd63;
-  --column-tint: #3b3020;
-  --column-line: #78613a;
+  --column-accent: #c6a6ff;
+  --column-tint: #332747;
+  --column-line: #70558e;
 }
 
 :global(html.dark) .column[data-status="in_progress"] {

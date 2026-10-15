@@ -122,9 +122,9 @@
 }
 
 .taskScreen :global(.task-status-control[data-status="todo"]) {
-  --task-status-label: #815700;
-  --task-status-tint: #fff4d6;
-  --task-status-line: #d8b252;
+  --task-status-label: #68449c;
+  --task-status-tint: #f2ebfc;
+  --task-status-line: #c4a9e8;
 }
 
 .taskScreen :global(.task-status-control[data-status="in_progress"]) {
@@ -211,9 +211,9 @@
 :global(html.dark)
   .taskScreen
   :global(.task-status-control[data-status="todo"]) {
-  --task-status-label: #f0ca7a;
-  --task-status-tint: #38301e;
-  --task-status-line: #806b3f;
+  --task-status-label: #c6a6ff;
+  --task-status-tint: #332747;
+  --task-status-line: #70558e;
 }
 
 :global(html.dark)

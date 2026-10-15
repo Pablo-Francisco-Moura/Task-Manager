@@ -7,6 +7,7 @@ const nameSchema = z.string().min(1).max(MAX_NAME_LENGTH).regex(/\S/);
 const projectIdSchema = z.int().positive();
 const taskStatusSchema = z.enum(["todo", "in_progress", "done"]);
 const taskPrioritySchema = z.enum(["low", "normal", "high"]);
+const taskDueDateSchema = z.iso.date().nullable().optional();
 const descriptionSchema = z
   .string()
   .max(MAX_DESCRIPTION_LENGTH)
@@ -25,6 +26,7 @@ export const taskCreateSchema = z.strictObject({
   name: nameSchema,
   status: taskStatusSchema.optional(),
   priority: taskPrioritySchema.optional(),
+  dueDate: taskDueDateSchema,
   projectId: projectIdSchema,
   description: descriptionSchema,
 });
@@ -32,6 +34,7 @@ export const taskUpdateSchema = z.strictObject({
   name: nameSchema.optional(),
   status: taskStatusSchema.optional(),
   priority: taskPrioritySchema.optional(),
+  dueDate: taskDueDateSchema,
   projectId: projectIdSchema.optional(),
   description: descriptionSchema,
 });

@@ -35,6 +35,7 @@ model Task {
   id          Int          @id @default(autoincrement())
   name        String
   description String?
+  dueDate     DateTime?    @db.Date
   status      TaskStatus   @default(todo)
   priority    TaskPriority @default(normal)
   position    Int          @default(0)

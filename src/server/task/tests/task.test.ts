@@ -25,6 +25,7 @@ describe("Task API", () => {
     [{ name: "Task", projectId: 1, description: "x".repeat(2001) }],
     [{ name: "Task", projectId: 1, status: "blocked" }],
     [{ name: "Task", projectId: 1, priority: "urgent" }],
+    [{ name: "Task", projectId: 1, dueDate: "2026-02-30" }],
     [{ name: "Task", projectId: 1, unexpected: true }],
     [{ name: "x".repeat(201), projectId: 1 }],
   ])("should reject invalid task payloads: %o", async (body) => {
@@ -46,6 +47,7 @@ describe("Task API", () => {
     { description: "x".repeat(2001) },
     { status: "blocked" },
     { priority: "urgent" },
+    { dueDate: "2026-02-30" },
     { name: "Task", extra: true },
     { name: "x".repeat(201) },
   ])("should reject invalid task updates: %o", async (body) => {
@@ -85,6 +87,7 @@ describe("Task API", () => {
           name: "Task through Next",
           status: "in_progress",
           priority: "high",
+          dueDate: "2026-11-24",
           projectId: project.id,
           description: "Created through the Next route",
         }),
@@ -97,6 +100,7 @@ describe("Task API", () => {
       name: "Task through Next",
       status: "in_progress",
       priority: "high",
+      dueDate: "2026-11-24T00:00:00.000Z",
       projectId: project.id,
       description: "Created through the Next route",
     });
@@ -219,6 +223,54 @@ describe("Task API", () => {
       projectId: project.id,
       description: mockTask.description,
     });
+  });
+
+  test("should create a task without a due date", async () => {
+    const project = await prisma.project.create({
+      data: { name: "No due date" },
+    });
+    const response = await app.request("/tasks", {
+      method: "POST",
+      body: JSON.stringify({
+        name: "Task without due date",
+        projectId: project.id,
+      }),
+      headers: { "Content-Type": "application/json" },
+    });
+
+    expect(response.status).toBe(201);
+    expect(await response.json()).toMatchObject({ dueDate: null });
+  });
+
+  test("should update and clear a task due date", async () => {
+    const project = await prisma.project.create({
+      data: { name: "Due date update" },
+    });
+    const task = await prisma.task.create({
+      data: {
+        name: "Task with due date",
+        dueDate: new Date("2026-11-24T00:00:00.000Z"),
+        projectId: project.id,
+      },
+    });
+
+    const updateResponse = await app.request(`/tasks/${task.id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ dueDate: "2026-12-01" }),
+      headers: { "Content-Type": "application/json" },
+    });
+    expect(updateResponse.status).toBe(200);
+    expect(await updateResponse.json()).toMatchObject({
+      dueDate: "2026-12-01T00:00:00.000Z",
+    });
+
+    const clearResponse = await app.request(`/tasks/${task.id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ dueDate: null }),
+      headers: { "Content-Type": "application/json" },
+    });
+    expect(clearResponse.status).toBe(200);
+    expect(await clearResponse.json()).toMatchObject({ dueDate: null });
   });
 
   test("should append a newly created task to its status column", async () => {

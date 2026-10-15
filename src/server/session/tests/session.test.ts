@@ -39,6 +39,9 @@ describe("Guest workspace session", () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          email: "ana@example.com",
+          username: "ana",
+          password: "supersecret",
           displayName: "Ana",
           workspaceName: "Estudos",
         }),
@@ -57,7 +60,13 @@ describe("Guest workspace session", () => {
     });
 
     expect(body).toMatchObject({
-      user: { id: session.userId, kind: "account", displayName: "Ana" },
+      user: {
+        id: session.userId,
+        kind: "account",
+        displayName: "Ana",
+        username: "ana",
+        email: "ana@example.com",
+      },
       workspaceId: session.workspaceId,
       workspaceName: "Estudos",
     });
@@ -108,6 +117,62 @@ describe("Guest workspace session", () => {
     expect(session.tokenHash).not.toBe(token);
     expect(response.headers.get("set-cookie")).toContain("HttpOnly");
     expect(response.headers.get("set-cookie")).toContain("SameSite=Lax");
+  });
+
+  test("should sign in with the saved account credentials", async () => {
+    const signup = await POST(
+      apiRequest("session/account", undefined, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          displayName: "Ana",
+          username: "ana",
+          email: "ana@example.com",
+          password: "supersecret",
+          workspaceName: "Estudos",
+        }),
+      }),
+    );
+
+    expect(signup.status).toBe(201);
+
+    const signin = await POST(
+      apiRequest("session/sign-in", undefined, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          identifier: "ana",
+          password: "supersecret",
+        }),
+      }),
+    );
+
+    expect(signin.status).toBe(200);
+    expect(await signin.json()).toMatchObject({
+      user: {
+        email: "ana@example.com",
+        displayName: "Ana",
+        kind: "account",
+      },
+      workspaceName: "Estudos",
+    });
+    const signinCookie = cookieFrom(signin);
+    const authenticatedWorkspaces = await nextApiGet(
+      apiRequest("session/workspace", signinCookie),
+    );
+    expect(authenticatedWorkspaces.status).toBe(200);
+
+    const emailSignin = await POST(
+      apiRequest("session/sign-in", undefined, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          identifier: "ana@example.com",
+          password: "supersecret",
+        }),
+      }),
+    );
+    expect(emailSignin.status).toBe(200);
   });
 
   test("should list and create additional workspaces for the account session", async () => {
@@ -171,6 +236,49 @@ describe("Guest workspace session", () => {
       ]),
     );
   });
+
+  test("should create an account without email by upgrading the guest workspace", async () => {
+    const guestResponse = await POST(
+      apiRequest("session/guest", undefined, { method: "POST" }),
+    );
+    const guestCookie = cookieFrom(guestResponse);
+    const guestSession = await guestResponse.json();
+
+    const signup = await POST(
+      apiRequest("session/account", guestCookie, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: "pablo.moura",
+          password: "supersecret",
+        }),
+      }),
+    );
+
+    expect(signup.status).toBe(200);
+    expect(await signup.json()).toMatchObject({
+      user: {
+        username: "pablo.moura",
+        email: null,
+        kind: "account",
+      },
+      workspaceId: guestSession.workspaceId,
+    });
+    expect(signup.headers.get("set-cookie")).toContain("account_session=");
+
+    const signin = await POST(
+      apiRequest("session/sign-in", undefined, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          identifier: "pablo.moura",
+          password: "supersecret",
+        }),
+      }),
+    );
+    expect(signin.status).toBe(200);
+  });
+
   test("should reuse and extend a valid guest session cookie", async () => {
     const first = await POST(
       apiRequest("session/guest", undefined, { method: "POST" }),

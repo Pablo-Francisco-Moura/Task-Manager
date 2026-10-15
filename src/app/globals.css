@@ -83,11 +83,6 @@ body {
   font-family: "Avenir Next", Avenir, "Segoe UI", sans-serif;
 }
 
-html.dark .MuiDialog-paper {
-  background-color: var(--surface);
-  color: var(--foreground);
-}
-
 :where(
   button,
   a,

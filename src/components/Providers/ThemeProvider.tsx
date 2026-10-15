@@ -1,12 +1,15 @@
 "use client";
 
 import React, {
+  useMemo,
   useState,
   useEffect,
   useContext,
   createContext,
   useLayoutEffect,
 } from "react";
+import { createMuiTheme } from "./createMuiTheme";
+import { ThemeProvider as MuiThemeProvider } from "@mui/material/styles";
 import type { TypeTheme } from "@/types";
 
 const useIsomorphicLayoutEffect =
@@ -33,7 +36,6 @@ interface IThemeContextProps {
   theme: TypeTheme;
   toggleTheme: () => void;
 }
-
 interface IThemeProviderProps {
   children: React.ReactNode;
 }
@@ -43,6 +45,7 @@ const ThemeContext = createContext<IThemeContextProps | undefined>(undefined);
 export const ThemeProvider = ({ children }: IThemeProviderProps) => {
   const [theme, setTheme] = useState<TypeTheme>("light");
   const [isInitialized, setIsInitialized] = useState(false);
+  const muiTheme = useMemo(() => createMuiTheme(theme), [theme]);
 
   useIsomorphicLayoutEffect(() => {
     const initialTheme = readStoredTheme();
@@ -67,7 +70,7 @@ export const ThemeProvider = ({ children }: IThemeProviderProps) => {
 
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme }}>
-      {children}
+      <MuiThemeProvider theme={muiTheme}>{children}</MuiThemeProvider>
     </ThemeContext.Provider>
   );
 };

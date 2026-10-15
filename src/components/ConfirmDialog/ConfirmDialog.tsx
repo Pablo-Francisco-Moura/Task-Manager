@@ -45,12 +45,6 @@ export function ConfirmDialog({
       open={open}
       onClose={isLoading ? undefined : onClose}
       slotProps={{
-        paper: {
-          sx: {
-            color: "var(--foreground)",
-            backgroundColor: "var(--surface)",
-          },
-        },
         transition: {
           onEntered: () => cancelButtonRef.current?.focus(),
         },

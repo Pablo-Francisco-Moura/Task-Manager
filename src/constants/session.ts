@@ -4,6 +4,8 @@ export const ACCOUNT_SESSION_COOKIE_NAME = "account_session";
 
 export const ACCOUNT_SESSION_STORAGE_KEY = "account_session_state";
 
+export const ACCOUNT_IMPORT_STORAGE_KEY = "account_import_state";
+
 export const GUEST_PROFILE_STORAGE_KEY = "guest_profile_state";
 
 export const GUEST_SESSION_TTL_SECONDS = 60 * 60 * 24 * 30;

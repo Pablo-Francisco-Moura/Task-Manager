@@ -46,7 +46,12 @@
     "workspaceName": "Workspace name",
     "workspacePlaceholder": "e.g. Personal",
     "suggestions": "Workspace suggestions",
-    "workspaceDefault": "Personal"
+    "workspaceDefault": "Personal",
+    "import": {
+      "title": "Import local data",
+      "description": "You already have projects and tasks saved locally. Would you like to import this data into your account workspace?",
+      "submit": "Import now"
+    }
   },
   "project": {
     "label": "Project",

@@ -2,28 +2,31 @@
 
 import {
   Box,
-  Button,
-  ButtonGroup,
   Chip,
   Menu,
   Stack,
+  Button,
   Dialog,
   MenuItem,
   TextField,
   IconButton,
   Typography,
+  ButtonGroup,
   DialogTitle,
   DialogActions,
   DialogContent,
 } from "@mui/material";
 import {
   GUEST_PROFILE_STORAGE_KEY,
+  ACCOUNT_IMPORT_STORAGE_KEY,
   ACCOUNT_SESSION_STORAGE_KEY,
   ACCOUNT_WORKSPACE_SUGGESTIONS,
 } from "@/constants/session";
 import { ThemeSwitch } from "../ThemeSwitch";
 import { useTranslation } from "react-i18next";
+import { LOCAL_STORAGE_KEY } from "@/constants/localData";
 import { useEffect, useState } from "react";
+import { importLocalWorkspaceData } from "@/lib/localDataRepository";
 import type { TypeAccountSessionState, TypeGuestProfileState } from "@/types";
 import styles from "./AppBarTop.module.css";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
@@ -38,6 +41,7 @@ export function AppBarTop() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [workspaceName, setWorkspaceName] = useState("");
   const [isCreateAccountOpen, setIsCreateAccountOpen] = useState(false);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [profileAnchor, setProfileAnchor] = useState<HTMLElement | null>(null);
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const [guestProfile, setGuestProfile] = useState<TypeGuestProfileState>({
@@ -46,6 +50,62 @@ export function AppBarTop() {
   const [editedProfileName, setEditedProfileName] = useState("");
   const [accountSession, setAccountSession] =
     useState<TypeAccountSessionState | null>(null);
+
+  useEffect(() => {
+    try {
+      const savedProfile = window.localStorage.getItem(GUEST_PROFILE_STORAGE_KEY);
+      if (!savedProfile) return;
+
+      const parsedProfile = JSON.parse(savedProfile) as Partial<TypeGuestProfileState>;
+      setGuestProfile({
+        displayName:
+          typeof parsedProfile.displayName === "string"
+            ? parsedProfile.displayName.trim()
+            : "",
+      });
+    } catch {
+      setGuestProfile({ displayName: "" });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!accountSession) {
+      setIsImportDialogOpen(false);
+      return;
+    }
+
+    try {
+      const savedImportState = window.localStorage.getItem(
+        ACCOUNT_IMPORT_STORAGE_KEY,
+      );
+      if (savedImportState) {
+        return;
+      }
+
+      const savedWorkspaceData = window.localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (!savedWorkspaceData) {
+        return;
+      }
+
+      const parsedWorkspaceData = JSON.parse(savedWorkspaceData) as {
+        projects?: Array<unknown>;
+        tasks?: Array<unknown>;
+      };
+
+      const hasLocalWorkspaceData =
+        Array.isArray(parsedWorkspaceData.projects) &&
+        parsedWorkspaceData.projects.length > 0
+          ? true
+          : Array.isArray(parsedWorkspaceData.tasks) &&
+            parsedWorkspaceData.tasks.length > 0;
+
+      if (hasLocalWorkspaceData) {
+        setIsImportDialogOpen(true);
+      }
+    } catch {
+      setIsImportDialogOpen(false);
+    }
+  }, [accountSession]);
 
   useEffect(() => {
     try {
@@ -76,23 +136,104 @@ export function AppBarTop() {
       setAccountSession(null);
     }
   }, []);
-  useEffect(() => {
-    try {
-      const savedProfile = window.localStorage.getItem(GUEST_PROFILE_STORAGE_KEY);
-      if (!savedProfile) return;
 
-      const parsedProfile = JSON.parse(savedProfile) as Partial<TypeGuestProfileState>;
-      setGuestProfile({
-        displayName:
-          typeof parsedProfile.displayName === "string"
-            ? parsedProfile.displayName.trim()
-            : "",
-      });
-    } catch {
-      setGuestProfile({ displayName: "" });
+  const importLocalWorkspaceIntoAccount = async () => {
+    const savedWorkspaceData = window.localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (!savedWorkspaceData) {
+      return { projectCount: 0, taskCount: 0 };
     }
-  }, []);
 
+    const result = await importLocalWorkspaceData({
+      createProject: async ({ name, description }) => {
+        const response = await fetch("/api/project", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "same-origin",
+          body: JSON.stringify({
+            name,
+            description,
+          }),
+        });
+
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(
+            typeof payload?.error === "string"
+              ? payload.error
+              : t("account.create.error"),
+          );
+        }
+
+        const projectId = Number(payload.id);
+        if (!Number.isFinite(projectId)) {
+          throw new Error(t("account.create.error"));
+        }
+
+        return { id: projectId };
+      },
+      createTask: async ({
+        name,
+        projectId,
+        description,
+        dueDate,
+        dueAt,
+        status,
+        priority,
+      }) => {
+        const response = await fetch("/api/task", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "same-origin",
+          body: JSON.stringify({
+            name,
+            projectId,
+            description,
+            dueDate: dueDate ? dueDate.toISOString().slice(0, 10) : undefined,
+            dueAt: dueAt ? dueAt.toISOString() : undefined,
+            status,
+            priority,
+          }),
+        });
+
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(
+            typeof payload?.error === "string"
+              ? payload.error
+              : t("account.create.error"),
+          );
+        }
+
+        return payload;
+      },
+    });
+
+    return result;
+  };
+
+  const closeImportDialog = async (nextStatus?: "imported" | "dismissed") => {
+    if (nextStatus === "imported") {
+      try {
+        await importLocalWorkspaceIntoAccount();
+      } catch {
+        return;
+      }
+    }
+
+    setIsImportDialogOpen(false);
+
+    try {
+      window.localStorage.setItem(
+        ACCOUNT_IMPORT_STORAGE_KEY,
+        JSON.stringify({
+          status: nextStatus ?? "dismissed",
+          updatedAt: new Date().toISOString(),
+        }),
+      );
+    } catch {
+      // Keep the flow in memory when local storage is unavailable.
+    }
+  };
 
   const selectLanguage = (nextLanguage: "pt" | "en") => {
     void i18n.changeLanguage(nextLanguage);
@@ -331,6 +472,30 @@ export function AppBarTop() {
         </DialogActions>
       </Dialog>
 
+      <Dialog
+        open={isImportDialogOpen}
+        onClose={() => void closeImportDialog("dismissed")}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>{t("account.import.title")}</DialogTitle>
+        <DialogContent>
+          <Typography variant="body1">
+            {t("account.import.description")}
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => void closeImportDialog("dismissed")}>
+            {t("common.cancel")}
+          </Button>
+          <Button
+            variant="contained"
+            onClick={() => void closeImportDialog("imported")}
+          >
+            {t("account.import.submit")}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Menu
         anchorEl={profileAnchor}

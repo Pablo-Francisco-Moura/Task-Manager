@@ -168,7 +168,8 @@
 }
 
 .taskScreen :global(.task-form-surface) {
-  width: min(34rem, 100%);
+  width: fit-content;
+  max-width: 100%;
   margin: 1.25rem auto 0;
 }
 

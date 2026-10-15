@@ -6,9 +6,51 @@ import {
 } from "@/constants/session";
 import { Hono } from "hono";
 import { prisma } from "@/lib/prisma";
-import { randomBytes } from "node:crypto";
 import { hashSessionToken } from "./session";
 import { getCookie, setCookie } from "hono/cookie";
+import { randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
+
+function hashPassword(password: string): string {
+  const salt = randomBytes(16).toString("hex");
+  const hash = scryptSync(password, salt, 64).toString("hex");
+  return `${salt}:${hash}`;
+}
+
+function verifyPassword(password: string, storedHash: string | null): boolean {
+  if (!storedHash) return false;
+
+  const [salt, expectedHash] = storedHash.split(":");
+  if (!salt || !expectedHash) return false;
+
+  const actualHash = scryptSync(password, salt, 64);
+  const expectedBuffer = Buffer.from(expectedHash, "hex");
+  return (
+    actualHash.length === expectedBuffer.length &&
+    timingSafeEqual(actualHash, expectedBuffer)
+  );
+}
+
+function parseEmail(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+
+  const normalizedEmail = value.trim().toLowerCase();
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)
+    ? normalizedEmail
+    : null;
+}
+
+function parseUsername(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+
+  const username = value.trim().toLowerCase();
+  return /^[a-z0-9._-]{3,32}$/.test(username) ? username : null;
+}
+
+function parsePassword(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+
+  return value.length >= 6 ? value : null;
+}
 
 const sessionRoutes = new Hono();
 
@@ -147,18 +189,124 @@ sessionRoutes.post("/workspace", async (context) => {
     201,
   );
 });
+
+sessionRoutes.post("/sign-in", async (context) => {
+  const body = await context.req.json().catch(() => ({}));
+  const identifier =
+    typeof body.identifier === "string"
+      ? body.identifier.trim().toLowerCase()
+      : "";
+  const password = parsePassword(body.password);
+
+  if (!identifier || !password) {
+    return context.json(
+      { error: "Username or email and password are required" },
+      400,
+    );
+  }
+
+  const user = await prisma.user.findFirst({
+    where: { OR: [{ username: identifier }, { email: identifier }] },
+    select: {
+      id: true,
+      displayName: true,
+      username: true,
+      email: true,
+      passwordHash: true,
+      kind: true,
+    },
+  });
+
+  if (!user || user.kind !== "account") {
+    return context.json({ error: "Invalid credentials" }, 401);
+  }
+
+  if (!verifyPassword(password, user.passwordHash)) {
+    return context.json({ error: "Invalid credentials" }, 401);
+  }
+
+  const now = new Date();
+  const workspaceMembership = await prisma.workspaceMember.findFirst({
+    where: { userId: user.id },
+    include: { workspace: { select: { id: true, name: true } } },
+    orderBy: { joinedAt: "asc" },
+  });
+
+  const accountToken = randomBytes(32).toString("base64url");
+  const tokenHash = hashSessionToken(accountToken);
+  const accountWorkspace =
+    workspaceMembership?.workspace ??
+    (await prisma.$transaction(async (transaction) => {
+      const createdWorkspace = await transaction.workspace.create({
+        data: {
+          name: "Pessoal",
+          kind: "personal",
+          members: { create: { userId: user.id, role: "owner" } },
+        },
+      });
+      return createdWorkspace;
+    }));
+
+  await prisma.session.create({
+    data: {
+      tokenHash,
+      userId: user.id,
+      workspaceId: accountWorkspace.id,
+      expiresAt: new Date(now.getTime() + ACCOUNT_SESSION_TTL_SECONDS * 1000),
+      lastSeenAt: now,
+    },
+  });
+
+  setAccountCookie(context, accountToken);
+  return context.json(
+    {
+      user: {
+        id: user.id,
+        displayName: user.displayName,
+        kind: user.kind,
+        email: user.email,
+      },
+      workspaceId: accountWorkspace.id,
+      workspaceName: accountWorkspace.name,
+    },
+    200,
+  );
+});
+
 sessionRoutes.post("/account", async (context) => {
   const now = new Date();
-  const providedToken = getCookie(context, ACCOUNT_SESSION_COOKIE_NAME);
+  const providedToken =
+    getCookie(context, ACCOUNT_SESSION_COOKIE_NAME) ??
+    getCookie(context, GUEST_SESSION_COOKIE_NAME);
   const body = await context.req.json().catch(() => ({}));
+  const username = parseUsername(body.username);
+  const email =
+    body.email == null || body.email === "" ? null : parseEmail(body.email);
+  const password = parsePassword(body.password);
   const displayName =
     typeof body.displayName === "string" && body.displayName.trim()
       ? body.displayName.trim()
-      : "Usuário";
+      : (username ?? "Usuário");
   const workspaceName =
     typeof body.workspaceName === "string" && body.workspaceName.trim()
       ? body.workspaceName.trim()
       : "Pessoal";
+
+  if (!username || !password || (body.email && !email)) {
+    return context.json(
+      { error: "A valid username and password are required" },
+      400,
+    );
+  }
+
+  const existingUser = await prisma.user.findFirst({
+    where: {
+      OR: [{ username }, ...(email ? [{ email }] : [])],
+    },
+  });
+  if (existingUser) {
+    return context.json({ error: "Username or email already in use" }, 409);
+  }
 
   if (providedToken) {
     const tokenHash = hashSessionToken(providedToken);
@@ -169,7 +317,9 @@ sessionRoutes.post("/account", async (context) => {
         revokedAt: null,
       },
       include: {
-        user: { select: { id: true, displayName: true, kind: true } },
+        user: {
+          select: { id: true, displayName: true, username: true, kind: true },
+        },
       },
     });
 
@@ -184,6 +334,13 @@ sessionRoutes.post("/account", async (context) => {
         select: { workspaceId: true },
       });
       if (membership) {
+        if (existingSession.user.kind !== "guest") {
+          return context.json(
+            { error: "This session already belongs to an account" },
+            409,
+          );
+        }
+
         const expiresAt = new Date(
           now.getTime() + ACCOUNT_SESSION_TTL_SECONDS * 1000,
         );
@@ -191,13 +348,33 @@ sessionRoutes.post("/account", async (context) => {
           where: { id: existingSession.workspaceId },
           select: { name: true },
         });
-        await prisma.session.update({
-          where: { id: existingSession.id },
-          data: { lastSeenAt: now, expiresAt },
+        const user = await prisma.$transaction(async (transaction) => {
+          const upgradedUser = await transaction.user.update({
+            where: { id: existingSession.user.id },
+            data: {
+              displayName,
+              username,
+              email,
+              passwordHash: hashPassword(password),
+              kind: "account",
+            },
+            select: {
+              id: true,
+              displayName: true,
+              username: true,
+              email: true,
+              kind: true,
+            },
+          });
+          await transaction.session.update({
+            where: { id: existingSession.id },
+            data: { lastSeenAt: now, expiresAt },
+          });
+          return upgradedUser;
         });
         setAccountCookie(context, providedToken);
         return context.json({
-          user: existingSession.user,
+          user,
           workspaceId: existingSession.workspaceId,
           workspaceName: workspace?.name ?? "Pessoal",
         });
@@ -212,7 +389,13 @@ sessionRoutes.post("/account", async (context) => {
   );
   const account = await prisma.$transaction(async (transaction) => {
     const user = await transaction.user.create({
-      data: { displayName, kind: "account" },
+      data: {
+        displayName,
+        username,
+        email,
+        passwordHash: hashPassword(password),
+        kind: "account",
+      },
     });
     const workspace = await transaction.workspace.create({
       data: {
@@ -234,7 +417,13 @@ sessionRoutes.post("/account", async (context) => {
     });
 
     return {
-      user: { id: user.id, displayName: user.displayName, kind: user.kind },
+      user: {
+        id: user.id,
+        displayName: user.displayName,
+        username: user.username,
+        kind: user.kind,
+        email: user.email,
+      },
       workspaceId: workspace.id,
       workspaceName: workspace.name,
     };

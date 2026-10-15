@@ -57,9 +57,14 @@ taskRoutes.post(
 
     const status = parsedBody.data.status ?? "todo";
     const priority = normalizeTaskPriority(parsedBody.data.priority);
-    const dueDate = parsedBody.data.dueDate
-      ? new Date(`${parsedBody.data.dueDate}T00:00:00.000Z`)
+    const dueAt = parsedBody.data.dueAt
+      ? new Date(parsedBody.data.dueAt)
       : null;
+    const dueDate = dueAt
+      ? null
+      : parsedBody.data.dueDate
+        ? new Date(`${parsedBody.data.dueDate}T00:00:00.000Z`)
+        : null;
     const lastTask = await prisma.task.findFirst({
       where: { projectId, status },
       orderBy: [{ position: "desc" }, { id: "desc" }],
@@ -71,9 +76,10 @@ taskRoutes.post(
       const task = await prisma.task.create({
         data: {
           name,
+          dueAt,
           status,
-          priority,
           dueDate,
+          priority,
           position: (lastTask?.position ?? -1) + 1,
           projectId,
           description: normalizeDescription(parsedBody.data.description),
@@ -289,7 +295,7 @@ taskRoutes.patch(
     if (!parsedBody.success) {
       return c.json({ error: "Invalid task payload" }, 400);
     }
-    const { name, projectId, description, status, priority, dueDate } =
+    const { name, projectId, description, status, priority, dueDate, dueAt } =
       parsedBody.data;
     if (
       name === undefined &&
@@ -297,7 +303,8 @@ taskRoutes.patch(
       description === undefined &&
       status === undefined &&
       priority === undefined &&
-      dueDate === undefined
+      dueDate === undefined &&
+      dueAt === undefined
     ) {
       return c.json(
         { error: "At least one valid task field is required" },
@@ -338,10 +345,17 @@ taskRoutes.patch(
     if (priority !== undefined) {
       updateData.priority = priority;
     }
-    if (dueDate !== undefined) {
-      updateData.dueDate = dueDate
-        ? new Date(`${dueDate}T00:00:00.000Z`)
-        : null;
+    if (dueDate !== undefined || dueAt !== undefined) {
+      if (dueAt) {
+        updateData.dueAt = new Date(dueAt);
+        updateData.dueDate = null;
+      } else if (dueDate) {
+        updateData.dueAt = null;
+        updateData.dueDate = new Date(`${dueDate}T00:00:00.000Z`);
+      } else {
+        updateData.dueAt = null;
+        updateData.dueDate = null;
+      }
     }
     // If projectId is being updated, check if the new project exists
     if (parsedProjectId !== undefined) {

@@ -26,6 +26,7 @@ describe("Task API", () => {
     [{ name: "Task", projectId: 1, status: "blocked" }],
     [{ name: "Task", projectId: 1, priority: "urgent" }],
     [{ name: "Task", projectId: 1, dueDate: "2026-02-30" }],
+    [{ name: "Task", projectId: 1, dueAt: "2026-11-24T14:30:00" }],
     [{ name: "Task", projectId: 1, unexpected: true }],
     [{ name: "x".repeat(201), projectId: 1 }],
   ])("should reject invalid task payloads: %o", async (body) => {
@@ -48,6 +49,7 @@ describe("Task API", () => {
     { status: "blocked" },
     { priority: "urgent" },
     { dueDate: "2026-02-30" },
+    { dueAt: "not-a-timestamp" },
     { name: "Task", extra: true },
     { name: "x".repeat(201) },
   ])("should reject invalid task updates: %o", async (body) => {
@@ -242,6 +244,27 @@ describe("Task API", () => {
     expect(await response.json()).toMatchObject({ dueDate: null });
   });
 
+  test("should create a task with a timezone-aware due timestamp", async () => {
+    const project = await prisma.project.create({
+      data: { name: "Timed due date" },
+    });
+    const response = await app.request("/tasks", {
+      method: "POST",
+      body: JSON.stringify({
+        name: "Timed task",
+        projectId: project.id,
+        dueAt: "2026-11-24T14:30:00+02:00",
+      }),
+      headers: { "Content-Type": "application/json" },
+    });
+
+    expect(response.status).toBe(201);
+    expect(await response.json()).toMatchObject({
+      dueDate: null,
+      dueAt: "2026-11-24T12:30:00.000Z",
+    });
+  });
+
   test("should update and clear a task due date", async () => {
     const project = await prisma.project.create({
       data: { name: "Due date update" },
@@ -270,7 +293,45 @@ describe("Task API", () => {
       headers: { "Content-Type": "application/json" },
     });
     expect(clearResponse.status).toBe(200);
-    expect(await clearResponse.json()).toMatchObject({ dueDate: null });
+    expect(await clearResponse.json()).toMatchObject({
+      dueDate: null,
+      dueAt: null,
+    });
+  });
+
+  test("should update and clear a timezone-aware due timestamp", async () => {
+    const project = await prisma.project.create({
+      data: { name: "Timed due date update" },
+    });
+    const task = await prisma.task.create({
+      data: {
+        name: "Timed task",
+        dueDate: new Date("2026-11-24T00:00:00.000Z"),
+        projectId: project.id,
+      },
+    });
+
+    const updateResponse = await app.request(`/tasks/${task.id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ dueAt: "2026-12-01T09:15:00-05:00" }),
+      headers: { "Content-Type": "application/json" },
+    });
+    expect(updateResponse.status).toBe(200);
+    expect(await updateResponse.json()).toMatchObject({
+      dueDate: null,
+      dueAt: "2026-12-01T14:15:00.000Z",
+    });
+
+    const clearResponse = await app.request(`/tasks/${task.id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ dueAt: null }),
+      headers: { "Content-Type": "application/json" },
+    });
+    expect(clearResponse.status).toBe(200);
+    expect(await clearResponse.json()).toMatchObject({
+      dueDate: null,
+      dueAt: null,
+    });
   });
 
   test("should append a newly created task to its status column", async () => {

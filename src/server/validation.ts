@@ -8,6 +8,7 @@ const projectIdSchema = z.int().positive();
 const taskStatusSchema = z.enum(["todo", "in_progress", "done"]);
 const taskPrioritySchema = z.enum(["low", "normal", "high"]);
 const taskDueDateSchema = z.iso.date().nullable().optional();
+const taskDueAtSchema = z.iso.datetime({ offset: true }).nullable().optional();
 const descriptionSchema = z
   .string()
   .max(MAX_DESCRIPTION_LENGTH)
@@ -24,17 +25,19 @@ export const projectUpdateSchema = z.strictObject({
 });
 export const taskCreateSchema = z.strictObject({
   name: nameSchema,
+  dueAt: taskDueAtSchema,
   status: taskStatusSchema.optional(),
-  priority: taskPrioritySchema.optional(),
   dueDate: taskDueDateSchema,
+  priority: taskPrioritySchema.optional(),
   projectId: projectIdSchema,
   description: descriptionSchema,
 });
 export const taskUpdateSchema = z.strictObject({
   name: nameSchema.optional(),
+  dueAt: taskDueAtSchema,
   status: taskStatusSchema.optional(),
-  priority: taskPrioritySchema.optional(),
   dueDate: taskDueDateSchema,
+  priority: taskPrioritySchema.optional(),
   projectId: projectIdSchema.optional(),
   description: descriptionSchema,
 });

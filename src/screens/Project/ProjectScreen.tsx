@@ -15,7 +15,7 @@ export function ProjectScreen() {
   return (
     <section className={`${styles.projectScreen} screen-content`}>
       <div className="screen-heading">
-        <h2 className="screen-title">{t("navigation.projects")}</h2>
+        <h2 className="screen-title">{t("app.workspace")}</h2>
         <button
           type="button"
           className="primary-action"

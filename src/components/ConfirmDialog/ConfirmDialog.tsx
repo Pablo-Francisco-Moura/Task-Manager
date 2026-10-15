@@ -64,11 +64,20 @@ export function ConfirmDialog({
                 type="button"
                 onClick={() => setShowRelatedItems((visible) => !visible)}
                 aria-expanded={showRelatedItems}
+                variant="outlined"
+                size="small"
                 sx={{
                   mt: 1,
-                  px: 0,
                   color: "var(--brand)",
+                  backgroundColor: "var(--brand-soft)",
+                  borderColor: "var(--brand)",
+                  borderRadius: 1.5,
+                  fontWeight: 600,
                   textTransform: "none",
+                  "&:hover": {
+                    backgroundColor: "var(--brand-soft)",
+                    borderColor: "var(--accent)",
+                  },
                 }}
               >
                 {showRelatedItems
@@ -86,10 +95,23 @@ export function ConfirmDialog({
                   </Typography>
                   <List dense disablePadding>
                     {relatedItems.map((item, index) => (
-                      <ListItem key={`${index}-${item}`} disableGutters>
+                      <ListItem
+                        key={`${index}-${item}`}
+                        disableGutters
+                        sx={{
+                          mt: 0.75,
+                          px: 1.25,
+                          py: 0.75,
+                          border: "1px solid var(--line)",
+                          borderRadius: 1,
+                          backgroundColor: "var(--background)",
+                        }}
+                      >
                         <ListItemText
                           sx={{ color: "var(--foreground)" }}
-                          primary={item}
+                          primary={t("project.taskWillBeDeleted", {
+                            name: item,
+                          })}
                         />
                       </ListItem>
                     ))}

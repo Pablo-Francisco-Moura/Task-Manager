@@ -59,7 +59,8 @@
     "add": "Add Project",
     "viewTasks": "View tasks",
     "hideTasks": "Hide tasks",
-    "tasksDeletedWithProject": "Tasks that will be deleted with the project",
+    "tasksDeletedWithProject": "Deleting this project will also delete these tasks:",
+    "taskWillBeDeleted": "Task to delete: {{name}}",
     "select": "Select a project"
   },
   "task": {

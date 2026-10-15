@@ -59,7 +59,8 @@
     "add": "Adicionar Projeto",
     "viewTasks": "Ver tarefas",
     "hideTasks": "Ocultar tarefas",
-    "tasksDeletedWithProject": "Tarefas que serão excluídas junto com o projeto",
+    "tasksDeletedWithProject": "Ao excluir o projeto, estas tarefas também serão excluídas:",
+    "taskWillBeDeleted": "Tarefa a excluir: {{name}}",
     "select": "Selecione um projeto"
   },
   "task": {

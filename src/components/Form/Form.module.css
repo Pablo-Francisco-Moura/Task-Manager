@@ -53,6 +53,100 @@
   color: var(--muted);
 }
 
+.statusSelect,
+.prioritySelect {
+  border-left-width: 4px;
+  font-weight: 700;
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease,
+    color 140ms ease;
+}
+
+.statusSelect:focus-visible,
+.prioritySelect:focus-visible {
+  outline-color: var(--field-ink);
+}
+
+.statusSelect[data-status="todo"] {
+  --field-ink: #68449c;
+  --field-tint: #f2ebfc;
+  --field-line: #c4a9e8;
+}
+
+.statusSelect[data-status="in_progress"] {
+  --field-ink: #28688c;
+  --field-tint: #eaf4fa;
+  --field-line: #a6ccdf;
+}
+
+.statusSelect[data-status="done"] {
+  --field-ink: #287342;
+  --field-tint: #eaf4ed;
+  --field-line: #a8d0b2;
+}
+
+.prioritySelect[data-priority="low"] {
+  --field-ink: #806000;
+  --field-tint: #fff7cc;
+  --field-line: #dfc456;
+}
+
+.prioritySelect[data-priority="normal"] {
+  --field-ink: #a35a00;
+  --field-tint: #fff7e8;
+  --field-line: #f2ad42;
+}
+
+.prioritySelect[data-priority="high"] {
+  --field-ink: #8c0e05;
+  --field-tint: #ffeded;
+  --field-line: #f57d7d;
+}
+
+.statusSelect[data-status],
+.prioritySelect[data-priority] {
+  border-color: var(--field-line);
+  background-color: var(--field-tint);
+  color: var(--field-ink);
+}
+
+:global(html.dark) .statusSelect[data-status="todo"] {
+  --field-ink: #c6a6ff;
+  --field-tint: #332747;
+  --field-line: #70558e;
+}
+
+:global(html.dark) .statusSelect[data-status="in_progress"] {
+  --field-ink: #88c7e7;
+  --field-tint: #1d3039;
+  --field-line: #3e6579;
+}
+
+:global(html.dark) .statusSelect[data-status="done"] {
+  --field-ink: #88d09a;
+  --field-tint: #20362a;
+  --field-line: #426c4e;
+}
+
+:global(html.dark) .prioritySelect[data-priority="low"] {
+  --field-ink: #f0d77c;
+  --field-tint: #3c351e;
+  --field-line: #776639;
+}
+
+:global(html.dark) .prioritySelect[data-priority="normal"] {
+  --field-ink: #ffc266;
+  --field-tint: #43321b;
+  --field-line: #9b6b2b;
+}
+
+:global(html.dark) .prioritySelect[data-priority="high"] {
+  --field-ink: #ff8585;
+  --field-tint: #442424;
+  --field-line: #9b4c4c;
+}
+
 .descriptionField {
   display: grid;
   gap: 0.5rem;

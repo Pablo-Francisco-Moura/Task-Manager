@@ -163,14 +163,21 @@ export function Tasks() {
     register,
     handleSubmit,
     reset,
+    watch,
     formState: { isSubmitting, isValid, errors },
   } = useForm<{
     name: string;
-    description: string;
+    status: TypeTask["status"];
     priority: TypeTask["priority"];
+    description: string;
   }>({
     mode: "onChange",
-    defaultValues: { name: "", description: "", priority: "normal" },
+    defaultValues: {
+      name: "",
+      status: "todo",
+      priority: "normal",
+      description: "",
+    },
   });
 
   // Handlers
@@ -194,8 +201,9 @@ export function Tasks() {
     setEditTask(task);
     reset({
       name: task.name,
-      description: task.description ?? "",
+      status: task.status,
       priority: normalizeTaskPriority(task.priority),
+      description: task.description ?? "",
     });
     setOpenEditDialog(true);
   };
@@ -207,16 +215,18 @@ export function Tasks() {
 
   const onEditSubmit = async (data: {
     name: string;
-    description: string;
+    status: TypeTask["status"];
     priority: TypeTask["priority"];
+    description: string;
   }) => {
     if (editTask) {
       await updateMutation.mutateAsync({
         id: editTask.id,
         name: data.name,
+        status: data.status,
+        priority: data.priority,
         projectId: editTask.projectId,
         description: data.description,
-        priority: data.priority,
       });
     }
   };
@@ -408,10 +418,22 @@ export function Tasks() {
             placeholder: t("task.enterDescription"),
             maxLength: MAX_DESCRIPTION_LENGTH,
           }}
+          statusField={{
+            label: t("task.status.label"),
+            inputId: `task-edit-status-${editTask?.id ?? "pending"}`,
+            defaultValue: editTask?.status ?? "todo",
+            value: watch("status"),
+            options: [
+              { value: "todo", label: t("task.status.todo") },
+              { value: "in_progress", label: t("task.status.inProgress") },
+              { value: "done", label: t("task.status.done") },
+            ],
+          }}
           priorityField={{
             inputId: `task-edit-priority-${editTask?.id ?? "pending"}`,
             label: t("task.priority.label"),
             defaultValue: editTask?.priority ?? "normal",
+            value: watch("priority"),
             options: [
               { value: "low", label: t("task.priority.low") },
               { value: "normal", label: t("task.priority.normal") },

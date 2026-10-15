@@ -7,7 +7,7 @@ import { useTranslation } from "react-i18next";
 import { useFeedbackStore } from "@/store/feedbackStore";
 import { MAX_DESCRIPTION_LENGTH } from "@/constants";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { TaskPriority } from "@prisma/client";
+import type { TaskPriority, TaskStatus } from "@prisma/client";
 
 interface IProps {
   projectId: number;
@@ -16,6 +16,7 @@ interface IProps {
 
 interface ITaskFormInputs {
   name: string;
+  status: TaskStatus;
   priority: TaskPriority;
   description: string;
 }
@@ -25,10 +26,16 @@ export function TaskForm({ projectId, onClose }: IProps) {
     formState: { isSubmitting, isValid, errors },
     reset,
     register,
+    watch,
     handleSubmit,
   } = useForm<ITaskFormInputs>({
     mode: "onChange",
-    defaultValues: { name: "", description: "", priority: "normal" },
+    defaultValues: {
+      name: "",
+      status: "todo",
+      priority: "normal",
+      description: "",
+    },
   });
   const [error, setError] = useState<string | null>(null);
 
@@ -81,10 +88,22 @@ export function TaskForm({ projectId, onClose }: IProps) {
         placeholder: t("task.enterDescription"),
         maxLength: MAX_DESCRIPTION_LENGTH,
       }}
+      statusField={{
+        label: t("task.status.label"),
+        inputId: "task-create-status",
+        defaultValue: "todo",
+        value: watch("status"),
+        options: [
+          { value: "todo", label: t("task.status.todo") },
+          { value: "in_progress", label: t("task.status.inProgress") },
+          { value: "done", label: t("task.status.done") },
+        ],
+      }}
       priorityField={{
         inputId: "task-create-priority",
         label: t("task.priority.label"),
         defaultValue: "normal",
+        value: watch("priority"),
         options: [
           { value: "low", label: t("task.priority.low") },
           { value: "normal", label: t("task.priority.normal") },

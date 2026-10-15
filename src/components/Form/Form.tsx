@@ -16,11 +16,19 @@ interface IProps<TFieldValues extends FieldValues & { name: string }> {
   register: UseFormRegister<TFieldValues>;
   onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
   onClose?: () => void;
+  statusField?: {
+    label: string;
+    inputId: string;
+    options: Array<{ value: string; label: string }>;
+    defaultValue: string;
+    value: string;
+  };
   priorityField?: {
     label: string;
     inputId: string;
     options: Array<{ value: string; label: string }>;
     defaultValue: string;
+    value: string;
   };
   descriptionField?: {
     label: string;
@@ -37,6 +45,7 @@ export function Form<TFieldValues extends FieldValues & { name: string }>({
   nameError,
   placeholder,
   submitLabel,
+  statusField,
   isSubmitting,
   priorityField,
   submitDisabled,
@@ -113,6 +122,33 @@ export function Form<TFieldValues extends FieldValues & { name: string }>({
         </div>
       )}
 
+      {statusField && (
+        <div
+          className={`${styles.descriptionField} app-form-description-field`}
+        >
+          <label
+            htmlFor={statusField.inputId}
+            className={`${styles.title} app-form-title`}
+          >
+            {statusField.label}
+          </label>
+          <select
+            id={statusField.inputId}
+            data-status={statusField.value}
+            defaultValue={statusField.defaultValue}
+            {...register("status" as FieldPath<TFieldValues>)}
+            disabled={isSubmitting}
+            className={`${styles.input} ${styles.statusSelect} app-form-input`}
+          >
+            {statusField.options.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
       {priorityField && (
         <div
           className={`${styles.descriptionField} app-form-description-field`}
@@ -125,10 +161,11 @@ export function Form<TFieldValues extends FieldValues & { name: string }>({
           </label>
           <select
             id={priorityField.inputId}
+            data-priority={priorityField.value}
             defaultValue={priorityField.defaultValue}
             {...register("priority" as FieldPath<TFieldValues>)}
             disabled={isSubmitting}
-            className={`${styles.input} app-form-input`}
+            className={`${styles.input} ${styles.prioritySelect} app-form-input`}
           >
             {priorityField.options.map((option) => (
               <option key={option.value} value={option.value}>

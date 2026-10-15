@@ -23,7 +23,22 @@
   "app": {
     "title": "Gerenciamento de Projetos",
     "workspace": "Espaço de trabalho",
-    "language": "Idioma"
+    "language": "Idioma",
+    "account": "Conta"
+  },
+  "account": {
+    "create": {
+      "button": "Criar conta",
+      "title": "Crie sua conta",
+      "submit": "Criar conta",
+      "error": "Não foi possível criar a conta neste momento.",
+      "success": "Conta criada com sucesso."
+    },
+    "displayName": "Como você quer se chamar?",
+    "workspaceName": "Nome do workspace",
+    "workspacePlaceholder": "Ex.: Pessoal",
+    "suggestions": "Sugestões de workspace",
+    "workspaceDefault": "Pessoal"
   },
   "project": {
     "label": "Projeto",

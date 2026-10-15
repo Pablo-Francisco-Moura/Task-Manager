@@ -6,6 +6,13 @@ export const GUEST_SESSION_TTL_SECONDS = 60 * 60 * 24 * 30;
 
 export const ACCOUNT_SESSION_TTL_SECONDS = 60 * 60 * 24 * 30;
 
+export const ACCOUNT_WORKSPACE_SUGGESTIONS = [
+  "Pessoal",
+  "Estudos",
+  "Comércio",
+  "Investimentos",
+];
+
 export const MINIMUM_SESSION_LOADING_FIRST_MS = 2000;
 
 export const MINIMUM_SESSION_LOADING_REPEAT_MS = 1000;

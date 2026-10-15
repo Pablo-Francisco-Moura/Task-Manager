@@ -23,7 +23,22 @@
   "app": {
     "title": "Project Management",
     "workspace": "Workspace",
-    "language": "Language"
+    "language": "Language",
+    "account": "Account"
+  },
+  "account": {
+    "create": {
+      "button": "Create account",
+      "title": "Create your account",
+      "submit": "Create account",
+      "error": "Could not create the account right now.",
+      "success": "Account created successfully."
+    },
+    "displayName": "How would you like to be called?",
+    "workspaceName": "Workspace name",
+    "workspacePlaceholder": "e.g. Personal",
+    "suggestions": "Workspace suggestions",
+    "workspaceDefault": "Personal"
   },
   "project": {
     "label": "Project",

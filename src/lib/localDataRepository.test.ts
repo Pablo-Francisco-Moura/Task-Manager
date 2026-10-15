@@ -5,6 +5,7 @@ import {
   reorderLocalTasks,
   createLocalProject,
   deleteLocalProject,
+  importLocalWorkspaceData,
 } from "./localDataRepository";
 import { LOCAL_STORAGE_KEY } from "@/constants/localData";
 import { beforeEach, describe, expect, test } from "vitest";
@@ -103,5 +104,76 @@ describe("local data repository", () => {
         },
       }),
     ).toThrow("Task list changed; reload the board");
+  });
+
+  test("imports local projects and tasks into the account workspace while preserving relations", async () => {
+    const project = createLocalProject({
+      name: "Personal",
+      description: "Initial project",
+    });
+    const task = createLocalTask({
+      name: "Review plan",
+      projectId: project.id,
+      description: "Important follow-up",
+      status: "in_progress",
+      priority: "high",
+      dueDate: new Date("2026-11-24T00:00:00.000Z"),
+    });
+
+    const createdProjects: Array<{ id: number; name: string; description: string | null }> = [];
+    const createdTasks: Array<{
+      name: string;
+      projectId: number;
+      description: string | null;
+      dueDate: Date | null;
+      status: string;
+      priority: string;
+      position: number;
+    }> = [];
+
+    const result = await importLocalWorkspaceData({
+      createProject: async ({ name, description }) => {
+        const created = {
+          id: createdProjects.length + 101,
+          name,
+          description,
+        };
+        createdProjects.push(created);
+        return created;
+      },
+      createTask: async ({ name, projectId, description, dueDate, status, priority, position }) => {
+        const created = {
+          name,
+          projectId,
+          description,
+          dueDate,
+          status,
+          priority,
+          position,
+        };
+        createdTasks.push(created);
+        return created;
+      },
+    });
+
+    expect(result).toEqual({ projectCount: 1, taskCount: 1 });
+    expect(createdProjects).toEqual([
+      {
+        id: 101,
+        name: "Personal",
+        description: "Initial project",
+      },
+    ]);
+    expect(createdTasks).toEqual([
+      {
+        name: "Review plan",
+        projectId: 101,
+        description: "Important follow-up",
+        dueDate: new Date("2026-11-24T00:00:00.000Z"),
+        status: "in_progress",
+        priority: "high",
+        position: 0,
+      },
+    ]);
   });
 });

@@ -7,12 +7,9 @@ import type {
   TypeLocalWorkspaceData,
   TypeLocalProjectWithTasks,
 } from "@/types/localData";
-import {
-  EMPTY_WORKSPACE_DATA,
-  LOCAL_STORAGE_KEY,
-} from "@/constants/localData";
+import { EMPTY_WORKSPACE_DATA, LOCAL_STORAGE_KEY } from "@/constants/localData";
 
-function readWorkspaceData(): TypeLocalWorkspaceData {
+export function readWorkspaceData(): TypeLocalWorkspaceData {
   const storedData = window.localStorage.getItem(LOCAL_STORAGE_KEY);
   if (!storedData) return structuredClone(EMPTY_WORKSPACE_DATA);
 
@@ -35,10 +32,61 @@ function readWorkspaceData(): TypeLocalWorkspaceData {
 }
 
 function writeWorkspaceData(data: TypeLocalWorkspaceData): void {
-  window.localStorage.setItem(
-    LOCAL_STORAGE_KEY,
-    JSON.stringify(data),
-  );
+  window.localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(data));
+}
+
+export async function importLocalWorkspaceData(options: {
+  createProject: (input: {
+    name: string;
+    description: string | null;
+  }) => Promise<{ id: number }>;
+  createTask: (input: {
+    name: string;
+    projectId: number;
+    description: string | null;
+    dueDate: Date | null;
+    dueAt: Date | null;
+    status: TypeLocalTaskStatus;
+    priority: TypeLocalTaskPriority;
+    position: number;
+  }) => Promise<unknown>;
+}): Promise<{ projectCount: number; taskCount: number }> {
+  const data = readWorkspaceData();
+  const projectIdsByLocalId = new Map<number, number>();
+
+  for (const project of data.projects) {
+    const createdProject = await options.createProject({
+      name: project.name,
+      description: project.description,
+    });
+    projectIdsByLocalId.set(project.id, createdProject.id);
+  }
+
+  let importedTaskCount = 0;
+
+  for (const task of data.tasks) {
+    const destinationProjectId = projectIdsByLocalId.get(task.projectId);
+    if (destinationProjectId === undefined) {
+      continue;
+    }
+
+    await options.createTask({
+      name: task.name,
+      projectId: destinationProjectId,
+      description: task.description,
+      dueDate: task.dueDate,
+      dueAt: task.dueAt,
+      status: task.status,
+      priority: task.priority,
+      position: task.position,
+    });
+    importedTaskCount += 1;
+  }
+
+  return {
+    projectCount: projectIdsByLocalId.size,
+    taskCount: importedTaskCount,
+  };
 }
 
 function getProjectOrThrow(

@@ -1,8 +1,32 @@
+import {
+  Select,
+  Tooltip,
+  MenuItem,
+  TextField,
+  IconButton,
+  InputLabel,
+  FormControl,
+  InputAdornment,
+} from "@mui/material";
 import { useTranslation } from "react-i18next";
-import { IconButton, TextField, Tooltip } from "@mui/material";
 import { FieldPath, FieldValues, UseFormRegister } from "react-hook-form";
 import styles from "./Form.module.css";
 import CloseIcon from "@mui/icons-material/Close";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import EventOutlinedIcon from "@mui/icons-material/EventOutlined";
+
+function openNativePicker(inputId: string) {
+  const input = document.getElementById(inputId) as HTMLInputElement | null;
+  if (!input) return;
+
+  if (typeof input.showPicker === "function") {
+    input.showPicker();
+    return;
+  }
+
+  input.focus();
+  input.click();
+}
 
 interface IProps<TFieldValues extends FieldValues & { name: string }> {
   title: string;
@@ -78,10 +102,30 @@ export function Form<TFieldValues extends FieldValues & { name: string }>({
           !value || Boolean(values.dueDate) || dueDateField.dateRequiredMessage,
       })
     : undefined;
+  const statusRegistration = statusField
+    ? register("status" as FieldPath<TFieldValues>)
+    : undefined;
+  const priorityRegistration = priorityField
+    ? register("priority" as FieldPath<TFieldValues>)
+    : undefined;
   const { ref: dueDateInputRef, ...dueDateInputProps } =
     dueDateRegistration ?? {};
   const { ref: dueTimeInputRef, ...dueTimeInputProps } =
     dueTimeRegistration ?? {};
+  const { ref: statusInputRef, ...statusInputProps } = statusRegistration ?? {};
+  const { ref: priorityInputRef, ...priorityInputProps } =
+    priorityRegistration ?? {};
+  const menuProps = {
+    PaperProps: {
+      sx: {
+        backgroundColor: "var(--surface)",
+        color: "var(--foreground)",
+        "& .MuiMenuItem-root:hover": {
+          backgroundColor: "var(--brand-soft)",
+        },
+      },
+    },
+  };
 
   return (
     <form onSubmit={onSubmit} className={`${styles.form} app-form`}>
@@ -169,6 +213,54 @@ export function Form<TFieldValues extends FieldValues & { name: string }>({
                 inputRef={dueDateInputRef}
                 disabled={isSubmitting}
                 error={Boolean(dueDateField.dateError)}
+                sx={{
+                  "& .MuiInputBase-root": {
+                    backgroundColor: "var(--surface)",
+                    color: "var(--foreground)",
+                  },
+                  "& .MuiInputLabel-root": { color: "var(--muted)" },
+                  "& .MuiInputLabel-root.Mui-focused": {
+                    color: "var(--accent)",
+                  },
+                  "& .MuiOutlinedInput-notchedOutline": {
+                    borderColor: "var(--line)",
+                  },
+                  "& .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline":
+                    {
+                      borderColor: "var(--accent)",
+                    },
+                  "& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline":
+                    {
+                      borderColor: "var(--accent)",
+                      borderWidth: 2,
+                    },
+                  "& .MuiSvgIcon-root": { color: "var(--foreground)" },
+                  "& input::-webkit-calendar-picker-indicator": {
+                    display: "none",
+                  },
+                }}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        type="button"
+                        aria-label={dueDateField.dateLabel}
+                        onClick={() => openNativePicker(dueDateField.inputId)}
+                        edge="end"
+                        size="small"
+                        sx={{
+                          color: "var(--muted)",
+                          "&:hover": {
+                            color: "var(--accent)",
+                            backgroundColor: "var(--brand-soft)",
+                          },
+                        }}
+                      >
+                        <EventOutlinedIcon fontSize="small" />
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
                 aria-describedby={
                   dueDateField.dateError
                     ? `${dueDateField.timeInputId}-error`
@@ -188,6 +280,56 @@ export function Form<TFieldValues extends FieldValues & { name: string }>({
                 {...dueTimeInputProps}
                 inputRef={dueTimeInputRef}
                 disabled={isSubmitting}
+                sx={{
+                  "& .MuiInputBase-root": {
+                    backgroundColor: "var(--surface)",
+                    color: "var(--foreground)",
+                  },
+                  "& .MuiInputLabel-root": { color: "var(--muted)" },
+                  "& .MuiInputLabel-root.Mui-focused": {
+                    color: "var(--accent)",
+                  },
+                  "& .MuiOutlinedInput-notchedOutline": {
+                    borderColor: "var(--line)",
+                  },
+                  "& .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline":
+                    {
+                      borderColor: "var(--accent)",
+                    },
+                  "& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline":
+                    {
+                      borderColor: "var(--accent)",
+                      borderWidth: 2,
+                    },
+                  "& .MuiSvgIcon-root": { color: "var(--foreground)" },
+                  "& input::-webkit-calendar-picker-indicator": {
+                    display: "none",
+                  },
+                }}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        type="button"
+                        aria-label={dueDateField.timeLabel}
+                        onClick={() =>
+                          openNativePicker(dueDateField.timeInputId)
+                        }
+                        edge="end"
+                        size="small"
+                        sx={{
+                          color: "var(--muted)",
+                          "&:hover": {
+                            color: "var(--accent)",
+                            backgroundColor: "var(--brand-soft)",
+                          },
+                        }}
+                      >
+                        <AccessTimeIcon fontSize="small" />
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
                 aria-describedby={
                   dueDateField.dateError
                     ? `${dueDateField.timeInputId}-error`
@@ -213,26 +355,54 @@ export function Form<TFieldValues extends FieldValues & { name: string }>({
         <div
           className={`${styles.descriptionField} app-form-description-field`}
         >
-          <label
-            htmlFor={statusField.inputId}
-            className={`${styles.title} app-form-title`}
-          >
-            {statusField.label}
-          </label>
-          <select
-            id={statusField.inputId}
-            data-status={statusField.value}
-            defaultValue={statusField.defaultValue}
-            {...register("status" as FieldPath<TFieldValues>)}
-            disabled={isSubmitting}
-            className={`${styles.input} ${styles.statusSelect} app-form-input`}
-          >
-            {statusField.options.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+          <FormControl fullWidth>
+            <InputLabel
+              id={`${statusField.inputId}-label`}
+              sx={{
+                color: "var(--foreground)",
+                "&.Mui-focused": { color: "var(--accent)" },
+              }}
+            >
+              {statusField.label}
+            </InputLabel>
+            <Select
+              id={statusField.inputId}
+              data-status={statusField.value}
+              labelId={`${statusField.inputId}-label`}
+              label={statusField.label}
+              value={statusField.value}
+              {...statusInputProps}
+              inputRef={statusInputRef}
+              disabled={isSubmitting}
+              className={styles.statusSelect}
+              MenuProps={menuProps}
+              sx={{
+                backgroundColor: "var(--field-tint, var(--surface))",
+                color: "var(--field-ink, var(--foreground))",
+                ".MuiOutlinedInput-notchedOutline": {
+                  borderColor: "var(--field-line, var(--line))",
+                  borderLeftWidth: 4,
+                },
+                "&:hover .MuiOutlinedInput-notchedOutline": {
+                  borderColor: "var(--field-line, var(--line))",
+                },
+                "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                  borderColor: "var(--field-line, var(--line))",
+                  borderWidth: 2,
+                  borderLeftWidth: 4,
+                },
+                "& .MuiSelect-icon": {
+                  color: "var(--field-ink, var(--foreground))",
+                },
+              }}
+            >
+              {statusField.options.map((option) => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
         </div>
       )}
 
@@ -240,26 +410,54 @@ export function Form<TFieldValues extends FieldValues & { name: string }>({
         <div
           className={`${styles.descriptionField} app-form-description-field`}
         >
-          <label
-            htmlFor={priorityField.inputId}
-            className={`${styles.title} app-form-title`}
-          >
-            {priorityField.label}
-          </label>
-          <select
-            id={priorityField.inputId}
-            data-priority={priorityField.value}
-            defaultValue={priorityField.defaultValue}
-            {...register("priority" as FieldPath<TFieldValues>)}
-            disabled={isSubmitting}
-            className={`${styles.input} ${styles.prioritySelect} app-form-input`}
-          >
-            {priorityField.options.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+          <FormControl fullWidth>
+            <InputLabel
+              id={`${priorityField.inputId}-label`}
+              sx={{
+                color: "var(--foreground)",
+                "&.Mui-focused": { color: "var(--accent)" },
+              }}
+            >
+              {priorityField.label}
+            </InputLabel>
+            <Select
+              id={priorityField.inputId}
+              data-priority={priorityField.value}
+              labelId={`${priorityField.inputId}-label`}
+              label={priorityField.label}
+              value={priorityField.value}
+              {...priorityInputProps}
+              inputRef={priorityInputRef}
+              disabled={isSubmitting}
+              className={styles.prioritySelect}
+              MenuProps={menuProps}
+              sx={{
+                backgroundColor: "var(--field-tint, var(--surface))",
+                color: "var(--field-ink, var(--foreground))",
+                ".MuiOutlinedInput-notchedOutline": {
+                  borderColor: "var(--field-line, var(--line))",
+                  borderLeftWidth: 4,
+                },
+                "&:hover .MuiOutlinedInput-notchedOutline": {
+                  borderColor: "var(--field-line, var(--line))",
+                },
+                "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                  borderColor: "var(--field-line, var(--line))",
+                  borderWidth: 2,
+                  borderLeftWidth: 4,
+                },
+                "& .MuiSelect-icon": {
+                  color: "var(--field-ink, var(--foreground))",
+                },
+              }}
+            >
+              {priorityField.options.map((option) => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
         </div>
       )}
 

@@ -17,6 +17,7 @@ interface IProps {
 interface ITaskFormInputs {
   name: string;
   status: TaskStatus;
+  dueDate: string;
   priority: TaskPriority;
   description: string;
 }
@@ -33,6 +34,7 @@ export function TaskForm({ projectId, onClose }: IProps) {
     defaultValues: {
       name: "",
       status: "todo",
+      dueDate: "",
       priority: "normal",
       description: "",
     },
@@ -45,7 +47,11 @@ export function TaskForm({ projectId, onClose }: IProps) {
 
   const mutation = useMutation({
     mutationFn: async (data: ITaskFormInputs) => {
-      return createTask({ ...data, projectId });
+      return createTask({
+        ...data,
+        dueDate: data.dueDate || null,
+        projectId,
+      });
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({
@@ -109,6 +115,11 @@ export function TaskForm({ projectId, onClose }: IProps) {
           { value: "normal", label: t("task.priority.normal") },
           { value: "high", label: t("task.priority.high") },
         ],
+      }}
+      dueDateField={{
+        label: t("task.dueDate.label"),
+        inputId: "task-create-due-date",
+        defaultValue: "",
       }}
       isSubmitting={isSubmitting || mutation.isPending}
     />

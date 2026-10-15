@@ -30,6 +30,11 @@ interface IProps<TFieldValues extends FieldValues & { name: string }> {
     defaultValue: string;
     value: string;
   };
+  dueDateField?: {
+    label: string;
+    inputId: string;
+    defaultValue: string;
+  };
   descriptionField?: {
     label: string;
     inputId: string;
@@ -47,6 +52,7 @@ export function Form<TFieldValues extends FieldValues & { name: string }>({
   submitLabel,
   statusField,
   isSubmitting,
+  dueDateField,
   priorityField,
   submitDisabled,
   descriptionField,
@@ -118,6 +124,27 @@ export function Form<TFieldValues extends FieldValues & { name: string }>({
             placeholder={descriptionField.placeholder}
             maxLength={descriptionField.maxLength}
             rows={4}
+          />
+        </div>
+      )}
+
+      {dueDateField && (
+        <div
+          className={`${styles.descriptionField} app-form-description-field`}
+        >
+          <label
+            htmlFor={dueDateField.inputId}
+            className={`${styles.title} app-form-title`}
+          >
+            {dueDateField.label}
+          </label>
+          <input
+            id={dueDateField.inputId}
+            type="date"
+            defaultValue={dueDateField.defaultValue}
+            {...register("dueDate" as FieldPath<TFieldValues>)}
+            disabled={isSubmitting}
+            className={`${styles.input} app-form-input`}
           />
         </div>
       )}

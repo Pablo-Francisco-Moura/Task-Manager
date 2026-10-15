@@ -17,6 +17,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { useTranslation } from "react-i18next";
 import { TaskPriorityBadge } from "@/components/TaskPriorityBadge";
+import { formatTaskDueDate } from "@/utils/taskDueDate";
 import { IconButton, Tooltip } from "@mui/material";
 import type { Task as TypeTask, TaskStatus } from "@prisma/client";
 import type { DragEndEvent, UniqueIdentifier } from "@dnd-kit/core";
@@ -24,6 +25,7 @@ import styles from "./TaskBoard.module.css";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
+import EventOutlinedIcon from "@mui/icons-material/EventOutlined";
 
 interface IProps {
   tasks: TypeTask[];
@@ -75,7 +77,7 @@ function SortableTaskCard({
   onEditClick: (task: TypeTask) => void;
   onDeleteClick: (task: TypeTask) => void;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const {
     attributes,
     listeners,
@@ -115,6 +117,13 @@ function SortableTaskCard({
           <TaskPriorityBadge priority={task.priority} />
           {task.description && (
             <p className={styles.cardDescription}>{task.description}</p>
+          )}
+          {task.dueDate && (
+            <p className={styles.cardDueDate}>
+              <EventOutlinedIcon fontSize="inherit" aria-hidden="true" />
+              {t("task.dueDate.label")}:{" "}
+              {formatTaskDueDate(task.dueDate, i18n.language)}
+            </p>
           )}
         </div>
         <div className={styles.cardActions}>

@@ -153,6 +153,14 @@
   white-space: pre-wrap;
 }
 
+.taskScreen :global(.task-due-date) {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
 .taskScreen :global(.task-row-actions) {
   display: flex;
   flex: 0 0 auto;

@@ -171,6 +171,7 @@ export function Tasks({ openAddTask, onCloseAddTask }: IProps) {
   } = useForm<{
     name: string;
     status: TypeTask["status"];
+    dueDate: string;
     priority: TypeTask["priority"];
     description: string;
   }>({
@@ -178,6 +179,7 @@ export function Tasks({ openAddTask, onCloseAddTask }: IProps) {
     defaultValues: {
       name: "",
       status: "todo",
+      dueDate: "",
       priority: "normal",
       description: "",
     },
@@ -205,6 +207,7 @@ export function Tasks({ openAddTask, onCloseAddTask }: IProps) {
     reset({
       name: task.name,
       status: task.status,
+      dueDate: task.dueDate?.toISOString().slice(0, 10) ?? "",
       priority: normalizeTaskPriority(task.priority),
       description: task.description ?? "",
     });
@@ -219,6 +222,7 @@ export function Tasks({ openAddTask, onCloseAddTask }: IProps) {
   const onEditSubmit = async (data: {
     name: string;
     status: TypeTask["status"];
+    dueDate: string;
     priority: TypeTask["priority"];
     description: string;
   }) => {
@@ -227,6 +231,7 @@ export function Tasks({ openAddTask, onCloseAddTask }: IProps) {
         id: editTask.id,
         name: data.name,
         status: data.status,
+        dueDate: data.dueDate || null,
         priority: data.priority,
         projectId: editTask.projectId,
         description: data.description,
@@ -422,6 +427,11 @@ export function Tasks({ openAddTask, onCloseAddTask }: IProps) {
               { value: "normal", label: t("task.priority.normal") },
               { value: "high", label: t("task.priority.high") },
             ],
+          }}
+          dueDateField={{
+            label: t("task.dueDate.label"),
+            inputId: `task-edit-due-date-${editTask?.id ?? "pending"}`,
+            defaultValue: editTask?.dueDate?.toISOString().slice(0, 10) ?? "",
           }}
           isSubmitting={isSubmitting || updateMutation.isPending}
         />

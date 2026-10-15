@@ -137,6 +137,15 @@
   white-space: pre-wrap;
 }
 
+.cardDueDate {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin: 0.45rem 0 0;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
 .dragHandle {
   cursor: grab;
   touch-action: none;

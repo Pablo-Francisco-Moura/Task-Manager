@@ -7,10 +7,12 @@ import {
 } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { TaskPriorityBadge } from "@/components/TaskPriorityBadge";
+import { formatTaskDueDate } from "@/utils/taskDueDate";
 import { Task as TypeTask, TaskStatus } from "@prisma/client";
 import React from "react";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import EventOutlinedIcon from "@mui/icons-material/EventOutlined";
 
 interface IProps {
   task: TypeTask;
@@ -27,7 +29,7 @@ export function Task({
   onDeleteClick,
   onStatusChange,
 }: IProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   return (
     <li className="task-row">
@@ -37,6 +39,13 @@ export function Task({
         <TaskPriorityBadge priority={task.priority} />
         {task.description && (
           <span className="task-description">{task.description}</span>
+        )}
+        {task.dueDate && (
+          <span className="task-due-date">
+            <EventOutlinedIcon fontSize="inherit" aria-hidden="true" />
+            {t("task.dueDate.label")}:{" "}
+            {formatTaskDueDate(task.dueDate, i18n.language)}
+          </span>
         )}
       </div>
       <FormControl

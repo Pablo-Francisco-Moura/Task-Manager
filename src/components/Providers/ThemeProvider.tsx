@@ -9,27 +9,39 @@ import React, {
   useLayoutEffect,
 } from "react";
 import { createMuiTheme } from "./createMuiTheme";
+import { themeStorageKey } from "@/constants/app";
 import { ThemeProvider as MuiThemeProvider } from "@mui/material/styles";
 import type { TypeTheme } from "@/types";
 
 const useIsomorphicLayoutEffect =
   typeof window === "undefined" ? useEffect : useLayoutEffect;
 
+function getSystemTheme(): TypeTheme {
+  if (typeof window === "undefined") return "light";
+
+  return window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
+}
+
 function readStoredTheme(): TypeTheme {
   try {
-    const savedTheme = window.localStorage.getItem("theme");
-    return savedTheme === "dark" || savedTheme === "light"
-      ? savedTheme
-      : "light";
+    const savedTheme = window.localStorage.getItem(themeStorageKey);
+    if (savedTheme === "dark" || savedTheme === "light") {
+      return savedTheme;
+    }
   } catch {
-    return "light";
+    // Fall back to the browser preference when storage is unavailable.
   }
+
+  return getSystemTheme();
 }
 
 function applyThemeClass(theme: TypeTheme) {
   const root = document.documentElement;
   root.classList.remove("light", "dark");
   root.classList.add(theme);
+  root.style.colorScheme = theme;
 }
 
 interface IThemeContextProps {
@@ -59,7 +71,7 @@ export const ThemeProvider = ({ children }: IThemeProviderProps) => {
 
     applyThemeClass(theme);
     try {
-      window.localStorage.setItem("theme", theme);
+      window.localStorage.setItem(themeStorageKey, theme);
     } catch {
       // Keep the in-memory theme usable when storage is unavailable.
     }

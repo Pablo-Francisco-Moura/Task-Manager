@@ -16,9 +16,13 @@ export default function RootLayout({
         <Script id="theme-bootstrap" strategy="beforeInteractive">
           {`try {
             const savedTheme = localStorage.getItem("theme");
-            document.documentElement.classList.add(savedTheme === "dark" ? "dark" : "light");
+            const preferredTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+            const nextTheme = savedTheme === "dark" || savedTheme === "light" ? savedTheme : preferredTheme;
+            document.documentElement.classList.add(nextTheme);
+            document.documentElement.style.colorScheme = nextTheme;
           } catch {
             document.documentElement.classList.add("light");
+            document.documentElement.style.colorScheme = "light";
           }`}
         </Script>
       </head>

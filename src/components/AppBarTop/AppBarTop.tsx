@@ -2,11 +2,23 @@
 
 import { ThemeSwitch } from "../ThemeSwitch";
 import { useTranslation } from "react-i18next";
+import { Button, ButtonGroup } from "@mui/material";
 import styles from "./AppBarTop.module.css";
 import WorkspacesOutlinedIcon from "@mui/icons-material/WorkspacesOutlined";
 
 export function AppBarTop() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const language = i18n.language.startsWith("en") ? "en" : "pt";
+
+  const selectLanguage = (nextLanguage: "pt" | "en") => {
+    void i18n.changeLanguage(nextLanguage);
+    document.documentElement.lang = nextLanguage === "pt" ? "pt-BR" : "en";
+    try {
+      window.localStorage.setItem("language", nextLanguage);
+    } catch {
+      // The current selection still applies for this session.
+    }
+  };
 
   return (
     <header className={`${styles.header} app-header w-full transition-colors`}>
@@ -16,11 +28,29 @@ export function AppBarTop() {
             <WorkspacesOutlinedIcon fontSize="small" />
           </span>
           <div className="min-w-0">
-            <p className="app-brand-kicker">Workspace</p>
+            <p className="app-brand-kicker">{t("app.workspace")}</p>
             <h1 className="app-brand-title truncate">{t("app.title")}</h1>
           </div>
         </div>
-        <ThemeSwitch />
+        <div className="flex items-center gap-2">
+          <ButtonGroup size="small" aria-label={t("app.language")}>
+            <Button
+              aria-pressed={language === "pt"}
+              onClick={() => selectLanguage("pt")}
+              variant={language === "pt" ? "contained" : "outlined"}
+            >
+              PT
+            </Button>
+            <Button
+              aria-pressed={language === "en"}
+              onClick={() => selectLanguage("en")}
+              variant={language === "en" ? "contained" : "outlined"}
+            >
+              EN
+            </Button>
+          </ButtonGroup>
+          <ThemeSwitch />
+        </div>
       </div>
     </header>
   );

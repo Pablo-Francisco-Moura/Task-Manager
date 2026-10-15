@@ -19,7 +19,8 @@
   },
   "app": {
     "title": "Project Management",
-    "workspace": "Workspace"
+    "workspace": "Workspace",
+    "language": "Language"
   },
   "project": {
     "label": "Project",

@@ -19,7 +19,8 @@
   },
   "app": {
     "title": "Gerenciamento de Projetos",
-    "workspace": "Espaço de trabalho"
+    "workspace": "Espaço de trabalho",
+    "language": "Idioma"
   },
   "project": {
     "label": "Projeto",

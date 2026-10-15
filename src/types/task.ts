@@ -1,34 +1,38 @@
-import type { Task, TaskPriority, TaskStatus } from "@prisma/client";
+import type {
+  TypeLocalTask,
+  TypeLocalTaskStatus,
+  TypeLocalTaskPriority,
+} from "./localData";
 
-export type TypeCreateTaskInput = Pick<Task, "name" | "projectId"> & {
+export type TypeCreateTaskInput = Pick<TypeLocalTask, "name" | "projectId"> & {
   dueAt?: string | null;
-  status?: TaskStatus;
+  status?: TypeLocalTaskStatus;
   dueDate?: string | null;
-  priority?: TaskPriority;
+  priority?: TypeLocalTaskPriority;
   description?: string | null;
 };
 
-export type TypeCreateTaskResponse = Task;
+export type TypeCreateTaskResponse = TypeLocalTask;
 
 export type TypeDeleteTaskResponse = void;
 
-export type TypeGetTaskResponse = Task[];
+export type TypeGetTaskResponse = TypeLocalTask[];
 
-export type TypeUpdateTaskInput = Pick<Task, "id"> & {
+export type TypeUpdateTaskInput = Pick<TypeLocalTask, "id"> & {
   name?: string;
   dueAt?: string | null;
-  status?: TaskStatus;
+  status?: TypeLocalTaskStatus;
   dueDate?: string | null;
-  priority?: TaskPriority;
+  priority?: TypeLocalTaskPriority;
   projectId?: number;
   description?: string | null;
 };
 
-export type TypeUpdateTaskResponse = Task;
+export type TypeUpdateTaskResponse = TypeLocalTask;
 
 export type TypeReorderTasksInput = {
   projectId: number;
-  orderedTaskIdsByStatus: Record<TaskStatus, number[]>;
+  orderedTaskIdsByStatus: Record<TypeLocalTaskStatus, number[]>;
 };
 
-export type TypeReorderTasksResponse = Task[];
+export type TypeReorderTasksResponse = TypeLocalTask[];

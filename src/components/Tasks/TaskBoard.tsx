@@ -19,8 +19,8 @@ import { useTranslation } from "react-i18next";
 import { TaskPriorityBadge } from "@/components/TaskPriorityBadge";
 import { IconButton, Tooltip } from "@mui/material";
 import { formatTaskDueDate, isTaskDueDateOverdue } from "@/utils/taskDueDate";
-import type { Task as TypeTask, TaskStatus } from "@prisma/client";
 import type { DragEndEvent, UniqueIdentifier } from "@dnd-kit/core";
+import type { TypeLocalTask, TypeLocalTaskStatus } from "@/types/localData";
 import styles from "./TaskBoard.module.css";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -28,35 +28,37 @@ import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import EventOutlinedIcon from "@mui/icons-material/EventOutlined";
 
 interface IProps {
-  tasks: TypeTask[];
+  tasks: TypeLocalTask[];
   isSaving: boolean;
-  onReorder: (orderedTaskIdsByStatus: Record<TaskStatus, number[]>) => void;
-  onEditClick: (task: TypeTask) => void;
-  onDeleteClick: (task: TypeTask) => void;
+  onReorder: (
+    orderedTaskIdsByStatus: Record<TypeLocalTaskStatus, number[]>,
+  ) => void;
+  onEditClick: (task: TypeLocalTask) => void;
+  onDeleteClick: (task: TypeLocalTask) => void;
 }
 
-const taskStatuses: TaskStatus[] = ["todo", "in_progress", "done"];
-const statusLabelKeys: Record<TaskStatus, string> = {
+const taskStatuses: TypeLocalTaskStatus[] = ["todo", "in_progress", "done"];
+const statusLabelKeys: Record<TypeLocalTaskStatus, string> = {
   todo: "task.status.todo",
   in_progress: "task.status.inProgress",
   done: "task.status.done",
 };
 
-type TasksByStatus = Record<TaskStatus, TypeTask[]>;
+type TasksByStatus = Record<TypeLocalTaskStatus, TypeLocalTask[]>;
 
-function getColumnId(status: TaskStatus) {
+function getColumnId(status: TypeLocalTaskStatus) {
   return `column:${status}`;
 }
 
-function getColumnStatus(id: string): TaskStatus | undefined {
+function getColumnStatus(id: string): TypeLocalTaskStatus | undefined {
   return taskStatuses.find((status) => getColumnId(status) === id);
 }
 
-function sortByPosition(first: TypeTask, second: TypeTask) {
+function sortByPosition(first: TypeLocalTask, second: TypeLocalTask) {
   return first.position - second.position || first.id - second.id;
 }
 
-function groupTasks(tasks: TypeTask[]): TasksByStatus {
+function groupTasks(tasks: TypeLocalTask[]): TasksByStatus {
   return {
     todo: tasks.filter((task) => task.status === "todo").sort(sortByPosition),
     in_progress: tasks
@@ -72,10 +74,10 @@ function SortableTaskCard({
   onEditClick,
   onDeleteClick,
 }: {
-  task: TypeTask;
+  task: TypeLocalTask;
   isSaving: boolean;
-  onEditClick: (task: TypeTask) => void;
-  onDeleteClick: (task: TypeTask) => void;
+  onEditClick: (task: TypeLocalTask) => void;
+  onDeleteClick: (task: TypeLocalTask) => void;
 }) {
   const { t, i18n } = useTranslation();
   const dueValue = task.dueAt ?? task.dueDate;
@@ -183,7 +185,7 @@ export function TaskBoard({
     tasks.find((task) => task.id === Number(id))?.name ?? "";
   const targetStatus = (id: UniqueIdentifier) =>
     getColumnStatus(String(id)) ?? findStatusForTask(Number(id));
-  const statusLabel = (status: TaskStatus | undefined) =>
+  const statusLabel = (status: TypeLocalTaskStatus | undefined) =>
     status ? t(statusLabelKeys[status]) : "";
 
   const onDragEnd = ({ active, over }: DragEndEvent) => {
@@ -194,7 +196,7 @@ export function TaskBoard({
     const destinationStatus = targetStatus(over.id);
     if (!sourceStatus || !destinationStatus) return;
 
-    const nextIdsByStatus: Record<TaskStatus, number[]> = {
+    const nextIdsByStatus: Record<TypeLocalTaskStatus, number[]> = {
       todo: tasksByStatus.todo.map((task) => task.id),
       in_progress: tasksByStatus.in_progress.map((task) => task.id),
       done: tasksByStatus.done.map((task) => task.id),
@@ -292,12 +294,12 @@ function TaskStatusColumn({
   onEditClick,
   onDeleteClick,
 }: {
-  status: TaskStatus;
-  tasks: TypeTask[];
+  status: TypeLocalTaskStatus;
+  tasks: TypeLocalTask[];
   headingId: string;
   isSaving: boolean;
-  onEditClick: (task: TypeTask) => void;
-  onDeleteClick: (task: TypeTask) => void;
+  onEditClick: (task: TypeLocalTask) => void;
+  onDeleteClick: (task: TypeLocalTask) => void;
 }) {
   const { t } = useTranslation();
   const { isOver, setNodeRef } = useDroppable({ id: getColumnId(status) });

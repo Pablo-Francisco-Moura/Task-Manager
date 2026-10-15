@@ -1,3 +1,7 @@
+import type {
+  TypeLocalTaskStatus,
+  TypeLocalTaskPriority,
+} from "@/types/localData";
 import { Form } from "@/components/Form";
 import { useForm } from "react-hook-form";
 import { useState } from "react";
@@ -8,7 +12,6 @@ import { useFeedbackStore } from "@/store/feedbackStore";
 import { toTaskDueAtISOString } from "@/utils/taskDueDate";
 import { MAX_DESCRIPTION_LENGTH } from "@/constants";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { TaskPriority, TaskStatus } from "@prisma/client";
 
 interface IProps {
   projectId: number;
@@ -17,10 +20,10 @@ interface IProps {
 
 interface ITaskFormInputs {
   name: string;
-  status: TaskStatus;
+  status: TypeLocalTaskStatus;
   dueDate: string;
   dueTime: string;
-  priority: TaskPriority;
+  priority: TypeLocalTaskPriority;
   description: string;
 }
 

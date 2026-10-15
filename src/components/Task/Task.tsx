@@ -7,19 +7,19 @@ import {
 } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { TaskPriorityBadge } from "@/components/TaskPriorityBadge";
-import { Task as TypeTask, TaskStatus } from "@prisma/client";
 import { formatTaskDueDate, isTaskDueDateOverdue } from "@/utils/taskDueDate";
+import type { TypeLocalTask, TypeLocalTaskStatus } from "@/types/localData";
 import React from "react";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EventOutlinedIcon from "@mui/icons-material/EventOutlined";
 
 interface IProps {
-  task: TypeTask;
+  task: TypeLocalTask;
   position: number;
-  onEditClick: (task: TypeTask) => void;
-  onDeleteClick: (task: TypeTask) => void;
-  onStatusChange: (task: TypeTask, status: TaskStatus) => void;
+  onEditClick: (task: TypeLocalTask) => void;
+  onDeleteClick: (task: TypeLocalTask) => void;
+  onStatusChange: (task: TypeLocalTask, status: TypeLocalTaskStatus) => void;
 }
 
 export function Task({
@@ -67,7 +67,7 @@ export function Task({
             "aria-label": `${t("task.status.label")}: ${task.name}`,
           }}
           onChange={(event) =>
-            onStatusChange(task, event.target.value as TaskStatus)
+            onStatusChange(task, event.target.value as TypeLocalTaskStatus)
           }
         >
           <MenuItem value="todo">{t("task.status.todo")}</MenuItem>

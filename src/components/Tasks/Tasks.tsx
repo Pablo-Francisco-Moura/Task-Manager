@@ -24,8 +24,8 @@ import { useProjects, useTasks } from "@/hooks";
 import { normalizeTaskPriority } from "@/utils/taskPriority";
 import { MAX_DESCRIPTION_LENGTH } from "@/constants";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Task as TypeTask, TaskStatus } from "@prisma/client";
 import type { TypeReorderTasksInput } from "@/types";
+import type { TypeLocalTask, TypeLocalTaskStatus } from "@/types/localData";
 import ChecklistOutlinedIcon from "@mui/icons-material/ChecklistOutlined";
 import FolderOpenOutlinedIcon from "@mui/icons-material/FolderOpenOutlined";
 
@@ -38,9 +38,9 @@ export function Tasks({ openAddTask, onCloseAddTask }: IProps) {
   const setSelectedTab = useMainStore((s) => s.setSelectedTab);
   const selectedProject = useProjectStore((s) => s.selectedProject);
 
-  const [editTask, setEditTask] = useState<TypeTask | null>(null);
+  const [editTask, setEditTask] = useState<TypeLocalTask | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
-  const [taskToDelete, setTaskToDelete] = useState<TypeTask | null>(null);
+  const [taskToDelete, setTaskToDelete] = useState<TypeLocalTask | null>(null);
   const [openEditDialog, setOpenEditDialog] = useState(false);
 
   const { t } = useTranslation();
@@ -78,7 +78,7 @@ export function Tasks({ openAddTask, onCloseAddTask }: IProps) {
     mutationFn: updateTask,
     onSuccess: async (updatedTask) => {
       if (selectedProject?.id) {
-        queryClient.setQueryData<TypeTask[]>(
+        queryClient.setQueryData<TypeLocalTask[]>(
           [QUERY_KEYS.TASKS, selectedProject.id],
           (currentTasks) =>
             currentTasks?.map((task) =>
@@ -103,7 +103,7 @@ export function Tasks({ openAddTask, onCloseAddTask }: IProps) {
     mutationFn: updateTask,
     onSuccess: async (updatedTask) => {
       if (selectedProject?.id) {
-        queryClient.setQueryData<TypeTask[]>(
+        queryClient.setQueryData<TypeLocalTask[]>(
           [QUERY_KEYS.TASKS, selectedProject.id],
           (currentTasks) =>
             currentTasks?.map((task) =>
@@ -124,19 +124,19 @@ export function Tasks({ openAddTask, onCloseAddTask }: IProps) {
     onMutate: async ({ projectId, orderedTaskIdsByStatus }) => {
       const queryKey = [QUERY_KEYS.TASKS, projectId] as const;
       await queryClient.cancelQueries({ queryKey });
-      const previousTasks = queryClient.getQueryData<TypeTask[]>(queryKey);
+      const previousTasks = queryClient.getQueryData<TypeLocalTask[]>(queryKey);
 
       if (previousTasks) {
         const positions = new Map<
           number,
-          { status: TaskStatus; position: number }
+          { status: TypeLocalTaskStatus; position: number }
         >();
         for (const status of ["todo", "in_progress", "done"] as const) {
           orderedTaskIdsByStatus[status].forEach((id, position) => {
             positions.set(id, { status, position });
           });
         }
-        queryClient.setQueryData<TypeTask[]>(
+        queryClient.setQueryData<TypeLocalTask[]>(
           queryKey,
           previousTasks.map((task) => {
             const placement = positions.get(task.id);
@@ -176,10 +176,10 @@ export function Tasks({ openAddTask, onCloseAddTask }: IProps) {
     formState: { isSubmitting, isValid, errors },
   } = useForm<{
     name: string;
-    status: TypeTask["status"];
+    status: TypeLocalTaskStatus;
     dueDate: string;
     dueTime: string;
-    priority: TypeTask["priority"];
+    priority: TypeLocalTask["priority"];
     description: string;
   }>({
     mode: "onChange",
@@ -194,7 +194,7 @@ export function Tasks({ openAddTask, onCloseAddTask }: IProps) {
   });
 
   // Handlers
-  const handleDeleteClick = (task: TypeTask) => {
+  const handleDeleteClick = (task: TypeLocalTask) => {
     setTaskToDelete(task);
     setOpenDialog(true);
   };
@@ -210,7 +210,7 @@ export function Tasks({ openAddTask, onCloseAddTask }: IProps) {
     setTaskToDelete(null);
   };
 
-  const handleEditClick = (task: TypeTask) => {
+  const handleEditClick = (task: TypeLocalTask) => {
     setEditTask(task);
     reset({
       name: task.name,
@@ -234,10 +234,10 @@ export function Tasks({ openAddTask, onCloseAddTask }: IProps) {
 
   const onEditSubmit = async (data: {
     name: string;
-    status: TypeTask["status"];
+    status: TypeLocalTaskStatus;
     dueDate: string;
     dueTime: string;
-    priority: TypeTask["priority"];
+    priority: TypeLocalTask["priority"];
     description: string;
   }) => {
     if (editTask) {
@@ -255,7 +255,10 @@ export function Tasks({ openAddTask, onCloseAddTask }: IProps) {
     }
   };
 
-  const handleStatusChange = (task: TypeTask, status: TaskStatus) => {
+  const handleStatusChange = (
+    task: TypeLocalTask,
+    status: TypeLocalTaskStatus,
+  ) => {
     updateStatusMutation.mutate({ id: task.id, status });
   };
 
@@ -357,7 +360,7 @@ export function Tasks({ openAddTask, onCloseAddTask }: IProps) {
             <ul className="task-list">
               {[...tasks]
                 .sort((a, b) => a.name.localeCompare(b.name))
-                .map((task: TypeTask, index: number) => (
+                .map((task: TypeLocalTask, index: number) => (
                   <Task
                     key={task.id}
                     task={task}

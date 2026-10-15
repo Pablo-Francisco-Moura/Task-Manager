@@ -332,11 +332,14 @@ export function Tasks({ openAddTask, onCloseAddTask }: IProps) {
         </p>
       </div>
 
-      {selectedProject && openAddTask && (
-        <div className="form-surface task-form-surface">
+      <Dialog
+        open={Boolean(selectedProject && openAddTask)}
+        onClose={onCloseAddTask}
+      >
+        {selectedProject && (
           <TaskForm onClose={onCloseAddTask} projectId={selectedProject.id} />
-        </div>
-      )}
+        )}
+      </Dialog>
 
       {tasks && tasks.length > 0 ? (
         <>

@@ -167,12 +167,6 @@
   color: var(--accent);
 }
 
-.taskScreen :global(.task-form-surface) {
-  width: fit-content;
-  max-width: 100%;
-  margin: 1.25rem auto 0;
-}
-
 .taskScreen :global(.task-empty-state) {
   margin-top: 1.5rem;
 }

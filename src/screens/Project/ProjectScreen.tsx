@@ -1,5 +1,6 @@
 "use client";
 
+import { Dialog } from "@mui/material";
 import { useState } from "react";
 import { Projects } from "@/components/Projects/Projects";
 import { ProjectForm } from "@/components/ProjectForm/ProjectForm";
@@ -37,11 +38,9 @@ export function ProjectScreen() {
           <span>{t("project.add")}</span>
         </button>
       </div>
-      {openAddProject && (
-        <div className="form-surface">
-          <ProjectForm toggleOpenAddProject={toggleOpenAddProject} />
-        </div>
-      )}
+      <Dialog open={openAddProject} onClose={() => toggleOpenAddProject(false)}>
+        <ProjectForm toggleOpenAddProject={toggleOpenAddProject} />
+      </Dialog>
 
       <Projects
         openAddProject={openAddProject}

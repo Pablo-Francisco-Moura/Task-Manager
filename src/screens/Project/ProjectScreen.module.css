@@ -123,6 +123,22 @@
   border-left: 1px solid var(--line);
   padding: 0 0.6rem;
   color: var(--muted);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 140ms ease;
+}
+
+.projectScreen :global(.project-card:hover .project-card-actions),
+.projectScreen :global(.project-card:focus-within .project-card-actions) {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+@media (hover: none) {
+  .projectScreen :global(.project-card-actions) {
+    opacity: 1;
+    pointer-events: auto;
+  }
 }
 
 .projectScreen :global(.project-card-actions .MuiIconButton-root) {
@@ -146,5 +162,11 @@
   .projectScreen :global(.project-card-actions) {
     gap: 0;
     padding: 0 0.35rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .projectScreen :global(.project-card-actions) {
+    transition: none;
   }
 }

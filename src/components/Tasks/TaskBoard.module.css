@@ -172,6 +172,14 @@
   color: var(--accent);
 }
 
+.dragHandle:global(.MuiIconButton-root) {
+  color: var(--muted);
+}
+
+.dragHandle:global(.MuiIconButton-root:hover) {
+  color: var(--accent);
+}
+
 .dragHandle:active {
   cursor: grabbing;
 }
@@ -183,7 +191,8 @@
 
 .cardActions {
   display: flex;
-  align-items: flex-start;
+  align-self: stretch;
+  align-items: center;
   color: var(--muted);
   opacity: 0;
   pointer-events: none;

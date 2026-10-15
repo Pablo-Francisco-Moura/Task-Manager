@@ -1,5 +1,4 @@
-import { api } from "@/lib/axios";
-import { ROUTES } from "@/constants";
+import { createLocalProject } from "@/lib/localDataRepository";
 import type {
   TypeCreateProjectInput,
   TypeCreateProjectResponse,
@@ -8,9 +7,5 @@ import type {
 export async function createProject(
   data: TypeCreateProjectInput,
 ): Promise<TypeCreateProjectResponse> {
-  const response = await api.post<TypeCreateProjectResponse>(
-    ROUTES.PROJECT,
-    data,
-  );
-  return response.data;
+  return createLocalProject(data);
 }

@@ -1,5 +1,4 @@
-import { api } from "@/lib/axios";
-import { ROUTES } from "@/constants";
+import { updateLocalProject } from "@/lib/localDataRepository";
 import type {
   TypeUpdateProjectInput,
   TypeUpdateProjectResponse,
@@ -10,13 +9,5 @@ export async function updateProject({
   name,
   description,
 }: TypeUpdateProjectInput): Promise<TypeUpdateProjectResponse> {
-  const response = await api.patch<TypeUpdateProjectResponse>(
-    `${ROUTES.PROJECT}/${id}`,
-    {
-      name,
-      description,
-    },
-  );
-
-  return response.data;
+  return updateLocalProject(id, { name, description });
 }

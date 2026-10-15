@@ -38,7 +38,8 @@
     "signIn": {
       "button": "Entrar",
       "title": "Entrar na sua conta",
-      "submit": "Entrar"
+      "submit": "Entrar",
+      "error": "Não foi possível entrar com estas credenciais."
     },
     "create": {
       "button": "Criar conta",
@@ -48,6 +49,17 @@
       "success": "Conta criada com sucesso."
     },
     "displayName": "Como você quer se chamar?",
+    "username": "Nome de usuário",
+    "usernamePlaceholder": "seu.nome",
+    "identifier": "Nome de usuário ou e-mail",
+    "identifierPlaceholder": "seu nome ou voce@exemplo.com",
+    "emailOptional": "E-mail (opcional)",
+    "emailPlaceholder": "voce@exemplo.com",
+    "password": "Senha",
+    "passwordPlaceholder": "Digite sua senha",
+    "credentials": {
+      "invalid": "Informe um nome de usuário válido e uma senha com pelo menos 6 caracteres."
+    },
     "workspaceName": "Nome do workspace",
     "workspacePlaceholder": "Ex.: Pessoal",
     "suggestions": "Sugestões de workspace",

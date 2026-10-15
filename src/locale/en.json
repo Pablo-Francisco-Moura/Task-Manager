@@ -38,7 +38,8 @@
     "signIn": {
       "button": "Sign in",
       "title": "Sign in to your account",
-      "submit": "Sign in"
+      "submit": "Sign in",
+      "error": "Could not sign in with those credentials."
     },
     "create": {
       "button": "Create account",
@@ -48,6 +49,17 @@
       "success": "Account created successfully."
     },
     "displayName": "How would you like to be called?",
+    "username": "Username",
+    "usernamePlaceholder": "your.name",
+    "identifier": "Username or email",
+    "identifierPlaceholder": "your username or you@example.com",
+    "emailOptional": "Email (optional)",
+    "emailPlaceholder": "you@example.com",
+    "password": "Password",
+    "passwordPlaceholder": "Enter your password",
+    "credentials": {
+      "invalid": "Enter a valid username and a password with at least 6 characters."
+    },
     "workspaceName": "Workspace name",
     "workspacePlaceholder": "e.g. Personal",
     "suggestions": "Workspace suggestions",

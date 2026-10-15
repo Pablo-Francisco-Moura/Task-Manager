@@ -83,7 +83,7 @@ body {
   font-family: "Avenir Next", Avenir, "Segoe UI", sans-serif;
 }
 
-:where(
+html :is(
   button,
   a,
   input,

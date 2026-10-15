@@ -110,6 +110,67 @@ describe("Guest workspace session", () => {
     expect(response.headers.get("set-cookie")).toContain("SameSite=Lax");
   });
 
+  test("should list and create additional workspaces for the account session", async () => {
+    const accountResponse = await POST(
+      apiRequest("session/account", undefined, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          displayName: "Ana",
+          username: "ana",
+          email: "ana@example.com",
+          password: "supersecret",
+          workspaceName: "Estudos",
+        }),
+      }),
+    );
+
+    expect(accountResponse.status).toBe(201);
+    const cookie = cookieFrom(accountResponse);
+
+    const listResponse = await nextApiGet(
+      apiRequest("session/workspace", cookie),
+    );
+    expect(listResponse.status).toBe(200);
+    expect(await listResponse.json()).toMatchObject({
+      activeWorkspaceId: expect.any(String),
+      workspaces: [
+        expect.objectContaining({
+          name: "Estudos",
+          role: "owner",
+        }),
+      ],
+    });
+
+    const createResponse = await POST(
+      apiRequest("session/workspace", cookie, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: "Casa" }),
+      }),
+    );
+
+    expect(createResponse.status).toBe(201);
+    const createdBody = await createResponse.json();
+    expect(createdBody).toMatchObject({
+      workspace: expect.objectContaining({
+        name: "Casa",
+        role: "owner",
+      }),
+      activeWorkspaceId: expect.any(String),
+    });
+
+    const refreshedListResponse = await nextApiGet(
+      apiRequest("session/workspace", cookie),
+    );
+    expect(refreshedListResponse.status).toBe(200);
+    expect((await refreshedListResponse.json()).workspaces).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ name: "Estudos" }),
+        expect.objectContaining({ name: "Casa" }),
+      ]),
+    );
+  });
   test("should reuse and extend a valid guest session cookie", async () => {
     const first = await POST(
       apiRequest("session/guest", undefined, { method: "POST" }),

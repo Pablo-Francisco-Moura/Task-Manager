@@ -44,6 +44,6 @@
 
 **Objetivo:** permitir o uso da aplicação sem cadastro, mantendo os dados de cada visitante isolados no servidor.
 
-**Escopo implementado:** `POST /api/session/guest` cria ou reutiliza um usuário guest, um workspace pessoal e a membership `owner`. O navegador recebe um token aleatório em cookie `HttpOnly`, `SameSite=Lax` e `Secure` em produção; somente o hash do token é persistido. As rotas de projeto e tarefa exigem sessão válida e membership, e limitam leituras e escritas ao workspace da sessão. O prazo configurado para a sessão é de 30 dias.
+**Escopo:** `POST /api/session/guest` cria ou reutiliza um usuário guest, um workspace pessoal e a membership `owner`. O navegador recebe um token aleatório em cookie `HttpOnly`, `SameSite=Lax` e `Secure` em produção; somente o hash do token é persistido. As rotas de projeto e tarefa exigem sessão válida e membership, e limitam leituras e escritas ao workspace da sessão. O prazo configurado para a sessão é de 30 dias.
 
 [Voltar à News](../README.md#news)

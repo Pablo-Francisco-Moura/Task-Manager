@@ -18,6 +18,7 @@ import { useFeedbackStore } from "@/store/feedbackStore";
 import { useProjects, useTasks } from "@/hooks";
 import { normalizeTaskPriority } from "@/utils/taskPriority";
 import { MAX_DESCRIPTION_LENGTH } from "@/constants";
+import { toTaskDueDateInputValue } from "@/utils/taskDueDate";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Task as TypeTask, TaskStatus } from "@prisma/client";
 import type { TypeReorderTasksInput } from "@/types";
@@ -207,7 +208,7 @@ export function Tasks({ openAddTask, onCloseAddTask }: IProps) {
     reset({
       name: task.name,
       status: task.status,
-      dueDate: task.dueDate?.toISOString().slice(0, 10) ?? "",
+      dueDate: toTaskDueDateInputValue(task.dueDate),
       priority: normalizeTaskPriority(task.priority),
       description: task.description ?? "",
     });
@@ -431,7 +432,7 @@ export function Tasks({ openAddTask, onCloseAddTask }: IProps) {
           dueDateField={{
             label: t("task.dueDate.label"),
             inputId: `task-edit-due-date-${editTask?.id ?? "pending"}`,
-            defaultValue: editTask?.dueDate?.toISOString().slice(0, 10) ?? "",
+            defaultValue: toTaskDueDateInputValue(editTask?.dueDate ?? null),
           }}
           isSubmitting={isSubmitting || updateMutation.isPending}
         />

@@ -6,6 +6,7 @@ export async function updateTask({
   id,
   name,
   status,
+  dueDate,
   priority,
   projectId,
   description,
@@ -15,6 +16,7 @@ export async function updateTask({
     {
       name,
       status,
+      dueDate,
       priority,
       projectId,
       description,

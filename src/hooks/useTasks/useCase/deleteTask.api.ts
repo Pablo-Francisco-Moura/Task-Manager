@@ -1,10 +1,5 @@
-import { api } from "@/lib/axios";
-import { ROUTES } from "@/constants";
-import type { TypeDeleteTaskResponse } from "@/types";
+import { deleteLocalTask } from "@/lib/localDataRepository";
 
 export async function deleteTask(id: number) {
-  const response = await api.delete<TypeDeleteTaskResponse>(
-    `${ROUTES.TASK}/${id}`,
-  );
-  return response.data;
+  deleteLocalTask(id);
 }

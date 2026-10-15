@@ -1,5 +1,4 @@
-import { api } from "@/lib/axios";
-import { ROUTES } from "@/constants";
+import { updateLocalTask } from "@/lib/localDataRepository";
 import type { TypeUpdateTaskInput, TypeUpdateTaskResponse } from "@/types";
 
 export async function updateTask({
@@ -12,17 +11,16 @@ export async function updateTask({
   projectId,
   description,
 }: TypeUpdateTaskInput): Promise<TypeUpdateTaskResponse> {
-  const response = await api.patch<TypeUpdateTaskResponse>(
-    `${ROUTES.TASK}/${id}`,
-    {
-      name,
-      dueAt,
-      status,
-      dueDate,
-      priority,
-      projectId,
-      description,
-    },
-  );
-  return response.data;
+  return updateLocalTask(id, {
+    name,
+    dueAt: typeof dueAt === "string" ? new Date(dueAt) : dueAt,
+    status,
+    dueDate:
+      typeof dueDate === "string"
+        ? new Date(`${dueDate}T00:00:00.000Z`)
+        : dueDate,
+    priority,
+    projectId,
+    description,
+  });
 }

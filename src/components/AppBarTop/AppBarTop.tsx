@@ -27,10 +27,7 @@ export function AppBarTop() {
           <span className="app-brand-mark flex h-10 w-10 shrink-0 items-center justify-center rounded-xl">
             <WorkspacesOutlinedIcon fontSize="small" />
           </span>
-          <div className="min-w-0">
-            <p className="app-brand-kicker">{t("app.workspace")}</p>
-            <h1 className="app-brand-title truncate">{t("app.title")}</h1>
-          </div>
+          <h1 className="app-brand-title truncate">{t("app.title")}</h1>
         </div>
         <div className="flex items-center gap-2">
           <ButtonGroup size="small" aria-label={t("app.language")}>

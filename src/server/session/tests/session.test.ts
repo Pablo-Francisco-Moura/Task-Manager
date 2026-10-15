@@ -33,6 +33,44 @@ function apiRequest(path: string, cookie?: string, init: RequestInit = {}) {
 }
 
 describe("Guest workspace session", () => {
+  test("should create an account workspace and issue an account cookie", async () => {
+    const response = await POST(
+      apiRequest("session/account", undefined, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          displayName: "Ana",
+          workspaceName: "Estudos",
+        }),
+      }),
+    );
+
+    expect(response.status).toBe(201);
+    const body = await response.json();
+    const cookie = cookieFrom(response);
+    const token = cookie.slice("account_session=".length);
+    const session = await prisma.session.findUniqueOrThrow({
+      where: {
+        tokenHash: (await import("../session")).hashSessionToken(token),
+      },
+      include: { user: true, workspace: { include: { members: true } } },
+    });
+
+    expect(body).toMatchObject({
+      user: { id: session.userId, kind: "account", displayName: "Ana" },
+      workspaceId: session.workspaceId,
+      workspaceName: "Estudos",
+    });
+    expect(session.user.kind).toBe("account");
+    expect(session.workspace.name).toBe("Estudos");
+    expect(session.workspace.members).toEqual([
+      expect.objectContaining({ userId: session.userId, role: "owner" }),
+    ]);
+    expect(response.headers.get("set-cookie")).toContain("account_session=");
+    expect(response.headers.get("set-cookie")).toContain("HttpOnly");
+    expect(response.headers.get("set-cookie")).toContain("SameSite=Lax");
+  });
+
   test("should reject project and task APIs without a guest session", async () => {
     const [projectsResponse, tasksResponse] = await Promise.all([
       nextApiGet(apiRequest("project")),

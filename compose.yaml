@@ -18,9 +18,14 @@ services:
       retries: 10
 
   app:
-    build: .
+    build:
+      context: .
+      args:
+        LOCAL_UID: ${LOCAL_UID:-1000}
+        LOCAL_GID: ${LOCAL_GID:-1000}
     container_name: desafio-tecnico-one-app
     restart: always
+    user: "${LOCAL_UID:-1000}:${LOCAL_GID:-1000}"
     ports:
       - "3000:3000"
     environment:

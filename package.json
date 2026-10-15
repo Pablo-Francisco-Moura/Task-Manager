@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "dotenv -e .env next dev --turbopack",
     "dev:docker": "prisma migrate deploy && prisma generate && next dev --hostname 0.0.0.0",
+    "dev:docker:clean": "docker compose exec -T app sh -c 'find /app/.next -mindepth 1 -delete' && docker compose restart app",
     "build": "next build",
     "start": "next start",
     "lint": "eslint src",

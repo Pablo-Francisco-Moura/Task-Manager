@@ -100,6 +100,11 @@ Desenvolver um sistema full stack de gerenciamento de projetos e tarefas utiliza
    ```
    O Compose aguarda o PostgreSQL ficar pronto, aplica as migrations e inicia a
    aplicação. Acesse http://localhost:3000.
+   Se precisar reiniciar a aplicação limpando o cache do Next.js, sem apagar os
+   dados do banco, use:
+   ```sh
+   npm run dev:docker:clean
+   ```
 5. (Opcional) Preencha o banco com algumas informações iniciais:
    ```sh
    docker compose exec app npm run db:seed

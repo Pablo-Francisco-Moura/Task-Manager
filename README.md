@@ -14,43 +14,58 @@ Este é um desafio técnico full stack que consiste no desenvolvimento de um sis
 
 ## Estrutura do Banco de Dados
 
-A estrutura do banco de dados é baseada em duas entidades: **Project** e **Task**.
+O modelo inclui identidade e sessão (`User`, `Session`), workspace e memberships (`Workspace`, `WorkspaceMember`), além dos dados de produto (`Project`, `Task`).
 
 ```mermaid
 erDiagram
+   USER {
+      uuid id PK
+      string displayName
+      string kind
+   }
+
+   SESSION {
+      uuid id PK
+      uuid userId FK
+      uuid workspaceId FK
+      string tokenHash UK
+      datetime expiresAt
+   }
+
+   WORKSPACE {
+      uuid id PK
+      string name
+      string kind
+   }
+
+   WORKSPACE_MEMBER {
+      uuid workspaceId PK, FK
+      uuid userId PK, FK
+      string role
+   }
+
     PROJECT {
         int id PK "Auto increment"
         string name "Nome do projeto"
+      uuid workspaceId FK
+      uuid createdById FK
     }
 
     TASK {
         int id PK "Auto increment"
         string name "Nome da tarefa"
         int projectId FK "Referência ao projeto"
+      uuid createdById FK
     }
 
+   USER ||--o{ SESSION : owns
+   WORKSPACE ||--o{ SESSION : scopes
+   USER ||--o{ WORKSPACE_MEMBER : joins
+   WORKSPACE ||--o{ WORKSPACE_MEMBER : contains
+   USER ||--o{ PROJECT : creates
+   USER ||--o{ TASK : creates
+   WORKSPACE ||--o{ PROJECT : contains
     PROJECT ||--o{ TASK : "possui"
-```
-
-```prisma
-model Project {
-  id   Int    @id @default(autoincrement())
-  name String
-
-  tasks Task[]
-
-  @@map("projects")
-}
-
-model Task {
-  id   Int    @id @default(autoincrement())
-  name String
-
-  projectId Int
-  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-
-  @@map("tasks")
-}
 ```
 
 ## Desafio
@@ -149,8 +164,12 @@ Desenvolver um sistema full stack de gerenciamento de projetos e tarefas utiliza
 
 ## Endpoints da API
 
-- `GET /api/project` - Lista todos os projetos
-- `POST /api/project` - Cria um novo projeto
+- `POST /api/session/guest` - Cria uma sessão guest ou reutiliza uma sessão válida.
+- `GET /api/project` - Lista os projetos e tarefas do workspace da sessão.
+- `POST /api/project` - Cria um projeto no workspace da sessão.
+- `PATCH /api/project/:id` e `DELETE /api/project/:id` - Atualiza ou exclui um projeto do workspace da sessão.
+- `GET /api/task?projectId=:id` e `POST /api/task` - Lista ou cria tarefas no projeto autorizado.
+- `PATCH /api/task/:id`, `DELETE /api/task/:id` e `PATCH /api/task/reorder` - Atualiza, exclui ou reordena tarefas autorizadas.
 
 ## Considerações
 
@@ -199,3 +218,4 @@ Boa sorte no desafio! 🚀
   - [x] [Adicionar status às tarefas (`todo`, `in_progress`, `done`)](docs/03-news.md#task-status)
   - [x] [Adicionar prioridade às tarefas (`low`, `normal`, `high`)](docs/03-news.md#task-priority)
   - [x] [Adicionar horário opcional ao prazo da tarefa](docs/03-news.md#task-due-time)
+  - [x] [Adicionar identidade guest e isolamento por workspace](docs/03-news.md#guest-workspace)

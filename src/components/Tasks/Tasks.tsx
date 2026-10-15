@@ -342,17 +342,6 @@ export function Tasks({ openAddTask, onCloseAddTask }: IProps) {
 
   return (
     <div className="task-workspace">
-      <div className="task-heading">
-        <p className="task-count" aria-live="polite">
-          <span className="task-count-value">{tasks?.length ?? 0}</span>
-          {t(
-            (tasks?.length ?? 0) === 1
-              ? "task.count.singular"
-              : "task.count.plural",
-          )}
-        </p>
-      </div>
-
       <Dialog
         open={Boolean(selectedProject && openAddTask)}
         onClose={onCloseAddTask}

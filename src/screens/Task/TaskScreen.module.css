@@ -3,12 +3,17 @@
 }
 
 .taskScreen :global(.task-project-toolbar) {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  display: grid;
   gap: 1.25rem;
-  border-bottom: 1px solid var(--line);
-  padding: 0 0 1.25rem;
+  padding: 0;
+}
+
+.taskScreen :global(.task-project-toolbar .task-summary-heading) {
+  align-items: center;
+}
+
+.taskScreen :global(.task-project-toolbar .task-count) {
+  flex: 1;
 }
 
 .taskScreen :global(.task-project-select .MuiInputBase-root) {
@@ -32,13 +37,7 @@
 
 .taskScreen :global(.task-workspace) {
   width: 100%;
-  padding-top: 2rem;
-}
-
-.taskScreen :global(.task-heading) {
-  align-items: center;
-  border-bottom: 1px solid var(--line);
-  padding-bottom: 1.5rem;
+  padding-top: 0;
 }
 
 .taskScreen :global(.task-title) {
@@ -221,10 +220,6 @@
 
   .taskScreen :global(.task-project-select) {
     width: 100%;
-  }
-
-  .taskScreen :global(.task-workspace) {
-    padding-top: 1.5rem;
   }
 
   .taskScreen :global(.task-row) {

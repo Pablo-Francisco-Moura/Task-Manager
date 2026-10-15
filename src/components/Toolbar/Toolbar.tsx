@@ -1,5 +1,5 @@
 import { Project } from "@prisma/client";
-import { useTheme } from "../Providers/ThemeProvider";
+import { useTasks } from "@/hooks/useTasks";
 import { useEffect } from "react";
 import { useProjects } from "@/hooks/useProjects";
 import { useTranslation } from "react-i18next";
@@ -22,10 +22,8 @@ export function Toolbar({ openAddTask, onToggleAddTask }: IProps) {
   const setSelectedProject = useProjectStore((s) => s.setSelectedProject);
 
   const { t } = useTranslation();
-  const { theme } = useTheme();
   const { projects, isLoading } = useProjects();
-
-  const isDark = theme === "dark";
+  const { tasks } = useTasks(selectedProject?.id);
 
   useEffect(() => {
     if (!preferencesLoaded) return;
@@ -63,7 +61,13 @@ export function Toolbar({ openAddTask, onToggleAddTask }: IProps) {
   return (
     <div className="task-project-toolbar">
       <FormControl className="task-project-select" sx={{ minWidth: 220 }}>
-        <InputLabel id="task-project-select-label">
+        <InputLabel
+          id="task-project-select-label"
+          sx={{
+            color: "var(--muted)",
+            "&.Mui-focused": { color: "var(--accent)" },
+          }}
+        >
           {t("project.label")}
         </InputLabel>
         <Select
@@ -73,13 +77,31 @@ export function Toolbar({ openAddTask, onToggleAddTask }: IProps) {
           onChange={handleChange}
           disabled={!projects || projects.length === 0 || isLoading}
           displayEmpty
+          MenuProps={{
+            PaperProps: {
+              sx: {
+                backgroundColor: "var(--surface)",
+                color: "var(--foreground)",
+                "& .MuiMenuItem-root:hover": {
+                  backgroundColor: "var(--brand-soft)",
+                },
+              },
+            },
+          }}
           sx={{
-            color: isDark ? "#fff" : undefined,
+            color: "var(--foreground)",
             ".MuiOutlinedInput-notchedOutline": {
-              borderColor: isDark ? "#fff" : undefined,
+              borderColor: "var(--line)",
+            },
+            "&:hover .MuiOutlinedInput-notchedOutline": {
+              borderColor: "var(--accent)",
             },
             "& .MuiSvgIcon-root": {
-              color: isDark ? "#fff" : undefined,
+              color: "var(--foreground)",
+            },
+            "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+              borderColor: "var(--accent)",
+              borderWidth: 2,
             },
           }}
         >
@@ -94,16 +116,26 @@ export function Toolbar({ openAddTask, onToggleAddTask }: IProps) {
             ))}
         </Select>
       </FormControl>
-      <button
-        type="button"
-        className="primary-action"
-        onClick={onToggleAddTask}
-        aria-expanded={openAddTask}
-        disabled={!selectedProject || isLoading}
-      >
-        <AddIcon fontSize="small" />
-        <span>{t("task.create.submit")}</span>
-      </button>
+      <div className="screen-heading task-summary-heading">
+        {tasks && (
+          <p className="task-count" aria-live="polite">
+            <span className="task-count-value">{tasks.length}</span>
+            {t(
+              tasks.length === 1 ? "task.count.singular" : "task.count.plural",
+            )}
+          </p>
+        )}
+        <button
+          type="button"
+          className="primary-action"
+          onClick={onToggleAddTask}
+          aria-expanded={openAddTask}
+          disabled={!selectedProject || isLoading}
+        >
+          <AddIcon fontSize="small" />
+          <span>{t("task.create.submit")}</span>
+        </button>
+      </div>
     </div>
   );
 }

@@ -36,6 +36,7 @@ model Task {
   name        String
   description String?
   dueDate     DateTime?    @db.Date
+  dueAt       DateTime?    @db.Timestamptz(3)
   status      TaskStatus   @default(todo)
   priority    TaskPriority @default(normal)
   position    Int          @default(0)

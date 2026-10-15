@@ -1,0 +1,1 @@
+ALTER TABLE "tasks" ADD COLUMN "dueAt" TIMESTAMPTZ(3);

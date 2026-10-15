@@ -6,3 +6,8 @@ export type TypeSessionVariables = {
 export type TypeSessionEnv = {
   Variables: TypeSessionVariables;
 };
+
+export type TypeAccountSessionState = {
+  displayName: string;
+  workspaceName: string;
+};

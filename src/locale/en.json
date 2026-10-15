@@ -100,6 +100,9 @@
       "normal": "Normal",
       "high": "High"
     },
+    "dueDate": {
+      "label": "Due date"
+    },
     "board": "Task board",
     "dragHandle": "Move {{name}}",
     "dragInstructions": "Focus a task's move button and press Space to pick it up. Use the arrow keys to move it, Space to place it, or Escape to cancel.",

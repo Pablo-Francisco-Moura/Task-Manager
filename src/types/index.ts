@@ -3,6 +3,7 @@ export * from "./task";
 export * from "./theme";
 export * from "./locale";
 export * from "./project";
+export * from "./session";
 export * from "./feedback";
 export * from "./validation";
 export * from "./taskPriority";

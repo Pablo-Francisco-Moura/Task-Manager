@@ -6,14 +6,16 @@ import {
   beforeAll,
   beforeEach,
 } from "vitest";
-import { Hono } from "hono";
-import { prisma } from "@/lib/prisma";
+import {
+  createTestRequest,
+  testPrisma as prisma,
+  createAuthenticatedTestApp,
+} from "@/server/tests/testDatabase";
 import { projectRoutes } from "../project.routes";
 import { cleanDatabase } from "@/utils";
 import { POST as nextApiPost } from "@/app/api/[[...route]]/route";
 
-const app = new Hono();
-app.route("/projects", projectRoutes);
+const app = createAuthenticatedTestApp("/projects", projectRoutes);
 
 beforeAll(async () => {
   await cleanDatabase();
@@ -89,7 +91,7 @@ describe("Project API", () => {
 
   test("should create a project through the Next.js API route", async () => {
     const response = await nextApiPost(
-      new Request("http://localhost/api/project", {
+      createTestRequest("/api/project", {
         method: "POST",
         body: JSON.stringify({
           name: "Project through Next",

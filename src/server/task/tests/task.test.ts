@@ -1,12 +1,14 @@
-import { Hono } from "hono";
-import { prisma } from "@/lib/prisma";
+import {
+  createTestRequest,
+  testPrisma as prisma,
+  createAuthenticatedTestApp,
+} from "@/server/tests/testDatabase";
 import { taskRoutes } from "../task.routes";
 import { cleanDatabase } from "@/utils";
 import { POST as nextApiPost } from "@/app/api/[[...route]]/route";
 import { expect, test, describe, afterAll, beforeEach } from "vitest";
 
-const app = new Hono();
-app.route("/tasks", taskRoutes);
+const app = createAuthenticatedTestApp("/tasks", taskRoutes);
 
 beforeEach(async () => {
   await cleanDatabase();
@@ -83,7 +85,7 @@ describe("Task API", () => {
       data: { name: "Project for Next route" },
     });
     const response = await nextApiPost(
-      new Request("http://localhost/api/task", {
+      createTestRequest("/api/task", {
         method: "POST",
         body: JSON.stringify({
           name: "Task through Next",

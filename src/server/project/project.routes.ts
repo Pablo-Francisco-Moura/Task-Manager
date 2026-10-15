@@ -12,8 +12,9 @@ import { Hono } from "hono";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { describeRoute } from "hono-openapi";
+import type { TypeSessionEnv } from "@/server/session";
 
-const projectRoutes = new Hono();
+const projectRoutes = new Hono<TypeSessionEnv>();
 
 // POST /api/project - Create new project.
 projectRoutes.post(
@@ -47,6 +48,8 @@ projectRoutes.post(
       data: {
         name,
         description: normalizeDescription(parsedBody.data.description),
+        workspaceId: c.get("workspaceId"),
+        createdById: c.get("userId"),
       },
     });
 
@@ -66,6 +69,7 @@ projectRoutes.get(
   }),
   async (c) => {
     const projects = await prisma.project.findMany({
+      where: { workspaceId: c.get("workspaceId") },
       include: { tasks: true },
     });
 
@@ -94,9 +98,12 @@ projectRoutes.delete(
     }
 
     try {
-      await prisma.project.delete({
-        where: { id },
+      const deleted = await prisma.project.deleteMany({
+        where: { id, workspaceId: c.get("workspaceId") },
       });
+      if (deleted.count === 0) {
+        return c.json({ error: "Project not found" }, 404);
+      }
 
       return c.json({ message: "Project deleted successfully" });
     } catch (error: unknown) {
@@ -162,9 +169,15 @@ projectRoutes.patch(
       updateData.description = normalizeDescription(description);
     }
     try {
-      const updatedProject = await prisma.project.update({
-        where: { id },
+      const updated = await prisma.project.updateMany({
+        where: { id, workspaceId: c.get("workspaceId") },
         data: updateData,
+      });
+      if (updated.count === 0) {
+        return c.json({ error: "Project not found" }, 404);
+      }
+      const updatedProject = await prisma.project.findFirstOrThrow({
+        where: { id, workspaceId: c.get("workspaceId") },
       });
       return c.json(updatedProject, 200);
     } catch (error: unknown) {

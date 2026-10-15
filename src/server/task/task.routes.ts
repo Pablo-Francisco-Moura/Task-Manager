@@ -15,8 +15,9 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { describeRoute } from "hono-openapi";
 import { normalizeTaskPriority } from "@/utils/taskPriority";
+import type { TypeSessionEnv } from "@/server/session";
 
-const taskRoutes = new Hono();
+const taskRoutes = new Hono<TypeSessionEnv>();
 
 taskRoutes.post(
   "/",
@@ -49,7 +50,7 @@ taskRoutes.post(
     }
 
     const project = await prisma.project.findUnique({
-      where: { id: projectId },
+      where: { id: projectId, workspaceId: c.get("workspaceId") },
     });
     if (!project) {
       return c.json({ error: "Project not found" }, 404);
@@ -82,6 +83,7 @@ taskRoutes.post(
           priority,
           position: (lastTask?.position ?? -1) + 1,
           projectId,
+          createdById: c.get("userId"),
           description: normalizeDescription(parsedBody.data.description),
         },
       });
@@ -125,13 +127,15 @@ taskRoutes.get(
 
     // Check if the project exists.
     const project = await prisma.project.findUnique({
-      where: { id: projectId },
+      where: { id: projectId, workspaceId: c.get("workspaceId") },
     });
     if (!project) {
       return c.json({ error: "Project not found" }, 404);
     }
 
-    const tasks = await prisma.task.findMany({ where: { projectId } });
+    const tasks = await prisma.task.findMany({
+      where: { projectId, project: { workspaceId: c.get("workspaceId") } },
+    });
     return c.json(
       tasks.map((task) => ({
         ...task,
@@ -181,7 +185,7 @@ taskRoutes.patch(
 
     const result = await prisma.$transaction(async (transaction) => {
       const project = await transaction.project.findUnique({
-        where: { id: projectId },
+        where: { id: projectId, workspaceId: c.get("workspaceId") },
         select: { id: true },
       });
       if (!project) {
@@ -189,7 +193,7 @@ taskRoutes.patch(
       }
 
       const existingTasks = await transaction.task.findMany({
-        where: { projectId },
+        where: { projectId, project: { workspaceId: c.get("workspaceId") } },
         select: { id: true },
       });
       const existingIds = new Set(existingTasks.map((task) => task.id));
@@ -204,7 +208,10 @@ taskRoutes.patch(
         await Promise.all(
           orderedTaskIdsByStatus[status].map((id, position) =>
             transaction.task.update({
-              where: { id },
+              where: {
+                id,
+                project: { workspaceId: c.get("workspaceId") },
+              },
               data: { status, position },
             }),
           ),
@@ -212,7 +219,7 @@ taskRoutes.patch(
       }
 
       const tasks = await transaction.task.findMany({
-        where: { projectId },
+        where: { projectId, project: { workspaceId: c.get("workspaceId") } },
         orderBy: [{ status: "asc" }, { position: "asc" }, { id: "asc" }],
       });
       return { kind: "success" as const, tasks };
@@ -249,7 +256,12 @@ taskRoutes.delete(
     }
 
     try {
-      await prisma.task.delete({ where: { id } });
+      const deleted = await prisma.task.deleteMany({
+        where: { id, project: { workspaceId: c.get("workspaceId") } },
+      });
+      if (deleted.count === 0) {
+        return c.json({ error: "Task not found" }, 404);
+      }
       return c.json({ message: "Task deleted successfully" }, 200);
     } catch (error: unknown) {
       if (
@@ -312,14 +324,11 @@ taskRoutes.patch(
       );
     }
 
-    const currentTask =
-      status !== undefined || projectId !== undefined
-        ? await prisma.task.findUnique({
-            where: { id },
-            select: { projectId: true, status: true },
-          })
-        : null;
-    if ((status !== undefined || projectId !== undefined) && !currentTask) {
+    const currentTask = await prisma.task.findFirst({
+      where: { id, project: { workspaceId: c.get("workspaceId") } },
+      select: { projectId: true, status: true },
+    });
+    if (!currentTask) {
       return c.json({ error: "Task not found" }, 404);
     }
 
@@ -333,6 +342,13 @@ taskRoutes.patch(
       updateData.name = parsedName;
     }
     if (projectId !== undefined) {
+      const destinationProject = await prisma.project.findFirst({
+        where: { id: projectId, workspaceId: c.get("workspaceId") },
+        select: { id: true },
+      });
+      if (!destinationProject) {
+        return c.json({ error: "Project not found" }, 404);
+      }
       updateData.projectId = projectId;
       parsedProjectId = projectId;
     }
@@ -357,15 +373,6 @@ taskRoutes.patch(
         updateData.dueDate = null;
       }
     }
-    // If projectId is being updated, check if the new project exists
-    if (parsedProjectId !== undefined) {
-      const project = await prisma.project.findUnique({
-        where: { id: parsedProjectId },
-      });
-      if (!project) {
-        return c.json({ error: "Project not found" }, 404);
-      }
-    }
     if (currentTask) {
       const destinationProjectId = parsedProjectId ?? currentTask.projectId;
       const destinationStatus = status ?? currentTask.status;
@@ -382,9 +389,15 @@ taskRoutes.patch(
       }
     }
     try {
-      const updatedTask = await prisma.task.update({
-        where: { id },
+      const updatedCount = await prisma.task.updateMany({
+        where: { id, project: { workspaceId: c.get("workspaceId") } },
         data: updateData,
+      });
+      if (updatedCount.count === 0) {
+        return c.json({ error: "Task not found" }, 404);
+      }
+      const updatedTask = await prisma.task.findFirstOrThrow({
+        where: { id, project: { workspaceId: c.get("workspaceId") } },
       });
       return c.json(
         {

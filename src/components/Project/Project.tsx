@@ -8,9 +8,9 @@ import { useTranslation } from "react-i18next";
 import { useProjectStore } from "@/store/projectStore";
 import { useFeedbackStore } from "@/store/feedbackStore";
 import { MAX_DESCRIPTION_LENGTH } from "@/constants";
-import { Project as TypeProject } from "@prisma/client";
 import { IconButton, Tooltip, Dialog } from "@mui/material";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import type { TypeLocalProject } from "@/types/localData";
 import type { TypeProjectWithTasks } from "@/types";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -32,7 +32,7 @@ export function Project({
   const selectedProject = useProjectStore((s) => s.selectedProject);
   const setSelectedProject = useProjectStore((s) => s.setSelectedProject);
 
-  const [editProject, setEditProject] = useState<TypeProject | null>(null);
+  const [editProject, setEditProject] = useState<TypeLocalProject | null>(null);
   const [openEditDialog, setOpenEditDialog] = useState(false);
 
   const { t } = useTranslation();
@@ -73,7 +73,7 @@ export function Project({
     setOpenDialog(true);
   };
 
-  const handleEditClick = (project: TypeProject) => {
+  const handleEditClick = (project: TypeLocalProject) => {
     setEditProject(project);
     reset({ name: project.name, description: project.description ?? "" });
     setOpenEditDialog(true);

@@ -1,12 +1,12 @@
 import { create } from "zustand";
-import { Project } from "@prisma/client";
 import { selectedProjectStorageKey } from "@/constants/app";
+import type { TypeLocalProject } from "@/types/localData";
 
 interface IProjectState {
-  selectedProject: Project | null;
+  selectedProject: TypeLocalProject | null;
   selectedProjectId: number | null;
   preferencesLoaded: boolean;
-  setSelectedProject: (project: Project | null) => void;
+  setSelectedProject: (project: TypeLocalProject | null) => void;
   setSelectedProjectId: (projectId: number | null) => void;
   setPreferencesLoaded: () => void;
 }

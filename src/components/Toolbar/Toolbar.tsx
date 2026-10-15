@@ -1,10 +1,10 @@
-import { Project } from "@prisma/client";
 import { useTasks } from "@/hooks/useTasks";
 import { useEffect } from "react";
 import { useProjects } from "@/hooks/useProjects";
 import { useTranslation } from "react-i18next";
 import { useProjectStore } from "@/store/projectStore";
 import Select, { SelectChangeEvent } from "@mui/material/Select";
+import type { TypeLocalProject } from "@/types/localData";
 import AddIcon from "@mui/icons-material/Add";
 import MenuItem from "@mui/material/MenuItem";
 import InputLabel from "@mui/material/InputLabel";
@@ -30,9 +30,11 @@ export function Toolbar({ openAddTask, onToggleAddTask }: IProps) {
 
     if (projects && projects.length > 0) {
       const projectToSelect =
-        projects.find((project: Project) => project.id === selectedProjectId) ??
         projects.find(
-          (project: Project) => project.id === selectedProject?.id,
+          (project: TypeLocalProject) => project.id === selectedProjectId,
+        ) ??
+        projects.find(
+          (project: TypeLocalProject) => project.id === selectedProject?.id,
         ) ??
         projects[0];
       if (
@@ -54,7 +56,8 @@ export function Toolbar({ openAddTask, onToggleAddTask }: IProps) {
 
   const handleChange = (event: SelectChangeEvent) => {
     const id = Number(event.target.value);
-    const project = projects?.find((p: Project) => p.id === id) || null;
+    const project =
+      projects?.find((item: TypeLocalProject) => item.id === id) || null;
     setSelectedProject(project);
   };
 
@@ -117,7 +120,7 @@ export function Toolbar({ openAddTask, onToggleAddTask }: IProps) {
                 : t("project.select")}
           </MenuItem>
           {projects &&
-            projects.map((project: Project) => (
+            projects.map((project: TypeLocalProject) => (
               <MenuItem key={project.id} value={project.id.toString()}>
                 {project.name}
               </MenuItem>

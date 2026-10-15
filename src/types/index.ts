@@ -5,5 +5,6 @@ export * from "./locale";
 export * from "./project";
 export * from "./session";
 export * from "./feedback";
+export * from "./localData";
 export * from "./validation";
 export * from "./taskPriority";

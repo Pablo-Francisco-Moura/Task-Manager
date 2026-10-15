@@ -1,14 +1,14 @@
-import type { Project, Task } from "@prisma/client";
+import type { TypeLocalProject, TypeLocalProjectWithTasks } from "./localData";
 
-export type TypeProjectWithTasks = Project & { tasks: Task[] };
-export type TypeCreateProjectInput = Pick<Project, "name"> & {
+export type TypeProjectWithTasks = TypeLocalProjectWithTasks;
+export type TypeCreateProjectInput = Pick<TypeLocalProject, "name"> & {
   description?: string | null;
 };
-export type TypeCreateProjectResponse = Project;
+export type TypeCreateProjectResponse = TypeLocalProject;
 export type TypeDeleteProjectResponse = void;
-export type TypeGetProjectResponse = TypeProjectWithTasks[];
-export type TypeUpdateProjectInput = Pick<Project, "id"> & {
+export type TypeGetProjectResponse = TypeLocalProjectWithTasks[];
+export type TypeUpdateProjectInput = Pick<TypeLocalProject, "id"> & {
   name?: string;
   description?: string | null;
 };
-export type TypeUpdateProjectResponse = Project;
+export type TypeUpdateProjectResponse = TypeLocalProject;

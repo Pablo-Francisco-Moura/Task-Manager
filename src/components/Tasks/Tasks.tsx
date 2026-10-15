@@ -21,18 +21,21 @@ import { MAX_DESCRIPTION_LENGTH } from "@/constants";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Task as TypeTask, TaskStatus } from "@prisma/client";
 import type { TypeReorderTasksInput } from "@/types";
-import AddIcon from "@mui/icons-material/Add";
 import ChecklistOutlinedIcon from "@mui/icons-material/ChecklistOutlined";
 import FolderOpenOutlinedIcon from "@mui/icons-material/FolderOpenOutlined";
 
-export function Tasks() {
+interface IProps {
+  openAddTask: boolean;
+  onCloseAddTask: () => void;
+}
+
+export function Tasks({ openAddTask, onCloseAddTask }: IProps) {
   const setSelectedTab = useMainStore((s) => s.setSelectedTab);
   const selectedProject = useProjectStore((s) => s.selectedProject);
 
   const [editTask, setEditTask] = useState<TypeTask | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState<TypeTask | null>(null);
-  const [openAddTask, toggleOpenAddTask] = useState(false);
   const [openEditDialog, setOpenEditDialog] = useState(false);
 
   const { t } = useTranslation();
@@ -319,35 +322,19 @@ export function Tasks() {
   return (
     <div className="task-workspace">
       <div className="task-heading">
-        <div>
-          <p className="screen-eyebrow">{t("navigation.tasks")}</p>
-          <h2 className="screen-title task-title">{selectedProject?.name}</h2>
-          <p className="task-count">
-            <span className="task-count-value">{tasks?.length ?? 0}</span>
-            {t(
-              (tasks?.length ?? 0) === 1
-                ? "task.count.singular"
-                : "task.count.plural",
-            )}
-          </p>
-        </div>
-        <button
-          type="button"
-          className="primary-action"
-          onClick={() => toggleOpenAddTask(!openAddTask)}
-          aria-expanded={openAddTask}
-        >
-          <AddIcon fontSize="small" />
-          <span>{t("task.create.submit")}</span>
-        </button>
+        <p className="task-count" aria-live="polite">
+          <span className="task-count-value">{tasks?.length ?? 0}</span>
+          {t(
+            (tasks?.length ?? 0) === 1
+              ? "task.count.singular"
+              : "task.count.plural",
+          )}
+        </p>
       </div>
 
       {selectedProject && openAddTask && (
         <div className="form-surface task-form-surface">
-          <TaskForm
-            onClose={() => toggleOpenAddTask(false)}
-            projectId={selectedProject.id}
-          />
+          <TaskForm onClose={onCloseAddTask} projectId={selectedProject.id} />
         </div>
       )}
 
@@ -390,13 +377,6 @@ export function Tasks() {
             <ChecklistOutlinedIcon />
           </span>
           <h3>{t("task.empty")}</h3>
-          <button
-            type="button"
-            className="text-action"
-            onClick={() => toggleOpenAddTask(true)}
-          >
-            {t("task.create.submit")}
-          </button>
         </div>
       )}
 

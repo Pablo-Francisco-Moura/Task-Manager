@@ -6,10 +6,17 @@ import { useTranslation } from "react-i18next";
 import { useProjectStore } from "@/store/projectStore";
 import { CircularProgress } from "@mui/material";
 import Select, { SelectChangeEvent } from "@mui/material/Select";
+import AddIcon from "@mui/icons-material/Add";
 import MenuItem from "@mui/material/MenuItem";
+import InputLabel from "@mui/material/InputLabel";
 import FormControl from "@mui/material/FormControl";
 
-export function Toolbar() {
+interface IProps {
+  openAddTask: boolean;
+  onToggleAddTask: () => void;
+}
+
+export function Toolbar({ openAddTask, onToggleAddTask }: IProps) {
   const selectedProject = useProjectStore((s) => s.selectedProject);
   const selectedProjectId = useProjectStore((s) => s.selectedProjectId);
   const preferencesLoaded = useProjectStore((s) => s.preferencesLoaded);
@@ -56,10 +63,13 @@ export function Toolbar() {
 
   return (
     <div className="task-project-toolbar">
-      <p className="toolbar-caption">{t("project.name")}</p>
       <FormControl className="task-project-select" sx={{ minWidth: 220 }}>
+        <InputLabel id="task-project-select-label">
+          {t("project.label")}
+        </InputLabel>
         <Select
-          aria-label={t("project.name")}
+          labelId="task-project-select-label"
+          label={t("project.label")}
           value={selectedProject?.id?.toString() ?? ""}
           onChange={handleChange}
           disabled={!projects || projects.length === 0 || isLoading}
@@ -86,6 +96,16 @@ export function Toolbar() {
         </Select>
       </FormControl>
       {isLoading && <CircularProgress />}
+      <button
+        type="button"
+        className="primary-action"
+        onClick={onToggleAddTask}
+        aria-expanded={openAddTask}
+        disabled={!selectedProject || isLoading}
+      >
+        <AddIcon fontSize="small" />
+        <span>{t("task.create.submit")}</span>
+      </button>
     </div>
   );
 }

@@ -6,6 +6,7 @@ import type { TypeSharedSchema } from "@/types/validation";
 const nameSchema = z.string().min(1).max(MAX_NAME_LENGTH).regex(/\S/);
 const projectIdSchema = z.int().positive();
 const taskStatusSchema = z.enum(["todo", "in_progress", "done"]);
+const taskPrioritySchema = z.enum(["low", "normal", "high"]);
 const descriptionSchema = z
   .string()
   .max(MAX_DESCRIPTION_LENGTH)
@@ -22,15 +23,17 @@ export const projectUpdateSchema = z.strictObject({
 });
 export const taskCreateSchema = z.strictObject({
   name: nameSchema,
+  status: taskStatusSchema.optional(),
+  priority: taskPrioritySchema.optional(),
   projectId: projectIdSchema,
   description: descriptionSchema,
-  status: taskStatusSchema.optional(),
 });
 export const taskUpdateSchema = z.strictObject({
   name: nameSchema.optional(),
+  status: taskStatusSchema.optional(),
+  priority: taskPrioritySchema.optional(),
   projectId: projectIdSchema.optional(),
   description: descriptionSchema,
-  status: taskStatusSchema.optional(),
 });
 export const taskReorderSchema = z.strictObject({
   projectId: projectIdSchema,

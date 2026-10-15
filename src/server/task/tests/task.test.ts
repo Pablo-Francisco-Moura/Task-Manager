@@ -24,6 +24,7 @@ describe("Task API", () => {
     [{ name: "Task", projectId: 1, description: 42 }],
     [{ name: "Task", projectId: 1, description: "x".repeat(2001) }],
     [{ name: "Task", projectId: 1, status: "blocked" }],
+    [{ name: "Task", projectId: 1, priority: "urgent" }],
     [{ name: "Task", projectId: 1, unexpected: true }],
     [{ name: "x".repeat(201), projectId: 1 }],
   ])("should reject invalid task payloads: %o", async (body) => {
@@ -44,6 +45,7 @@ describe("Task API", () => {
     { description: 42 },
     { description: "x".repeat(2001) },
     { status: "blocked" },
+    { priority: "urgent" },
     { name: "Task", extra: true },
     { name: "x".repeat(201) },
   ])("should reject invalid task updates: %o", async (body) => {
@@ -81,9 +83,10 @@ describe("Task API", () => {
         method: "POST",
         body: JSON.stringify({
           name: "Task through Next",
+          status: "in_progress",
+          priority: "high",
           projectId: project.id,
           description: "Created through the Next route",
-          status: "in_progress",
         }),
         headers: { "Content-Type": "application/json" },
       }),
@@ -92,10 +95,65 @@ describe("Task API", () => {
     expect(response.status).toBe(201);
     expect(await response.json()).toMatchObject({
       name: "Task through Next",
+      status: "in_progress",
+      priority: "high",
       projectId: project.id,
       description: "Created through the Next route",
-      status: "in_progress",
     });
+  });
+
+  test("should default a task priority to normal", async () => {
+    const project = await prisma.project.create({
+      data: { name: "Project for default priority" },
+    });
+
+    const response = await app.request("/tasks", {
+      method: "POST",
+      body: JSON.stringify({
+        name: "Default priority task",
+        projectId: project.id,
+      }),
+      headers: { "Content-Type": "application/json" },
+    });
+
+    expect(response.status).toBe(201);
+    expect(await response.json()).toMatchObject({
+      priority: "normal",
+    });
+  });
+
+  test("should update a task priority to high", async () => {
+    const project = await prisma.project.create({
+      data: { name: "Project for priority update" },
+    });
+
+    const task = await prisma.task.create({
+      data: {
+        name: "Priority update task",
+        projectId: project.id,
+        position: 0,
+      },
+    });
+
+    const response = await app.request(`/tasks/${task.id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ priority: "high" }),
+      headers: { "Content-Type": "application/json" },
+    });
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({
+      id: task.id,
+      priority: "high",
+    });
+  });
+
+  test("should normalize missing task priorities to normal", async () => {
+    const { normalizeTaskPriority } = await import("@/utils/taskPriority");
+
+    expect(normalizeTaskPriority(undefined)).toBe("normal");
+    expect(normalizeTaskPriority("low")).toBe("low");
+    expect(normalizeTaskPriority("high")).toBe("high");
   });
 
   test("should accept a task name at the maximum allowed length", async () => {

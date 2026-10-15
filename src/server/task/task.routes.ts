@@ -14,6 +14,7 @@ import { Hono } from "hono";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { describeRoute } from "hono-openapi";
+import { normalizeTaskPriority } from "@/utils/taskPriority";
 
 const taskRoutes = new Hono();
 
@@ -55,6 +56,7 @@ taskRoutes.post(
     }
 
     const status = parsedBody.data.status ?? "todo";
+    const priority = normalizeTaskPriority(parsedBody.data.priority);
     const lastTask = await prisma.task.findFirst({
       where: { projectId, status },
       orderBy: [{ position: "desc" }, { id: "desc" }],
@@ -67,6 +69,7 @@ taskRoutes.post(
         data: {
           name,
           status,
+          priority,
           position: (lastTask?.position ?? -1) + 1,
           projectId,
           description: normalizeDescription(parsedBody.data.description),
@@ -119,7 +122,13 @@ taskRoutes.get(
     }
 
     const tasks = await prisma.task.findMany({ where: { projectId } });
-    return c.json(tasks, 200);
+    return c.json(
+      tasks.map((task) => ({
+        ...task,
+        priority: normalizeTaskPriority(task.priority),
+      })),
+      200,
+    );
   },
 );
 
@@ -276,12 +285,13 @@ taskRoutes.patch(
     if (!parsedBody.success) {
       return c.json({ error: "Invalid task payload" }, 400);
     }
-    const { name, projectId, description, status } = parsedBody.data;
+    const { name, projectId, description, status, priority } = parsedBody.data;
     if (
       name === undefined &&
       projectId === undefined &&
       description === undefined &&
-      status === undefined
+      status === undefined &&
+      priority === undefined
     ) {
       return c.json(
         { error: "At least one valid task field is required" },
@@ -319,6 +329,9 @@ taskRoutes.patch(
     if (status !== undefined) {
       updateData.status = status;
     }
+    if (priority !== undefined) {
+      updateData.priority = priority;
+    }
     // If projectId is being updated, check if the new project exists
     if (parsedProjectId !== undefined) {
       const project = await prisma.project.findUnique({
@@ -348,7 +361,13 @@ taskRoutes.patch(
         where: { id },
         data: updateData,
       });
-      return c.json(updatedTask, 200);
+      return c.json(
+        {
+          ...updatedTask,
+          priority: normalizeTaskPriority(updatedTask.priority),
+        },
+        200,
+      );
     } catch (error: unknown) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&

@@ -6,6 +6,7 @@ export async function updateTask({
   id,
   name,
   status,
+  priority,
   projectId,
   description,
 }: TypeUpdateTaskInput): Promise<TypeUpdateTaskResponse> {
@@ -14,6 +15,7 @@ export async function updateTask({
     {
       name,
       status,
+      priority,
       projectId,
       description,
     },

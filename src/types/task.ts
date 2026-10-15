@@ -1,6 +1,7 @@
-import type { Task, TaskStatus } from "@prisma/client";
+import type { Task, TaskPriority, TaskStatus } from "@prisma/client";
 
 export type TypeCreateTaskInput = Pick<Task, "name" | "projectId"> & {
+  priority?: TaskPriority;
   description?: string | null;
 };
 
@@ -13,6 +14,7 @@ export type TypeGetTaskResponse = Task[];
 export type TypeUpdateTaskInput = Pick<Task, "id"> & {
   name?: string;
   status?: TaskStatus;
+  priority?: TaskPriority;
   projectId?: number;
   description?: string | null;
 };

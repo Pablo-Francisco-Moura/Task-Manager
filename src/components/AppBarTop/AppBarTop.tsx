@@ -53,6 +53,9 @@ export function AppBarTop() {
   const { t, i18n } = useTranslation();
   const language = i18n.language.startsWith("en") ? "en" : "pt";
   const [displayName, setDisplayName] = useState("");
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [workspaceName, setWorkspaceName] = useState("");
@@ -271,6 +274,9 @@ export function AppBarTop() {
         guestProfile.displayName ||
         t("profile.unnamed"),
     );
+    setUsername("");
+    setEmail("");
+    setPassword("");
     setSubmitError(null);
     setIsCreateAccountOpen(true);
   };
@@ -299,8 +305,80 @@ export function AppBarTop() {
 
   const handleCreateAccount = async () => {
     const trimmedDisplayName = displayName.trim() || t("profile.unnamed");
+    const trimmedUsername = username.trim().toLowerCase();
+    const trimmedEmail = email.trim().toLowerCase();
+    const trimmedPassword = password;
     const trimmedWorkspaceName =
       workspaceName.trim() || t("account.workspaceDefault");
+
+    if (accountDialogMode === "signIn") {
+      setIsSubmitting(true);
+      setSubmitError(null);
+
+      try {
+        const response = await fetch("/api/session/sign-in", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "same-origin",
+          body: JSON.stringify({
+            identifier: trimmedEmail,
+            password: trimmedPassword,
+          }),
+        });
+
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(
+            typeof payload?.error === "string"
+              ? payload.error
+              : t("account.signIn.error"),
+          );
+        }
+
+        const nextAccountSession: TypeAccountSessionState = {
+          displayName:
+            typeof payload.user?.displayName === "string" &&
+            payload.user.displayName.trim()
+              ? payload.user.displayName.trim()
+              : trimmedDisplayName,
+          workspaceName:
+            typeof payload.workspaceName === "string" &&
+            payload.workspaceName.trim()
+              ? payload.workspaceName.trim()
+              : trimmedWorkspaceName,
+        };
+
+        try {
+          window.localStorage.setItem(
+            ACCOUNT_SESSION_STORAGE_KEY,
+            JSON.stringify(nextAccountSession),
+          );
+        } catch {
+          // Keep the active account state in memory even when storage is unavailable.
+        }
+
+        setAccountSession(nextAccountSession);
+        setDisplayName("");
+        setEmail("");
+        setPassword("");
+        setWorkspaceName("");
+        closeCreateAccountDialog();
+        return;
+      } catch (error) {
+        setSubmitError(
+          error instanceof Error ? error.message : t("account.signIn.error"),
+        );
+      } finally {
+        setIsSubmitting(false);
+      }
+
+      return;
+    }
+
+    if (!trimmedUsername || !trimmedPassword || trimmedPassword.length < 6) {
+      setSubmitError(t("account.credentials.invalid"));
+      return;
+    }
 
     setIsSubmitting(true);
     setSubmitError(null);
@@ -311,7 +389,10 @@ export function AppBarTop() {
         headers: { "Content-Type": "application/json" },
         credentials: "same-origin",
         body: JSON.stringify({
-          displayName: trimmedDisplayName,
+          displayName: trimmedUsername,
+          username: trimmedUsername,
+          ...(trimmedEmail ? { email: trimmedEmail } : {}),
+          password: trimmedPassword,
           workspaceName: trimmedWorkspaceName,
         }),
       });
@@ -349,6 +430,9 @@ export function AppBarTop() {
 
       setAccountSession(nextAccountSession);
       setDisplayName("");
+      setUsername("");
+      setEmail("");
+      setPassword("");
       setWorkspaceName("");
       closeCreateAccountDialog();
     } catch (error) {
@@ -445,42 +529,75 @@ export function AppBarTop() {
         <DialogTitle>{accountDialogContent.title}</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ pt: 1 }}>
+            {accountDialogMode === "signUp" ? (
+              <>
+                <TextField
+                  label={t("account.username")}
+                  value={username}
+                  onChange={(event) => setUsername(event.target.value)}
+                  placeholder={t("account.usernamePlaceholder")}
+                  autoComplete="username"
+                />
+                <TextField
+                  label={t("account.emailOptional")}
+                  type="email"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  placeholder={t("account.emailPlaceholder")}
+                  autoComplete="email"
+                />
+              </>
+            ) : null}
+            {accountDialogMode === "signIn" ? (
+              <TextField
+                label={t("account.identifier")}
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                placeholder={t("account.identifierPlaceholder")}
+                autoComplete="username"
+              />
+            ) : null}
             <TextField
-              label={t("account.displayName")}
-              value={displayName}
-              onChange={(event) => setDisplayName(event.target.value)}
-              placeholder={t("account.displayName")}
+              label={t("account.password")}
+              type="password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              placeholder={t("account.passwordPlaceholder")}
             />
-            <TextField
-              label={t("account.workspaceName")}
-              value={workspaceName}
-              onChange={(event) => setWorkspaceName(event.target.value)}
-              placeholder={t("account.workspacePlaceholder")}
-            />
-            <Box>
-              <Typography variant="caption" color="text.secondary">
-                {t("account.suggestions")}
-              </Typography>
-              <Stack
-                direction="row"
-                spacing={1}
-                useFlexGap
-                flexWrap="wrap"
-                sx={{ mt: 1 }}
-              >
-                {ACCOUNT_WORKSPACE_SUGGESTIONS.map((suggestion) => (
-                  <Chip
-                    key={suggestion}
-                    label={suggestion}
-                    variant={
-                      workspaceName === suggestion ? "filled" : "outlined"
-                    }
-                    onClick={() => setWorkspaceName(suggestion)}
-                    clickable
-                  />
-                ))}
-              </Stack>
-            </Box>
+            {accountDialogMode === "signUp" ? (
+              <>
+                <TextField
+                  label={t("account.workspaceName")}
+                  value={workspaceName}
+                  onChange={(event) => setWorkspaceName(event.target.value)}
+                  placeholder={t("account.workspacePlaceholder")}
+                />
+                <Box>
+                  <Typography variant="caption" color="text.secondary">
+                    {t("account.suggestions")}
+                  </Typography>
+                  <Stack
+                    direction="row"
+                    spacing={1}
+                    useFlexGap
+                    flexWrap="wrap"
+                    sx={{ mt: 1 }}
+                  >
+                    {ACCOUNT_WORKSPACE_SUGGESTIONS.map((suggestion) => (
+                      <Chip
+                        key={suggestion}
+                        label={suggestion}
+                        variant={
+                          workspaceName === suggestion ? "filled" : "outlined"
+                        }
+                        onClick={() => setWorkspaceName(suggestion)}
+                        clickable
+                      />
+                    ))}
+                  </Stack>
+                </Box>
+              </>
+            ) : null}
             {submitError ? (
               <Typography color="error.main" variant="body2">
                 {submitError}

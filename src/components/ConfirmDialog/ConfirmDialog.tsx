@@ -25,12 +25,12 @@ interface IProps {
 
 export function ConfirmDialog({
   open,
-  onClose,
-  onConfirm,
-  description,
   isLoading = false,
+  description,
   relatedItems = [],
   relatedItemsLabel,
+  onClose,
+  onConfirm,
 }: IProps) {
   const { t } = useTranslation();
   const [showRelatedItems, setShowRelatedItems] = useState(false);
@@ -45,17 +45,23 @@ export function ConfirmDialog({
       open={open}
       onClose={isLoading ? undefined : onClose}
       slotProps={{
+        paper: {
+          sx: {
+            color: "var(--foreground)",
+            backgroundColor: "var(--surface)",
+          },
+        },
         transition: {
           onEntered: () => cancelButtonRef.current?.focus(),
         },
       }}
     >
-      <div className="dark:bg-gray-600">
-        <DialogTitle className="dark:text-white">
+      <div>
+        <DialogTitle sx={{ color: "var(--foreground)" }}>
           {t("common.confirm")}
         </DialogTitle>
         <DialogContent>
-          <DialogContentText className="dark:text-white">
+          <DialogContentText sx={{ color: "var(--muted)" }}>
             {description}
           </DialogContentText>
           {relatedItems.length > 0 && relatedItemsLabel && (
@@ -64,7 +70,12 @@ export function ConfirmDialog({
                 type="button"
                 onClick={() => setShowRelatedItems((visible) => !visible)}
                 aria-expanded={showRelatedItems}
-                sx={{ mt: 1, px: 0, textTransform: "none" }}
+                sx={{
+                  mt: 1,
+                  px: 0,
+                  color: "var(--brand)",
+                  textTransform: "none",
+                }}
               >
                 {showRelatedItems
                   ? t("project.hideTasks")
@@ -73,16 +84,19 @@ export function ConfirmDialog({
               <Collapse in={showRelatedItems}>
                 <div aria-label={relatedItemsLabel}>
                   <Typography
-                    component="p"
+                    sx={{ mt: 1, color: "var(--foreground)", fontWeight: 600 }}
                     variant="body2"
-                    sx={{ mt: 1, fontWeight: 600 }}
+                    component="p"
                   >
                     {relatedItemsLabel}
                   </Typography>
                   <List dense disablePadding>
                     {relatedItems.map((item, index) => (
                       <ListItem key={`${index}-${item}`} disableGutters>
-                        <ListItemText primary={item} />
+                        <ListItemText
+                          sx={{ color: "var(--foreground)" }}
+                          primary={item}
+                        />
                       </ListItem>
                     ))}
                   </List>
@@ -93,11 +107,11 @@ export function ConfirmDialog({
         </DialogContent>
         <DialogActions>
           <Button
-            className="dark:text-blue-400"
-            onClick={onClose}
-            color="primary"
-            disabled={isLoading}
+            sx={{ color: "var(--brand)" }}
             ref={cancelButtonRef}
+            color="primary"
+            onClick={onClose}
+            disabled={isLoading}
           >
             {t("common.cancel")}
           </Button>

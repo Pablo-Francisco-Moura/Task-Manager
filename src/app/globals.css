@@ -3,6 +3,7 @@
 @tailwind utilities;
 
 :root {
+  color-scheme: light;
   --background: #f4f6f3;
   --foreground: #202925;
   --surface: #ffffff;
@@ -20,6 +21,7 @@
 }
 
 html.dark {
+  color-scheme: dark;
   --background: #171e1b;
   --foreground: #edf2ee;
   --surface: #202925;
@@ -62,10 +64,28 @@ html.dark {
   background-clip: padding-box;
 }
 
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  border-radius: 4px;
+  padding: 0.15rem;
+  transition: background-color 140ms ease;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover,
+input[type="time"]::-webkit-calendar-picker-indicator:hover {
+  background-color: var(--brand-soft);
+}
+
 body {
   color: var(--foreground);
   background: var(--background);
   font-family: "Avenir Next", Avenir, "Segoe UI", sans-serif;
+}
+
+html.dark .MuiDialog-paper {
+  background-color: var(--surface);
+  color: var(--foreground);
 }
 
 :where(

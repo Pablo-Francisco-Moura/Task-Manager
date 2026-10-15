@@ -30,10 +30,12 @@ export function Task({
   onStatusChange,
 }: IProps) {
   const { t, i18n } = useTranslation();
+  const dueValue = task.dueAt ?? task.dueDate;
+  const hasDueTime = task.dueAt !== null;
   const isOverdue =
     task.status !== "done" &&
-    task.dueDate !== null &&
-    isTaskDueDateOverdue(task.dueDate);
+    dueValue !== null &&
+    isTaskDueDateOverdue(dueValue, new Date(), hasDueTime);
 
   return (
     <li className="task-row">
@@ -44,13 +46,13 @@ export function Task({
         {task.description && (
           <span className="task-description">{task.description}</span>
         )}
-        {task.dueDate && (
+        {dueValue && (
           <span
             className={`task-due-date${isOverdue ? " task-due-date-overdue" : ""}`}
           >
             <EventOutlinedIcon fontSize="inherit" aria-hidden="true" />
             {t(isOverdue ? "task.dueDate.overdue" : "task.dueDate.label")}:{" "}
-            {formatTaskDueDate(task.dueDate, i18n.language)}
+            {formatTaskDueDate(dueValue, i18n.language, hasDueTime)}
           </span>
         )}
       </div>

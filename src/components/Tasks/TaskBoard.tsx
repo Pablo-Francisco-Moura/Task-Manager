@@ -78,10 +78,12 @@ function SortableTaskCard({
   onDeleteClick: (task: TypeTask) => void;
 }) {
   const { t, i18n } = useTranslation();
+  const dueValue = task.dueAt ?? task.dueDate;
+  const hasDueTime = task.dueAt !== null;
   const isOverdue =
     task.status !== "done" &&
-    task.dueDate !== null &&
-    isTaskDueDateOverdue(task.dueDate);
+    dueValue !== null &&
+    isTaskDueDateOverdue(dueValue, new Date(), hasDueTime);
   const {
     attributes,
     listeners,
@@ -122,12 +124,12 @@ function SortableTaskCard({
           {task.description && (
             <p className={styles.cardDescription}>{task.description}</p>
           )}
-          {task.dueDate && (
+          {dueValue && (
             <p className={styles.cardDueDate} data-overdue={isOverdue}>
               <EventOutlinedIcon fontSize="inherit" aria-hidden="true" />
               {t(
                 isOverdue ? "task.dueDate.overdue" : "task.dueDate.label",
-              )}: {formatTaskDueDate(task.dueDate, i18n.language)}
+              )}: {formatTaskDueDate(dueValue, i18n.language, hasDueTime)}
             </p>
           )}
         </div>

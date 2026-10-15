@@ -5,6 +5,7 @@ import type { TypeUpdateTaskInput, TypeUpdateTaskResponse } from "@/types";
 export async function updateTask({
   id,
   name,
+  dueAt,
   status,
   dueDate,
   priority,
@@ -15,6 +16,7 @@ export async function updateTask({
     `${ROUTES.TASK}/${id}`,
     {
       name,
+      dueAt,
       status,
       dueDate,
       priority,

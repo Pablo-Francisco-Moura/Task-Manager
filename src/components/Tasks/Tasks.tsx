@@ -1,3 +1,8 @@
+import {
+  toTaskDueAtISOString,
+  toTaskDueDateInputValue,
+  toTaskDueTimeInputValue,
+} from "@/utils/taskDueDate";
 import { Task } from "../Task/Task";
 import { Form } from "../Form";
 import { Dialog } from "@mui/material";
@@ -18,7 +23,6 @@ import { useFeedbackStore } from "@/store/feedbackStore";
 import { useProjects, useTasks } from "@/hooks";
 import { normalizeTaskPriority } from "@/utils/taskPriority";
 import { MAX_DESCRIPTION_LENGTH } from "@/constants";
-import { toTaskDueDateInputValue } from "@/utils/taskDueDate";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Task as TypeTask, TaskStatus } from "@prisma/client";
 import type { TypeReorderTasksInput } from "@/types";
@@ -164,15 +168,17 @@ export function Tasks({ openAddTask, onCloseAddTask }: IProps) {
 
   // Edit form.
   const {
+    watch,
+    reset,
+    trigger,
     register,
     handleSubmit,
-    reset,
-    watch,
     formState: { isSubmitting, isValid, errors },
   } = useForm<{
     name: string;
     status: TypeTask["status"];
     dueDate: string;
+    dueTime: string;
     priority: TypeTask["priority"];
     description: string;
   }>({
@@ -181,6 +187,7 @@ export function Tasks({ openAddTask, onCloseAddTask }: IProps) {
       name: "",
       status: "todo",
       dueDate: "",
+      dueTime: "",
       priority: "normal",
       description: "",
     },
@@ -208,10 +215,15 @@ export function Tasks({ openAddTask, onCloseAddTask }: IProps) {
     reset({
       name: task.name,
       status: task.status,
-      dueDate: toTaskDueDateInputValue(task.dueDate),
+      dueDate: toTaskDueDateInputValue(
+        task.dueAt ?? task.dueDate,
+        task.dueAt !== null,
+      ),
+      dueTime: toTaskDueTimeInputValue(task.dueAt),
       priority: normalizeTaskPriority(task.priority),
       description: task.description ?? "",
     });
+    void trigger(["dueDate", "dueTime"]);
     setOpenEditDialog(true);
   };
 
@@ -224,15 +236,18 @@ export function Tasks({ openAddTask, onCloseAddTask }: IProps) {
     name: string;
     status: TypeTask["status"];
     dueDate: string;
+    dueTime: string;
     priority: TypeTask["priority"];
     description: string;
   }) => {
     if (editTask) {
+      const dueAt = toTaskDueAtISOString(data.dueDate, data.dueTime);
       await updateMutation.mutateAsync({
         id: editTask.id,
         name: data.name,
         status: data.status,
-        dueDate: data.dueDate || null,
+        dueDate: dueAt ? null : data.dueDate || null,
+        dueAt,
         priority: data.priority,
         projectId: editTask.projectId,
         description: data.description,
@@ -431,8 +446,17 @@ export function Tasks({ openAddTask, onCloseAddTask }: IProps) {
           }}
           dueDateField={{
             label: t("task.dueDate.label"),
+            dateLabel: t("task.dueDate.dateLabel"),
             inputId: `task-edit-due-date-${editTask?.id ?? "pending"}`,
-            defaultValue: toTaskDueDateInputValue(editTask?.dueDate ?? null),
+            defaultValue: toTaskDueDateInputValue(
+              editTask?.dueAt ?? editTask?.dueDate ?? null,
+              editTask?.dueAt !== null && editTask?.dueAt !== undefined,
+            ),
+            timeLabel: t("task.dueDate.timeLabel"),
+            timeInputId: `task-edit-due-time-${editTask?.id ?? "pending"}`,
+            defaultTime: toTaskDueTimeInputValue(editTask?.dueAt ?? null),
+            dateRequiredMessage: t("task.dueDate.dateRequired"),
+            dateError: errors.dueDate?.message ?? errors.dueTime?.message,
           }}
           isSubmitting={isSubmitting || updateMutation.isPending}
         />

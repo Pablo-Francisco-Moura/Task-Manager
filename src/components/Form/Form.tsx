@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { IconButton, Tooltip } from "@mui/material";
+import { IconButton, TextField, Tooltip } from "@mui/material";
 import { FieldPath, FieldValues, UseFormRegister } from "react-hook-form";
 import styles from "./Form.module.css";
 import CloseIcon from "@mui/icons-material/Close";
@@ -33,7 +33,13 @@ interface IProps<TFieldValues extends FieldValues & { name: string }> {
   dueDateField?: {
     label: string;
     inputId: string;
+    dateLabel: string;
+    timeLabel: string;
+    timeInputId: string;
+    defaultTime: string;
     defaultValue: string;
+    dateRequiredMessage: string;
+    dateError?: string;
   };
   descriptionField?: {
     label: string;
@@ -61,6 +67,21 @@ export function Form<TFieldValues extends FieldValues & { name: string }>({
   register,
 }: IProps<TFieldValues>) {
   const { t } = useTranslation();
+  const dueDateRegistration = dueDateField
+    ? register("dueDate" as FieldPath<TFieldValues>, {
+        deps: "dueTime" as FieldPath<TFieldValues>,
+      })
+    : undefined;
+  const dueTimeRegistration = dueDateField
+    ? register("dueTime" as FieldPath<TFieldValues>, {
+        validate: (value: string, values: TFieldValues) =>
+          !value || Boolean(values.dueDate) || dueDateField.dateRequiredMessage,
+      })
+    : undefined;
+  const { ref: dueDateInputRef, ...dueDateInputProps } =
+    dueDateRegistration ?? {};
+  const { ref: dueTimeInputRef, ...dueTimeInputProps } =
+    dueTimeRegistration ?? {};
 
   return (
     <form onSubmit={onSubmit} className={`${styles.form} app-form`}>
@@ -132,20 +153,59 @@ export function Form<TFieldValues extends FieldValues & { name: string }>({
         <div
           className={`${styles.descriptionField} app-form-description-field`}
         >
-          <label
-            htmlFor={dueDateField.inputId}
-            className={`${styles.title} app-form-title`}
-          >
+          <span className={`${styles.title} app-form-title`}>
             {dueDateField.label}
-          </label>
-          <input
-            id={dueDateField.inputId}
-            type="date"
-            defaultValue={dueDateField.defaultValue}
-            {...register("dueDate" as FieldPath<TFieldValues>)}
-            disabled={isSubmitting}
-            className={`${styles.input} app-form-input`}
-          />
+          </span>
+          <div className={styles.dueDateInputs}>
+            <div className={styles.dueDateInputGroup}>
+              <TextField
+                id={dueDateField.inputId}
+                type="date"
+                label={dueDateField.dateLabel}
+                variant="outlined"
+                fullWidth
+                defaultValue={dueDateField.defaultValue}
+                {...dueDateInputProps}
+                inputRef={dueDateInputRef}
+                disabled={isSubmitting}
+                error={Boolean(dueDateField.dateError)}
+                aria-describedby={
+                  dueDateField.dateError
+                    ? `${dueDateField.timeInputId}-error`
+                    : undefined
+                }
+                InputLabelProps={{ shrink: true }}
+              />
+            </div>
+            <div className={styles.dueDateInputGroup}>
+              <TextField
+                id={dueDateField.timeInputId}
+                type="time"
+                label={dueDateField.timeLabel}
+                variant="outlined"
+                fullWidth
+                defaultValue={dueDateField.defaultTime}
+                {...dueTimeInputProps}
+                inputRef={dueTimeInputRef}
+                disabled={isSubmitting}
+                aria-describedby={
+                  dueDateField.dateError
+                    ? `${dueDateField.timeInputId}-error`
+                    : undefined
+                }
+                InputLabelProps={{ shrink: true }}
+              />
+            </div>
+          </div>
+          {dueDateField.dateError && (
+            <div
+              id={`${dueDateField.timeInputId}-error`}
+              className={`${styles.fieldError} app-form-field-error`}
+              role="alert"
+            >
+              {dueDateField.dateError}
+            </div>
+          )}
         </div>
       )}
 

@@ -5,6 +5,7 @@ import { createTask } from "@/hooks/useTasks/useCase/createTask.api";
 import { QUERY_KEYS } from "@/constants/queryKeys";
 import { useTranslation } from "react-i18next";
 import { useFeedbackStore } from "@/store/feedbackStore";
+import { toTaskDueAtISOString } from "@/utils/taskDueDate";
 import { MAX_DESCRIPTION_LENGTH } from "@/constants";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { TaskPriority, TaskStatus } from "@prisma/client";
@@ -18,6 +19,7 @@ interface ITaskFormInputs {
   name: string;
   status: TaskStatus;
   dueDate: string;
+  dueTime: string;
   priority: TaskPriority;
   description: string;
 }
@@ -35,6 +37,7 @@ export function TaskForm({ projectId, onClose }: IProps) {
       name: "",
       status: "todo",
       dueDate: "",
+      dueTime: "",
       priority: "normal",
       description: "",
     },
@@ -47,10 +50,15 @@ export function TaskForm({ projectId, onClose }: IProps) {
 
   const mutation = useMutation({
     mutationFn: async (data: ITaskFormInputs) => {
+      const dueAt = toTaskDueAtISOString(data.dueDate, data.dueTime);
       return createTask({
-        ...data,
-        dueDate: data.dueDate || null,
+        name: data.name,
+        dueAt,
+        status: data.status,
+        dueDate: dueAt ? null : data.dueDate || null,
+        priority: data.priority,
         projectId,
+        description: data.description,
       });
     },
     onSuccess: async () => {
@@ -118,8 +126,14 @@ export function TaskForm({ projectId, onClose }: IProps) {
       }}
       dueDateField={{
         label: t("task.dueDate.label"),
+        dateLabel: t("task.dueDate.dateLabel"),
         inputId: "task-create-due-date",
+        timeLabel: t("task.dueDate.timeLabel"),
+        timeInputId: "task-create-due-time",
+        defaultTime: "",
         defaultValue: "",
+        dateRequiredMessage: t("task.dueDate.dateRequired"),
+        dateError: errors.dueDate?.message ?? errors.dueTime?.message,
       }}
       isSubmitting={isSubmitting || mutation.isPending}
     />

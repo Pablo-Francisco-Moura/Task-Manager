@@ -1,4 +1,4 @@
-export type TaskPriorityValue = "low" | "normal" | "high";
+import type { TaskPriorityValue } from "@/types/taskPriority";
 
 export function normalizeTaskPriority(
   value?: string | null,

@@ -26,6 +26,14 @@
     "language": "Idioma",
     "account": "Conta"
   },
+  "profile": {
+    "open": "Abrir perfil",
+    "guest": "Visitante",
+    "account": "Conta",
+    "unnamed": "Sem nome",
+    "editName": "Editar nome",
+    "editTitle": "Editar perfil"
+  },
   "account": {
     "create": {
       "button": "Criar conta",

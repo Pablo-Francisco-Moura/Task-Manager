@@ -5,24 +5,30 @@ import {
   Button,
   ButtonGroup,
   Chip,
+  Menu,
   Stack,
   Dialog,
+  MenuItem,
   TextField,
+  IconButton,
   Typography,
   DialogTitle,
   DialogActions,
   DialogContent,
 } from "@mui/material";
 import {
+  GUEST_PROFILE_STORAGE_KEY,
   ACCOUNT_SESSION_STORAGE_KEY,
   ACCOUNT_WORKSPACE_SUGGESTIONS,
 } from "@/constants/session";
 import { ThemeSwitch } from "../ThemeSwitch";
 import { useTranslation } from "react-i18next";
-import type { TypeAccountSessionState } from "@/types";
 import { useEffect, useState } from "react";
+import type { TypeAccountSessionState, TypeGuestProfileState } from "@/types";
 import styles from "./AppBarTop.module.css";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import WorkspacesOutlinedIcon from "@mui/icons-material/WorkspacesOutlined";
+import AccountCircleOutlinedIcon from "@mui/icons-material/AccountCircleOutlined";
 
 export function AppBarTop() {
   const { t, i18n } = useTranslation();
@@ -32,6 +38,12 @@ export function AppBarTop() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [workspaceName, setWorkspaceName] = useState("");
   const [isCreateAccountOpen, setIsCreateAccountOpen] = useState(false);
+  const [profileAnchor, setProfileAnchor] = useState<HTMLElement | null>(null);
+  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
+  const [guestProfile, setGuestProfile] = useState<TypeGuestProfileState>({
+    displayName: "",
+  });
+  const [editedProfileName, setEditedProfileName] = useState("");
   const [accountSession, setAccountSession] =
     useState<TypeAccountSessionState | null>(null);
 
@@ -64,6 +76,23 @@ export function AppBarTop() {
       setAccountSession(null);
     }
   }, []);
+  useEffect(() => {
+    try {
+      const savedProfile = window.localStorage.getItem(GUEST_PROFILE_STORAGE_KEY);
+      if (!savedProfile) return;
+
+      const parsedProfile = JSON.parse(savedProfile) as Partial<TypeGuestProfileState>;
+      setGuestProfile({
+        displayName:
+          typeof parsedProfile.displayName === "string"
+            ? parsedProfile.displayName.trim()
+            : "",
+      });
+    } catch {
+      setGuestProfile({ displayName: "" });
+    }
+  }, []);
+
 
   const selectLanguage = (nextLanguage: "pt" | "en") => {
     void i18n.changeLanguage(nextLanguage);
@@ -76,8 +105,29 @@ export function AppBarTop() {
   };
 
   const openCreateAccountDialog = () => {
+    setDisplayName(
+      accountSession?.displayName ||
+        guestProfile.displayName ||
+        t("profile.unnamed"),
+    );
     setSubmitError(null);
     setIsCreateAccountOpen(true);
+  };
+
+  const saveGuestProfileName = () => {
+    const nextProfile = { displayName: editedProfileName.trim() };
+
+    try {
+      window.localStorage.setItem(
+        GUEST_PROFILE_STORAGE_KEY,
+        JSON.stringify(nextProfile),
+      );
+    } catch {
+      // Keep the edited profile available for the current session.
+    }
+
+    setGuestProfile(nextProfile);
+    setIsEditProfileOpen(false);
   };
 
   const closeCreateAccountDialog = () => {
@@ -86,7 +136,7 @@ export function AppBarTop() {
   };
 
   const handleCreateAccount = async () => {
-    const trimmedDisplayName = displayName.trim();
+    const trimmedDisplayName = displayName.trim() || t("profile.unnamed");
     const trimmedWorkspaceName =
       workspaceName.trim() || t("account.workspaceDefault");
 
@@ -99,7 +149,7 @@ export function AppBarTop() {
         headers: { "Content-Type": "application/json" },
         credentials: "same-origin",
         body: JSON.stringify({
-          displayName: trimmedDisplayName || undefined,
+          displayName: trimmedDisplayName,
           workspaceName: trimmedWorkspaceName,
         }),
       });
@@ -118,7 +168,7 @@ export function AppBarTop() {
           typeof payload.user?.displayName === "string" &&
           payload.user.displayName.trim()
             ? payload.user.displayName.trim()
-            : trimmedDisplayName || "Usuário",
+            : trimmedDisplayName,
         workspaceName:
           typeof payload.workspaceName === "string" &&
           payload.workspaceName.trim()
@@ -202,6 +252,15 @@ export function AppBarTop() {
               </Button>
             </ButtonGroup>
             <ThemeSwitch />
+            <IconButton
+              aria-label={t("profile.open")}
+              aria-haspopup="menu"
+              aria-expanded={Boolean(profileAnchor)}
+              onClick={(event) => setProfileAnchor(event.currentTarget)}
+              color="inherit"
+            >
+              <AccountCircleOutlinedIcon />
+            </IconButton>
           </div>
         </div>
       </header>
@@ -268,6 +327,87 @@ export function AppBarTop() {
             disabled={isSubmitting}
           >
             {isSubmitting ? t("common.saving") : t("account.create.submit")}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+
+      <Menu
+        anchorEl={profileAnchor}
+        open={Boolean(profileAnchor)}
+        onClose={() => setProfileAnchor(null)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        transformOrigin={{ vertical: "top", horizontal: "right" }}
+      >
+        <Box sx={{ minWidth: 240, px: 2, py: 1 }}>
+          <Typography variant="overline" color="text.secondary">
+            {accountSession ? t("profile.account") : t("profile.guest")}
+          </Typography>
+          <Stack direction="row" alignItems="center" spacing={1}>
+            <Typography variant="body1" sx={{ flex: 1 }} noWrap>
+              {accountSession?.displayName ||
+                guestProfile.displayName ||
+                t("profile.unnamed")}
+            </Typography>
+            {!accountSession ? (
+              <IconButton
+                size="small"
+                aria-label={t("profile.editName")}
+                title={t("profile.editName")}
+                onClick={() => {
+                  setEditedProfileName(guestProfile.displayName);
+                  setProfileAnchor(null);
+                  setIsEditProfileOpen(true);
+                }}
+              >
+                <EditOutlinedIcon fontSize="small" />
+              </IconButton>
+            ) : null}
+          </Stack>
+          {accountSession ? (
+            <Typography variant="caption" color="text.secondary">
+              {accountSession.workspaceName}
+            </Typography>
+          ) : null}
+        </Box>
+        {!accountSession ? (
+          <MenuItem
+            onClick={() => {
+              setProfileAnchor(null);
+              openCreateAccountDialog();
+            }}
+          >
+            {t("account.create.button")}
+          </MenuItem>
+        ) : null}
+      </Menu>
+
+      <Dialog
+        open={isEditProfileOpen}
+        onClose={() => setIsEditProfileOpen(false)}
+        fullWidth
+        maxWidth="xs"
+      >
+        <DialogTitle>{t("profile.editTitle")}</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            fullWidth
+            margin="dense"
+            label={t("account.displayName")}
+            value={editedProfileName}
+            onChange={(event) => setEditedProfileName(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") saveGuestProfileName();
+            }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setIsEditProfileOpen(false)}>
+            {t("common.cancel")}
+          </Button>
+          <Button variant="contained" onClick={saveGuestProfileName}>
+            {t("common.save")}
           </Button>
         </DialogActions>
       </Dialog>

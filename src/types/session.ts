@@ -11,3 +11,7 @@ export type TypeAccountSessionState = {
   displayName: string;
   workspaceName: string;
 };
+
+export type TypeGuestProfileState = {
+  displayName: string;
+};

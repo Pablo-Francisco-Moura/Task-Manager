@@ -26,6 +26,14 @@
     "language": "Language",
     "account": "Account"
   },
+  "profile": {
+    "open": "Open profile",
+    "guest": "Guest",
+    "account": "Account",
+    "unnamed": "Unnamed",
+    "editName": "Edit name",
+    "editTitle": "Edit profile"
+  },
   "account": {
     "create": {
       "button": "Create account",

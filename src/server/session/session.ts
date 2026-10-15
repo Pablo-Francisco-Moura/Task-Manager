@@ -3,10 +3,10 @@ import {
   GUEST_SESSION_TTL_SECONDS,
 } from "@/constants/session";
 import { prisma } from "@/lib/prisma";
-import { getCookie } from "hono/cookie";
 import { createHash } from "node:crypto";
-import type { MiddlewareHandler } from "hono";
+import { getCookie, setCookie } from "hono/cookie";
 import type { TypeSessionEnv } from "@/types/session";
+import type { MiddlewareHandler } from "hono";
 
 export function hashSessionToken(token: string): string {
   return createHash("sha256").update(token).digest("hex");
@@ -50,6 +50,13 @@ export const requireWorkspaceSession: MiddlewareHandler<
   await prisma.session.update({
     where: { tokenHash: hashSessionToken(token) },
     data: { lastSeenAt: now, expiresAt },
+  });
+  setCookie(context, GUEST_SESSION_COOKIE_NAME, token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "Lax",
+    path: "/",
+    maxAge: GUEST_SESSION_TTL_SECONDS,
   });
 
   context.set("userId", session.userId);

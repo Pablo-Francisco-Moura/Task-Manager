@@ -87,6 +87,22 @@ describe("Guest workspace session", () => {
     expect(cookieFrom(second)).toBe(firstCookie);
   });
 
+  test("should refresh the guest cookie expiration on authenticated requests", async () => {
+    const sessionResponse = await POST(
+      apiRequest("session/guest", undefined, { method: "POST" }),
+    );
+    const cookie = cookieFrom(sessionResponse);
+
+    const projectsResponse = await nextApiGet(apiRequest("project", cookie));
+    const refreshedCookie = projectsResponse.headers.get("set-cookie");
+
+    expect(projectsResponse.status).toBe(200);
+    expect(refreshedCookie).toContain("HttpOnly");
+    expect(refreshedCookie).toContain("SameSite=Lax");
+    expect(refreshedCookie).toContain("Max-Age=2592000");
+    expect(refreshedCookie).toContain(cookie.split("=")[1]);
+  });
+
   test("should isolate project reads and writes between guest workspaces", async () => {
     const firstSession = await POST(
       apiRequest("session/guest", undefined, { method: "POST" }),

@@ -4,7 +4,6 @@ import { useEffect } from "react";
 import { useProjects } from "@/hooks/useProjects";
 import { useTranslation } from "react-i18next";
 import { useProjectStore } from "@/store/projectStore";
-import { CircularProgress } from "@mui/material";
 import Select, { SelectChangeEvent } from "@mui/material/Select";
 import AddIcon from "@mui/icons-material/Add";
 import MenuItem from "@mui/material/MenuItem";
@@ -95,7 +94,6 @@ export function Toolbar({ openAddTask, onToggleAddTask }: IProps) {
             ))}
         </Select>
       </FormControl>
-      {isLoading && <CircularProgress />}
       <button
         type="button"
         className="primary-action"

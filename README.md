@@ -198,3 +198,4 @@ Boa sorte no desafio! 🚀
   - [x] [Adicionar descrição opcional às tarefas e projetos](docs/03-news.md#descricao-opcional)
   - [x] [Adicionar status às tarefas (`todo`, `in_progress`, `done`)](docs/03-news.md#task-status)
   - [x] [Adicionar prioridade às tarefas (`low`, `normal`, `high`)](docs/03-news.md#task-priority)
+  - [x] [Adicionar horário opcional ao prazo da tarefa](docs/03-news.md#task-due-time)

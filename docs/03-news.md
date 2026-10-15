@@ -30,4 +30,12 @@
 
 **Escopo:** adicionar `priority` ao modelo `Task` com migration aditiva e valor padrão `normal` para tarefas existentes; validar e documentar os valores na API pelos schemas Zod/OpenAPI compartilhados; permitir selecionar e visualizar a prioridade na interface. Criação sem prioridade deve continuar válida.
 
+<a id="task-due-time"></a>
+
+## Adicionar horário opcional ao prazo da tarefa
+
+**Objetivo:** permitir definir a hora local de vencimento sem alterar o significado dos prazos existentes, que continuam sendo datas sem horário.
+
+**Escopo:** adicionar `dueAt` como instante UTC nullable em migration aditiva; manter `dueDate` para registros e clientes que usam apenas data. A interface aceita hora opcional no fuso local do navegador, a API valida timestamps com offset e normaliza o instante, e listas/formulários mostram horário apenas quando informado. Editar uma tarefa sem hora preserva o comportamento de data; remover o prazo limpa ambos os campos.
+
 [Voltar à News](../README.md#news)

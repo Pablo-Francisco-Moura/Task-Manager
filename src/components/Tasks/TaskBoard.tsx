@@ -17,8 +17,8 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { useTranslation } from "react-i18next";
 import { TaskPriorityBadge } from "@/components/TaskPriorityBadge";
-import { formatTaskDueDate } from "@/utils/taskDueDate";
 import { IconButton, Tooltip } from "@mui/material";
+import { formatTaskDueDate, isTaskDueDateOverdue } from "@/utils/taskDueDate";
 import type { Task as TypeTask, TaskStatus } from "@prisma/client";
 import type { DragEndEvent, UniqueIdentifier } from "@dnd-kit/core";
 import styles from "./TaskBoard.module.css";
@@ -78,6 +78,10 @@ function SortableTaskCard({
   onDeleteClick: (task: TypeTask) => void;
 }) {
   const { t, i18n } = useTranslation();
+  const isOverdue =
+    task.status !== "done" &&
+    task.dueDate !== null &&
+    isTaskDueDateOverdue(task.dueDate);
   const {
     attributes,
     listeners,
@@ -119,10 +123,11 @@ function SortableTaskCard({
             <p className={styles.cardDescription}>{task.description}</p>
           )}
           {task.dueDate && (
-            <p className={styles.cardDueDate}>
+            <p className={styles.cardDueDate} data-overdue={isOverdue}>
               <EventOutlinedIcon fontSize="inherit" aria-hidden="true" />
-              {t("task.dueDate.label")}:{" "}
-              {formatTaskDueDate(task.dueDate, i18n.language)}
+              {t(
+                isOverdue ? "task.dueDate.overdue" : "task.dueDate.label",
+              )}: {formatTaskDueDate(task.dueDate, i18n.language)}
             </p>
           )}
         </div>

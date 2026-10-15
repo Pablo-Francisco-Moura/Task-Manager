@@ -101,7 +101,8 @@
       "high": "Alta"
     },
     "dueDate": {
-      "label": "Prazo"
+      "label": "Prazo",
+      "overdue": "Atrasado"
     },
     "board": "Quadro de tarefas",
     "dragHandle": "Mover {{name}}",

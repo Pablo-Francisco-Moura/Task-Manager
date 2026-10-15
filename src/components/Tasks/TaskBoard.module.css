@@ -146,6 +146,11 @@
   font-size: 0.75rem;
 }
 
+.cardDueDate[data-overdue="true"] {
+  color: var(--danger-text);
+  font-weight: 700;
+}
+
 .dragHandle {
   cursor: grab;
   touch-action: none;

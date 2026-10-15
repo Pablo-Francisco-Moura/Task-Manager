@@ -7,8 +7,8 @@ import {
 } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { TaskPriorityBadge } from "@/components/TaskPriorityBadge";
-import { formatTaskDueDate } from "@/utils/taskDueDate";
 import { Task as TypeTask, TaskStatus } from "@prisma/client";
+import { formatTaskDueDate, isTaskDueDateOverdue } from "@/utils/taskDueDate";
 import React from "react";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -30,6 +30,10 @@ export function Task({
   onStatusChange,
 }: IProps) {
   const { t, i18n } = useTranslation();
+  const isOverdue =
+    task.status !== "done" &&
+    task.dueDate !== null &&
+    isTaskDueDateOverdue(task.dueDate);
 
   return (
     <li className="task-row">
@@ -41,9 +45,11 @@ export function Task({
           <span className="task-description">{task.description}</span>
         )}
         {task.dueDate && (
-          <span className="task-due-date">
+          <span
+            className={`task-due-date${isOverdue ? " task-due-date-overdue" : ""}`}
+          >
             <EventOutlinedIcon fontSize="inherit" aria-hidden="true" />
-            {t("task.dueDate.label")}:{" "}
+            {t(isOverdue ? "task.dueDate.overdue" : "task.dueDate.label")}:{" "}
             {formatTaskDueDate(task.dueDate, i18n.language)}
           </span>
         )}

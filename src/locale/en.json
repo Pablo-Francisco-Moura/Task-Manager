@@ -101,7 +101,8 @@
       "high": "High"
     },
     "dueDate": {
-      "label": "Due date"
+      "label": "Due date",
+      "overdue": "Overdue"
     },
     "board": "Task board",
     "dragHandle": "Move {{name}}",

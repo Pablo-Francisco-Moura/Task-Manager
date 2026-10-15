@@ -161,6 +161,11 @@
   font-size: 0.78rem;
 }
 
+.taskScreen :global(.task-due-date-overdue) {
+  color: var(--danger-text);
+  font-weight: 700;
+}
+
 .taskScreen :global(.task-row-actions) {
   display: flex;
   flex: 0 0 auto;

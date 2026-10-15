@@ -18,3 +18,19 @@ export function formatTaskDueDate(value: Date | string, locale: string): string 
     timeZone: "UTC",
   }).format(date);
 }
+
+export function isTaskDueDateOverdue(
+  value: Date | string,
+  now = new Date(),
+): boolean {
+  const dueDate = toTaskDueDateInputValue(value);
+  if (!dueDate) return false;
+
+  const today = [
+    now.getFullYear(),
+    String(now.getMonth() + 1).padStart(2, "0"),
+    String(now.getDate()).padStart(2, "0"),
+  ].join("-");
+
+  return dueDate < today;
+}

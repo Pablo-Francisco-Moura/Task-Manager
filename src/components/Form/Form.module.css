@@ -152,6 +152,24 @@
   gap: 0.5rem;
 }
 
+.dueDateInputs {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0.75rem;
+}
+
+.dueDateInputGroup {
+  display: grid;
+  min-width: 0;
+  gap: 0.5rem;
+}
+
+@media (max-width: 420px) {
+  .dueDateInputs {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 .textarea {
   min-height: 6rem;
   resize: vertical;

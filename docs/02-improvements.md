@@ -32,3 +32,5 @@
 
 - [x] Avaliar quais provedores precisam envolver a aplicação e manter cada um no menor escopo necessário.
 - [x] Manter no servidor o conteúdo que não exige interação e usar componentes cliente apenas para as partes interativas.
+
+[Voltar à Improvements](../README.md#improvements)

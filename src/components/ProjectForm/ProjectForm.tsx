@@ -5,6 +5,7 @@ import { QUERY_KEYS } from "@/constants/queryKeys";
 import { createProject } from "@/hooks/useProjects/useCase/createProject.api";
 import { useTranslation } from "react-i18next";
 import { useFeedbackStore } from "@/store/feedbackStore";
+import { MAX_DESCRIPTION_LENGTH } from "@/constants";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 interface IProps {
@@ -13,15 +14,19 @@ interface IProps {
 
 interface IProjectFormInputs {
   name: string;
+  description: string;
 }
 
 export function ProjectForm({ toggleOpenAddProject }: IProps) {
   const {
-    formState: { isSubmitting },
+    formState: { isSubmitting, isValid, errors },
     reset,
     register,
     handleSubmit,
-  } = useForm<IProjectFormInputs>();
+  } = useForm<IProjectFormInputs>({
+    mode: "onChange",
+    defaultValues: { name: "", description: "" },
+  });
   const [error, setError] = useState<string | null>(null);
 
   const { t } = useTranslation();
@@ -37,10 +42,10 @@ export function ProjectForm({ toggleOpenAddProject }: IProps) {
       reset();
       setError(null);
       toggleOpenAddProject(false);
-      showFeedback(t("projectCreated"));
+      showFeedback(t("project.create.success"));
     },
     onError: () => {
-      setError(t("errorCreatingProject"));
+      setError(t("project.create.error"));
     },
   });
 
@@ -51,14 +56,22 @@ export function ProjectForm({ toggleOpenAddProject }: IProps) {
 
   return (
     <Form
-      title={t("projectName")}
+      title={t("project.name")}
       error={error}
+      nameError={errors.name?.message}
+      submitDisabled={!isValid}
       inputId="project-create-name"
       onClose={() => toggleOpenAddProject(false)}
       onSubmit={handleSubmit(onSubmit)}
       register={register}
-      submitLabel={t("registerProject")}
-      placeholder={t("enterProjectName")}
+      submitLabel={t("project.create.submit")}
+      placeholder={t("project.create.enterName")}
+      descriptionField={{
+        inputId: "project-create-description",
+        label: t("project.description"),
+        placeholder: t("project.enterDescription"),
+        maxLength: MAX_DESCRIPTION_LENGTH,
+      }}
       isSubmitting={isSubmitting || mutation.isPending}
     />
   );

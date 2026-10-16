@@ -1,10 +1,14 @@
-import { api } from "@/lib/axios";
-import { ROUTES } from "@/constants";
-import type { TypeDeleteTaskResponse } from "@/types";
+import {
+  accountWorkspaceRequest,
+  hasStoredAccountSession,
+} from "@/lib/accountWorkspaceApi";
+import { deleteLocalTask } from "@/lib/localDataRepository";
 
 export async function deleteTask(id: number) {
-  const response = await api.delete<TypeDeleteTaskResponse>(
-    `${ROUTES.TASK}/${id}`,
-  );
-  return response.data;
+  if (hasStoredAccountSession()) {
+    await accountWorkspaceRequest(`/api/task/${id}`, { method: "DELETE" });
+    return;
+  }
+
+  deleteLocalTask(id);
 }

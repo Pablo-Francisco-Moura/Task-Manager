@@ -1,0 +1,56 @@
+.badge {
+  display: inline-flex;
+  width: fit-content;
+  max-width: 100%;
+  align-items: center;
+  gap: 0.3rem;
+  border: 1px solid var(--priority-line);
+  border-radius: 4px;
+  background: var(--priority-tint);
+  padding: 0.16rem 0.42rem;
+  color: var(--priority-ink);
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.badge svg {
+  flex: 0 0 auto;
+}
+
+.badge[data-priority="high"] {
+  --priority-ink: #8c0e05;
+  --priority-tint: #ffeded;
+  --priority-line: #f57d7d;
+}
+
+.badge[data-priority="normal"] {
+  --priority-ink: #ffa600;
+  --priority-tint: #fff7e8;
+  --priority-line: #f2ad42;
+  font-weight: 800;
+}
+
+.badge[data-priority="low"] {
+  --priority-ink: #c7c227;
+  --priority-tint: #fff7cc;
+  --priority-line: #efcc3f;
+}
+
+:global(html.dark) .badge[data-priority="high"] {
+  --priority-ink: #ff8585;
+  --priority-tint: #442424;
+  --priority-line: #9b4c4c;
+}
+
+:global(html.dark) .badge[data-priority="normal"] {
+  --priority-ink: #ffc266;
+  --priority-tint: #43321b;
+  --priority-line: #9b6b2b;
+}
+
+:global(html.dark) .badge[data-priority="low"] {
+  --priority-ink: #f0d77c;
+  --priority-tint: #3c351e;
+  --priority-line: #776639;
+}

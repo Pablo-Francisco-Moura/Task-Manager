@@ -1,5 +1,6 @@
 import { Project } from "../Project/Project";
 import { useState } from "react";
+import { TextField } from "@mui/material";
 import { QUERY_KEYS } from "@/constants/queryKeys";
 import { useProjects } from "@/hooks";
 import { AlertMessage } from "../AlertMessage";
@@ -14,13 +15,19 @@ import FolderOpenOutlinedIcon from "@mui/icons-material/FolderOpenOutlined";
 interface IProps {
   openAddProject: boolean;
   toggleOpenAddProject: (value: boolean) => void;
+  canManageProjects: boolean;
 }
 
-export function Projects({ openAddProject, toggleOpenAddProject }: IProps) {
+export function Projects({
+  openAddProject,
+  toggleOpenAddProject,
+  canManageProjects,
+}: IProps) {
   const { t } = useTranslation();
   const { projects, isLoading, isError, refetch } = useProjects();
 
   const [openDialog, setOpenDialog] = useState(false);
+  const [search, setSearch] = useState("");
 
   const [projectToDelete, setProjectToDelete] =
     useState<TypeProjectWithTasks | null>(null);
@@ -37,9 +44,9 @@ export function Projects({ openAddProject, toggleOpenAddProject }: IProps) {
 
       setProjectToDelete(null);
       setOpenDialog(false);
-      showFeedback(t("projectDeleted"));
+      showFeedback(t("project.delete.success"));
     },
-    onError: () => showFeedback(t("errorDeletingProject"), "error"),
+    onError: () => showFeedback(t("project.delete.error"), "error"),
   });
 
   const handleConfirmDelete = () => {
@@ -53,61 +60,89 @@ export function Projects({ openAddProject, toggleOpenAddProject }: IProps) {
     setProjectToDelete(null);
   };
 
+  const normalizedSearch = search.trim().toLowerCase();
+  const filteredProjects = (projects ?? []).filter((project) =>
+    `${project.name} ${project.description ?? ""}`
+      .toLowerCase()
+      .includes(normalizedSearch),
+  );
+  const sortedProjects = filteredProjects
+    .slice()
+    .sort((first, second) => first.name.localeCompare(second.name));
+
   return (
     <>
       {isLoading && (
         <div className="content-state" role="status">
-          <AlertMessage type="loading" message={t("loadingProjects")} />
+          <AlertMessage type="loading" message={t("project.loading")} />
         </div>
       )}
       {isError && (
         <div className="content-state" role="alert">
           <AlertMessage
             type="error"
-            message={t("errorLoadingProjects")}
-            retryLabel={t("retry")}
+            message={t("project.loadError")}
+            retryLabel={t("common.retry")}
             onRetry={() => void refetch()}
           />
         </div>
       )}
       {projects && projects.length > 0 && (
-        <div className="projects-grid">
-          {[...projects]
-            .sort((a, b) => a.name.localeCompare(b.name))
-            .map((project: TypeProjectWithTasks) => (
-              <Project
-                key={project.id}
-                project={project}
-                setOpenDialog={setOpenDialog}
-                setProjectToDelete={setProjectToDelete}
-              />
-            ))}
-        </div>
+        <>
+          <TextField
+            size="small"
+            label={t("project.search")}
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            sx={{ mb: 2, width: { xs: "100%", sm: 320 } }}
+          />
+          {sortedProjects.length > 0 ? (
+            <div className="projects-grid">
+              {sortedProjects.map((project: TypeProjectWithTasks) => (
+                <Project
+                  key={project.id}
+                  project={project}
+                  setOpenDialog={setOpenDialog}
+                  setProjectToDelete={setProjectToDelete}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="empty-state">
+              <h3>{t("project.noMatches")}</h3>
+            </div>
+          )}
+        </>
       )}
-      {projects && projects.length === 0 && !isLoading && (
+      {projects && projects.length === 0 && !isLoading && canManageProjects && (
         <div className="empty-state">
           <span className="empty-state-mark" aria-hidden="true">
             <FolderOpenOutlinedIcon />
           </span>
-          <h3>{t("noProjectsFound")}</h3>
+          <h3>{t("project.empty")}</h3>
           <button
             type="button"
             className="text-action"
             onClick={() => toggleOpenAddProject(true)}
             disabled={openAddProject}
           >
-            {t("addProject")}
+            {t("project.add")}
           </button>
         </div>
       )}
+      {projects && projects.length === 0 && !isLoading && !canManageProjects ? (
+        <div className="empty-state">
+          <h3>{t("project.noneAvailable")}</h3>
+        </div>
+      ) : null}
       <ConfirmDialog
         open={openDialog}
         onClose={handleCloseDialog}
         onConfirm={handleConfirmDelete}
         isLoading={deleteMutation.isPending}
         relatedItems={projectToDelete?.tasks.map((task) => task.name)}
-        relatedItemsLabel={t("tasksToBeDeleted")}
-        description={`${t("confirmDeleteProject")} "${projectToDelete?.name}"? ${t("inforToDeleteProject")}`}
+        relatedItemsLabel={t("project.tasksDeletedWithProject")}
+        description={`${t("project.delete.confirm")} "${projectToDelete?.name}"? ${t("project.delete.irreversible")}`}
       />
     </>
   );

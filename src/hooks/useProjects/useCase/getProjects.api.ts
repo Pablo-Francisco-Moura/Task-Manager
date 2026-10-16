@@ -1,10 +1,24 @@
-import { api } from "@/lib/axios";
-import { ROUTES } from "@/constants";
-import type { TypeGetProjectResponse } from "@/types";
+import {
+  accountWorkspaceRequest,
+  hasStoredAccountSession,
+  mapAccountProjectWithTasks,
+} from "@/lib/accountWorkspaceApi";
+import { getLocalProjects } from "@/lib/localDataRepository";
+import type {
+  TypeGetProjectResponse,
+  TypeSerializedProjectWithTasks,
+} from "@/types";
 
 export async function getProjects() {
-  const response = await api.get<TypeGetProjectResponse>(ROUTES.PROJECT);
-  const data = response.data;
+  if (hasStoredAccountSession()) {
+    const projects =
+      await accountWorkspaceRequest<TypeSerializedProjectWithTasks[]>(
+        "/api/project",
+      );
+    return projects.map(
+      mapAccountProjectWithTasks,
+    ) satisfies TypeGetProjectResponse;
+  }
 
-  return data;
+  return getLocalProjects() satisfies TypeGetProjectResponse;
 }

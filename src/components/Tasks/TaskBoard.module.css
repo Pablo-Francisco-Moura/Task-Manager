@@ -1,0 +1,240 @@
+.board {
+  display: none;
+}
+
+.column {
+  --column-accent: var(--brand);
+  --column-tint: var(--brand-soft);
+  --column-line: var(--line);
+
+  display: flex;
+  min-width: 15rem;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--column-line);
+  border-top: 3px solid var(--column-accent);
+  border-radius: 6px;
+  background: var(--surface);
+}
+
+.column[data-status="todo"] {
+  --column-accent: #73449c;
+  --column-tint: #f2ebfc;
+  --column-line: #c4a9e8;
+}
+
+.column[data-status="in_progress"] {
+  --column-accent: #2c44ae;
+  --column-tint: #eaf4fa;
+  --column-line: #a6ccdf;
+}
+
+.column[data-status="done"] {
+  --column-accent: #25862a;
+  --column-tint: #eaf4ed;
+  --column-line: #a8d0b2;
+}
+
+:global(html.dark) .column[data-status="todo"] {
+  --column-accent: #c6a6ff;
+  --column-tint: #332747;
+  --column-line: #70558e;
+}
+
+:global(html.dark) .column[data-status="in_progress"] {
+  --column-accent: #82c4e7;
+  --column-tint: #1d3039;
+  --column-line: #3e6579;
+}
+
+:global(html.dark) .column[data-status="done"] {
+  --column-accent: #88d09a;
+  --column-tint: #20362a;
+  --column-line: #426c4e;
+}
+
+.columnHeader {
+  display: flex;
+  min-height: 3.25rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border-bottom: 1px solid var(--column-line);
+  background: var(--column-tint);
+  padding: 0.7rem 0.85rem;
+}
+
+.columnTitle {
+  margin: 0;
+  color: var(--column-accent);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.columnCount {
+  display: grid;
+  min-width: 1.65rem;
+  height: 1.65rem;
+  place-items: center;
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--column-accent);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.cards {
+  display: flex;
+  min-height: 5rem;
+  max-height: min(62vh, 42rem);
+  flex-direction: column;
+  gap: 0.6rem;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0.75rem;
+  list-style: none;
+  transition: background-color 120ms ease;
+}
+
+.cardsOver {
+  background: var(--column-tint);
+}
+
+.cardShell {
+  margin: 0;
+  outline: none;
+}
+
+.card {
+  display: grid;
+  grid-template-columns: 2.25rem minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 0.4rem;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: var(--background);
+  padding: 0.55rem 0.4rem;
+}
+
+.cardCopy {
+  min-width: 0;
+  padding-top: 0.35rem;
+}
+
+.cardTitle {
+  margin: 0;
+  color: var(--foreground);
+  font-size: 0.88rem;
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+
+.cardDescription {
+  margin: 0.45rem 0 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.cardDueDate {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin: 0.45rem 0 0;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.cardDueDate[data-overdue="true"] {
+  color: var(--danger-text);
+  font-weight: 700;
+}
+
+.dragHandle {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  align-self: center;
+  justify-self: center;
+  place-items: center;
+  padding: 0;
+  cursor: grab;
+  touch-action: none;
+  color: var(--muted);
+  transition:
+    color 140ms ease,
+    background-color 140ms ease;
+}
+
+.dragHandle:hover {
+  background: var(--brand-soft);
+  color: var(--accent);
+}
+
+.dragHandle:global(.MuiIconButton-root) {
+  color: var(--muted);
+}
+
+.dragHandle:global(.MuiIconButton-root:hover) {
+  color: var(--accent);
+}
+
+.dragHandle:active {
+  cursor: grabbing;
+}
+
+.dragHandle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.cardActions {
+  display: flex;
+  align-self: stretch;
+  align-items: center;
+  color: var(--muted);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 140ms ease;
+}
+
+.card:hover .cardActions,
+.card:focus-within .cardActions {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+@media (hover: none) {
+  .cardActions {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+.cardActions :global(.MuiIconButton-root) {
+  color: inherit;
+}
+
+.cardActions :global(.MuiIconButton-root:hover) {
+  color: var(--accent);
+}
+
+@media (min-width: 900px) {
+  .board {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(15rem, 1fr));
+    align-items: start;
+    gap: 1rem;
+    overflow-x: auto;
+    padding: 1rem 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cards,
+  .cardActions,
+  .dragHandle {
+    transition: none;
+  }
+}

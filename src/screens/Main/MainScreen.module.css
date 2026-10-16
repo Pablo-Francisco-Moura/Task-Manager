@@ -1,0 +1,9 @@
+.shell {
+  background:
+    radial-gradient(
+      ellipse at 10% 0%,
+      rgba(191, 79, 54, 0.055),
+      transparent 34rem
+    ),
+    var(--background);
+}

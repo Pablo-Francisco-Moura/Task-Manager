@@ -1,8 +1,13 @@
 import {
+  getWorkspaceRole,
+  projectAccessWhere,
+} from "@/server/session/projectAccess";
+import {
   parseName,
   readJsonObject,
   projectCreateSchema,
   projectUpdateSchema,
+  normalizeDescription,
   parsePositiveIntegerString,
   projectCreateOpenApiSchema,
   projectUpdateOpenApiSchema,
@@ -11,8 +16,10 @@ import { Hono } from "hono";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { describeRoute } from "hono-openapi";
+import { createProjectActivity } from "@/server/task/taskActivity";
+import type { TypeSessionEnv } from "@/server/session";
 
-const projectRoutes = new Hono();
+const projectRoutes = new Hono<TypeSessionEnv>();
 
 // POST /api/project - Create new project.
 projectRoutes.post(
@@ -30,6 +37,16 @@ projectRoutes.post(
     },
   }),
   async (c) => {
+    const workspaceId = c.get("workspaceId");
+    const userId = c.get("userId");
+    const role = await getWorkspaceRole(prisma, workspaceId, userId);
+    if (role !== "owner") {
+      return c.json(
+        { error: "Workspace owner required to create projects" },
+        403,
+      );
+    }
+
     const body = await readJsonObject(c.req);
     if (!body) {
       return c.json({ error: "Invalid project payload" }, 400);
@@ -43,7 +60,12 @@ projectRoutes.post(
       return c.json({ error: "name must be a non-empty string" }, 400);
     }
     const project = await prisma.project.create({
-      data: { name },
+      data: {
+        name,
+        description: normalizeDescription(parsedBody.data.description),
+        workspaceId,
+        createdById: userId,
+      },
     });
 
     return c.json(project, 201);
@@ -61,7 +83,15 @@ projectRoutes.get(
     },
   }),
   async (c) => {
+    const workspaceId = c.get("workspaceId");
+    const userId = c.get("userId");
+    const role = await getWorkspaceRole(prisma, workspaceId, userId);
+    if (!role) {
+      return c.json({ error: "Workspace membership required" }, 403);
+    }
+
     const projects = await prisma.project.findMany({
+      where: projectAccessWhere(workspaceId, userId, role),
       include: { tasks: true },
     });
 
@@ -89,10 +119,23 @@ projectRoutes.delete(
       return c.json({ error: "id must be a positive integer" }, 400);
     }
 
+    const workspaceId = c.get("workspaceId");
+    const userId = c.get("userId");
+    const role = await getWorkspaceRole(prisma, workspaceId, userId);
+    if (!role) {
+      return c.json({ error: "Workspace membership required" }, 403);
+    }
+
     try {
-      await prisma.project.delete({
-        where: { id },
+      const deleted = await prisma.project.deleteMany({
+        where: {
+          id,
+          ...projectAccessWhere(workspaceId, userId, role),
+        },
       });
+      if (deleted.count === 0) {
+        return c.json({ error: "Project not found" }, 404);
+      }
 
       return c.json({ message: "Project deleted successfully" });
     } catch (error: unknown) {
@@ -131,6 +174,12 @@ projectRoutes.patch(
     if (id === null) {
       return c.json({ error: "id must be a positive integer" }, 400);
     }
+    const workspaceId = c.get("workspaceId");
+    const userId = c.get("userId");
+    const role = await getWorkspaceRole(prisma, workspaceId, userId);
+    if (!role) {
+      return c.json({ error: "Workspace membership required" }, 403);
+    }
     const body = await readJsonObject(c.req);
     if (!body) {
       return c.json({ error: "Invalid project payload" }, 400);
@@ -139,14 +188,40 @@ projectRoutes.patch(
     if (!parsedBody.success) {
       return c.json({ error: "Invalid project payload" }, 400);
     }
-    const name = parseName(parsedBody.data.name);
-    if (name === null) {
-      return c.json({ error: "name must be a non-empty string" }, 400);
+    const { name, description } = parsedBody.data;
+    if (name === undefined && description === undefined) {
+      return c.json(
+        { error: "At least one valid project field is required" },
+        400,
+      );
+    }
+    const updateData: Prisma.ProjectUpdateInput = {};
+    if (name !== undefined) {
+      const parsedName = parseName(name);
+      if (parsedName === null) {
+        return c.json({ error: "name must be a non-empty string" }, 400);
+      }
+      updateData.name = parsedName;
+    }
+    if (description !== undefined) {
+      updateData.description = normalizeDescription(description);
     }
     try {
-      const updatedProject = await prisma.project.update({
-        where: { id },
-        data: { name },
+      const updated = await prisma.project.updateMany({
+        where: {
+          id,
+          ...projectAccessWhere(workspaceId, userId, role),
+        },
+        data: updateData,
+      });
+      if (updated.count === 0) {
+        return c.json({ error: "Project not found" }, 404);
+      }
+      const updatedProject = await prisma.project.findFirstOrThrow({
+        where: {
+          id,
+          ...projectAccessWhere(workspaceId, userId, role),
+        },
       });
       return c.json(updatedProject, 200);
     } catch (error: unknown) {
@@ -160,5 +235,175 @@ projectRoutes.patch(
     }
   },
 );
+
+projectRoutes.get("/:projectId/activity", async (c) => {
+  const projectId = parsePositiveIntegerString(c.req.param("projectId"));
+  if (!projectId) {
+    return c.json({ error: "projectId must be a positive integer" }, 400);
+  }
+  const workspaceId = c.get("workspaceId");
+  const userId = c.get("userId");
+  const role = await getWorkspaceRole(prisma, workspaceId, userId);
+  if (!role) {
+    return c.json({ error: "Workspace membership required" }, 403);
+  }
+  const accessWhere = projectAccessWhere(workspaceId, userId, role);
+  const project = await prisma.project.findFirst({
+    where: { id: projectId, ...accessWhere },
+    select: { id: true },
+  });
+  if (!project) {
+    return c.json({ error: "Project not found" }, 404);
+  }
+
+  const activities = await prisma.projectActivity.findMany({
+    where: { projectId },
+    orderBy: { createdAt: "desc" },
+    take: 100,
+  });
+  return c.json(
+    activities.reverse().map((activity) => ({
+      ...activity,
+      canEdit:
+        activity.type === "comment" &&
+        !activity.isDeleted &&
+        activity.actorId === userId,
+      canDelete:
+        activity.type === "comment" &&
+        !activity.isDeleted &&
+        (activity.actorId === userId || role === "owner"),
+    })),
+  );
+});
+
+projectRoutes.post("/:projectId/comments", async (c) => {
+  const projectId = parsePositiveIntegerString(c.req.param("projectId"));
+  if (!projectId) {
+    return c.json({ error: "projectId must be a positive integer" }, 400);
+  }
+  const body = await readJsonObject(c.req);
+  const content = typeof body?.content === "string" ? body.content.trim() : "";
+  if (!content || content.length > 2000) {
+    return c.json({ error: "Comment must contain 1 to 2000 characters" }, 400);
+  }
+
+  const workspaceId = c.get("workspaceId");
+  const userId = c.get("userId");
+  const role = await getWorkspaceRole(prisma, workspaceId, userId);
+  if (!role) {
+    return c.json({ error: "Workspace membership required" }, 403);
+  }
+  const project = await prisma.project.findFirst({
+    where: {
+      id: projectId,
+      ...projectAccessWhere(workspaceId, userId, role),
+    },
+    select: { id: true },
+  });
+  if (!project) {
+    return c.json({ error: "Project not found" }, 404);
+  }
+
+  const activity = await createProjectActivity(prisma, {
+    projectId,
+    actorId: userId,
+    type: "comment",
+    content,
+  });
+  return c.json({ ...activity, canEdit: true, canDelete: true }, 201);
+});
+
+projectRoutes.patch("/:projectId/activity/:activityId", async (c) => {
+  const projectId = parsePositiveIntegerString(c.req.param("projectId"));
+  const activityId = parsePositiveIntegerString(c.req.param("activityId"));
+  if (!projectId || !activityId) {
+    return c.json(
+      { error: "Valid project and activity ids are required" },
+      400,
+    );
+  }
+  const body = await readJsonObject(c.req);
+  const content = typeof body?.content === "string" ? body.content.trim() : "";
+  if (!content || content.length > 2000) {
+    return c.json({ error: "Comment must contain 1 to 2000 characters" }, 400);
+  }
+
+  const workspaceId = c.get("workspaceId");
+  const userId = c.get("userId");
+  const role = await getWorkspaceRole(prisma, workspaceId, userId);
+  if (!role) {
+    return c.json({ error: "Workspace membership required" }, 403);
+  }
+  const project = await prisma.project.findFirst({
+    where: {
+      id: projectId,
+      ...projectAccessWhere(workspaceId, userId, role),
+    },
+    select: { id: true },
+  });
+  if (!project) {
+    return c.json({ error: "Project not found" }, 404);
+  }
+  const comment = await prisma.projectActivity.findFirst({
+    where: { id: activityId, projectId, type: "comment", isDeleted: false },
+  });
+  if (!comment) {
+    return c.json({ error: "Comment not found" }, 404);
+  }
+  if (comment.actorId !== userId) {
+    return c.json({ error: "Only the comment author can edit it" }, 403);
+  }
+
+  const updated = await prisma.projectActivity.update({
+    where: { id: activityId },
+    data: { content },
+  });
+  return c.json({ ...updated, canEdit: true, canDelete: true });
+});
+
+projectRoutes.delete("/:projectId/activity/:activityId", async (c) => {
+  const projectId = parsePositiveIntegerString(c.req.param("projectId"));
+  const activityId = parsePositiveIntegerString(c.req.param("activityId"));
+  if (!projectId || !activityId) {
+    return c.json(
+      { error: "Valid project and activity ids are required" },
+      400,
+    );
+  }
+  const workspaceId = c.get("workspaceId");
+  const userId = c.get("userId");
+  const role = await getWorkspaceRole(prisma, workspaceId, userId);
+  if (!role) {
+    return c.json({ error: "Workspace membership required" }, 403);
+  }
+  const project = await prisma.project.findFirst({
+    where: {
+      id: projectId,
+      ...projectAccessWhere(workspaceId, userId, role),
+    },
+    select: { id: true },
+  });
+  if (!project) {
+    return c.json({ error: "Project not found" }, 404);
+  }
+  const comment = await prisma.projectActivity.findFirst({
+    where: { id: activityId, projectId, type: "comment", isDeleted: false },
+  });
+  if (!comment) {
+    return c.json({ error: "Comment not found" }, 404);
+  }
+  if (comment.actorId !== userId && role !== "owner") {
+    return c.json(
+      { error: "Only the author or workspace owner can delete it" },
+      403,
+    );
+  }
+
+  await prisma.projectActivity.update({
+    where: { id: activityId },
+    data: { content: null, isDeleted: true },
+  });
+  return c.json({ deleted: true, activityId });
+});
 
 export { projectRoutes };

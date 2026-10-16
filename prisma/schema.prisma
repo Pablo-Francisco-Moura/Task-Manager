@@ -7,21 +7,208 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Project {
-  id   Int    @id @default(autoincrement())
-  name String
+enum TaskStatus {
+  todo
+  in_progress
+  done
+}
 
-  tasks Task[]
+enum TaskPriority {
+  low
+  normal
+  high
+}
+
+enum UserKind {
+  guest
+  account
+}
+
+enum WorkspaceKind {
+  personal
+  shared
+}
+
+enum WorkspaceRole {
+  owner
+  member
+}
+
+enum WorkspaceInviteStatus {
+  pending
+  accepted
+  declined
+  revoked
+  expired
+}
+
+enum ProjectActivityType {
+  task_created
+  task_updated
+  task_moved
+  task_deleted
+  comment
+}
+
+model User {
+  id                    String            @id @default(uuid()) @db.Uuid
+  displayName           String
+  username              String?           @unique
+  email                 String?           @unique
+  passwordHash          String?
+  kind                  UserKind          @default(guest)
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @default(now()) @updatedAt
+  sessions              Session[]
+  workspaceMembers      WorkspaceMember[]
+  invitedWorkspaceJobs  WorkspaceInvite[] @relation("WorkspaceInviteCreatedBy")
+  receivedWorkspaceInvites WorkspaceInvite[] @relation("WorkspaceInviteTarget")
+  createdProjects       Project[]         @relation("ProjectCreator")
+  createdTasks          Task[]            @relation("TaskCreator")
+  projectMembers        ProjectMember[]
+  projectActivities      ProjectActivity[]
+
+  @@map("users")
+}
+
+model Workspace {
+  id             String            @id @default(uuid()) @db.Uuid
+  name           String
+  kind           WorkspaceKind     @default(personal)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @default(now()) @updatedAt
+  members        WorkspaceMember[]
+  projects       Project[]
+  sessions       Session[]
+  workspaceInvites WorkspaceInvite[]
+
+  @@map("workspaces")
+}
+
+model WorkspaceMember {
+  workspaceId String        @db.Uuid
+  userId      String        @db.Uuid
+  role        WorkspaceRole @default(owner)
+  joinedAt    DateTime      @default(now())
+  workspace   Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([workspaceId, userId])
+  @@index([userId])
+  @@map("workspace_members")
+}
+
+model Session {
+  id          String    @id @default(uuid()) @db.Uuid
+  userId      String    @db.Uuid
+  workspaceId String    @db.Uuid
+  tokenHash   String    @unique
+  expiresAt   DateTime
+  revokedAt   DateTime?
+  createdAt   DateTime  @default(now())
+  lastSeenAt  DateTime  @default(now())
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([workspaceId])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+model Project {
+  id           Int      @id @default(autoincrement())
+  name         String
+  description  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now()) @updatedAt
+
+  workspaceId   String         @db.Uuid
+  createdById  String         @db.Uuid
+  workspace    Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  createdBy    User           @relation("ProjectCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  tasks        Task[]
+  projectMembers ProjectMember[]
+  activities     ProjectActivity[]
 
   @@map("projects")
 }
 
-model Task {
-  id   Int    @id @default(autoincrement())
-  name String
-
+model ProjectMember {
   projectId Int
+  userId    String @db.Uuid
+  role      WorkspaceRole @default(member)
+  joinedAt  DateTime @default(now())
+
   project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([projectId, userId])
+  @@index([userId])
+  @@map("project_members")
+}
+
+model Task {
+  id          Int          @id @default(autoincrement())
+  name        String
+  description String?
+  dueDate     DateTime?    @db.Date
+  dueAt       DateTime?    @db.Timestamptz(3)
+  status      TaskStatus   @default(todo)
+  priority    TaskPriority @default(normal)
+  position    Int          @default(0)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @default(now()) @updatedAt
+
+  projectId   Int
+  createdById String  @db.Uuid
+  project     Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdBy   User    @relation("TaskCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  activities  ProjectActivity[]
 
   @@map("tasks")
+}
+
+model WorkspaceInvite {
+  id            Int                    @id @default(autoincrement())
+  workspaceId   String                 @db.Uuid
+  createdById   String                 @db.Uuid
+  targetUserId  String                 @db.Uuid
+  status        WorkspaceInviteStatus  @default(pending)
+  projectIds    Int[]                  @default([])
+  expiresAt     DateTime
+  readAt        DateTime?
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @default(now()) @updatedAt
+
+  workspace     Workspace              @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  createdBy     User                   @relation("WorkspaceInviteCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  targetUser    User                   @relation("WorkspaceInviteTarget", fields: [targetUserId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, status])
+  @@index([targetUserId, status])
+  @@map("workspace_invites")
+}
+
+model ProjectActivity {
+  id        Int                 @id @default(autoincrement())
+  projectId Int
+  taskId    Int?
+  actorId   String              @db.Uuid
+  actorName String
+  type      ProjectActivityType
+  taskName  String?
+  content   String?
+  details   Json?
+  isDeleted Boolean             @default(false)
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @default(now()) @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  task    Task?   @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  actor   User    @relation(fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@index([projectId, createdAt])
+  @@index([taskId])
+  @@map("project_activities")
 }

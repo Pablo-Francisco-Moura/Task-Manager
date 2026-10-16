@@ -1,75 +1,170 @@
-import { Project } from "@prisma/client";
-import { useTheme } from "../Providers/ThemeProvider";
+import { useTasks } from "@/hooks/useTasks";
 import { useEffect } from "react";
 import { useProjects } from "@/hooks/useProjects";
 import { useTranslation } from "react-i18next";
 import { useProjectStore } from "@/store/projectStore";
-import { CircularProgress } from "@mui/material";
 import Select, { SelectChangeEvent } from "@mui/material/Select";
+import type { TypeLocalProject } from "@/types/localData";
+import AddIcon from "@mui/icons-material/Add";
 import MenuItem from "@mui/material/MenuItem";
+import InputLabel from "@mui/material/InputLabel";
 import FormControl from "@mui/material/FormControl";
+import Button from "@mui/material/Button";
+import ChatOutlinedIcon from "@mui/icons-material/ChatOutlined";
 
-export function Toolbar() {
+interface IProps {
+  openAddTask: boolean;
+  onToggleAddTask: () => void;
+  onOpenChat: () => void;
+}
+
+export function Toolbar({ openAddTask, onToggleAddTask, onOpenChat }: IProps) {
   const selectedProject = useProjectStore((s) => s.selectedProject);
+  const selectedProjectId = useProjectStore((s) => s.selectedProjectId);
+  const preferencesLoaded = useProjectStore((s) => s.preferencesLoaded);
   const setSelectedProject = useProjectStore((s) => s.setSelectedProject);
+  const workspaceRole = useProjectStore((state) => state.workspaceRole);
 
   const { t } = useTranslation();
-  const { theme } = useTheme();
   const { projects, isLoading } = useProjects();
-
-  const isDark = theme === "dark";
+  const { tasks } = useTasks(selectedProject?.id);
 
   useEffect(() => {
+    if (!preferencesLoaded) return;
+
     if (projects && projects.length > 0) {
+      const projectToSelect =
+        projects.find(
+          (project: TypeLocalProject) => project.id === selectedProjectId,
+        ) ??
+        projects.find(
+          (project: TypeLocalProject) => project.id === selectedProject?.id,
+        ) ??
+        projects[0];
       if (
-        !selectedProject ||
-        !projects.some((p: Project) => p.id === selectedProject.id)
+        selectedProject?.id !== projectToSelect.id ||
+        selectedProjectId !== projectToSelect.id
       ) {
-        setSelectedProject(projects[0]);
+        setSelectedProject(projectToSelect);
       }
     } else if (projects && projects.length === 0) {
       setSelectedProject(null);
     }
-  }, [projects, selectedProject, setSelectedProject]);
+  }, [
+    projects,
+    preferencesLoaded,
+    selectedProject,
+    selectedProjectId,
+    setSelectedProject,
+  ]);
 
   const handleChange = (event: SelectChangeEvent) => {
     const id = Number(event.target.value);
-    const project = projects?.find((p: Project) => p.id === id) || null;
+    const project =
+      projects?.find((item: TypeLocalProject) => item.id === id) || null;
     setSelectedProject(project);
   };
 
   return (
     <div className="task-project-toolbar">
-      <p className="toolbar-caption">{t("projectName")}</p>
       <FormControl className="task-project-select" sx={{ minWidth: 220 }}>
+        <InputLabel
+          id="task-project-select-label"
+          shrink
+          sx={{
+            color: "var(--muted)",
+            "&.Mui-focused": { color: "var(--accent)" },
+          }}
+        >
+          {t("project.label")}
+        </InputLabel>
         <Select
-          aria-label={t("projectName")}
+          labelId="task-project-select-label"
+          label={t("project.label")}
           value={selectedProject?.id?.toString() ?? ""}
           onChange={handleChange}
           disabled={!projects || projects.length === 0 || isLoading}
           displayEmpty
+          MenuProps={{
+            PaperProps: {
+              sx: {
+                backgroundColor: "var(--surface)",
+                color: "var(--foreground)",
+                "& .MuiMenuItem-root:hover": {
+                  backgroundColor: "var(--brand-soft)",
+                },
+              },
+            },
+          }}
           sx={{
-            color: isDark ? "#fff" : undefined,
+            color: "var(--foreground)",
             ".MuiOutlinedInput-notchedOutline": {
-              borderColor: isDark ? "#fff" : undefined,
+              borderColor: "var(--line)",
+            },
+            "&:not(.Mui-disabled):hover .MuiOutlinedInput-notchedOutline": {
+              borderColor: "var(--accent)",
+            },
+            "&.Mui-disabled .MuiOutlinedInput-notchedOutline": {
+              borderColor: "var(--line)",
             },
             "& .MuiSvgIcon-root": {
-              color: isDark ? "#fff" : undefined,
+              color: "var(--foreground)",
+            },
+            "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+              borderColor: "var(--accent)",
+              borderWidth: 2,
             },
           }}
         >
           <MenuItem value="" disabled>
-            {isLoading ? t("loadingProjects") : t("selectProject")}
+            {isLoading
+              ? t("project.loading")
+              : projects?.length === 0
+                ? t("project.noneAvailable")
+                : t("project.select")}
           </MenuItem>
           {projects &&
-            projects.map((project: Project) => (
+            projects.map((project: TypeLocalProject) => (
               <MenuItem key={project.id} value={project.id.toString()}>
                 {project.name}
               </MenuItem>
             ))}
         </Select>
       </FormControl>
-      {isLoading && <CircularProgress />}
+      <div className="screen-heading task-summary-heading">
+        {tasks && (
+          <p className="task-count" aria-live="polite">
+            <span className="task-count-value">{tasks.length}</span>
+            {t(
+              tasks.length === 1 ? "task.count.singular" : "task.count.plural",
+            )}
+          </p>
+        )}
+        <div className="flex items-center gap-2">
+          {workspaceRole !== null ? (
+            <Button
+              className="task-toolbar-action"
+              size="small"
+              variant="outlined"
+              startIcon={<ChatOutlinedIcon />}
+              onClick={onOpenChat}
+              disabled={!selectedProject || isLoading}
+            >
+              {t("activity.title")}
+            </Button>
+          ) : null}
+          <button
+            type="button"
+            className="primary-action task-toolbar-action"
+            onClick={onToggleAddTask}
+            aria-expanded={openAddTask}
+            disabled={!selectedProject || isLoading}
+          >
+            <AddIcon fontSize="small" />
+            <span>{t("task.create.submit")}</span>
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

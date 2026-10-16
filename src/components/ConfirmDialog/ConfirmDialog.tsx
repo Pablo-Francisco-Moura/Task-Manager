@@ -25,12 +25,12 @@ interface IProps {
 
 export function ConfirmDialog({
   open,
-  onClose,
-  onConfirm,
-  description,
   isLoading = false,
+  description,
   relatedItems = [],
   relatedItemsLabel,
+  onClose,
+  onConfirm,
 }: IProps) {
   const { t } = useTranslation();
   const [showRelatedItems, setShowRelatedItems] = useState(false);
@@ -50,12 +50,12 @@ export function ConfirmDialog({
         },
       }}
     >
-      <div className="dark:bg-gray-600">
-        <DialogTitle className="dark:text-white">
-          {t("confirmDelete")}
+      <div>
+        <DialogTitle sx={{ color: "var(--foreground)" }}>
+          {t("common.confirm")}
         </DialogTitle>
         <DialogContent>
-          <DialogContentText className="dark:text-white">
+          <DialogContentText sx={{ color: "var(--muted)" }}>
             {description}
           </DialogContentText>
           {relatedItems.length > 0 && relatedItemsLabel && (
@@ -64,25 +64,55 @@ export function ConfirmDialog({
                 type="button"
                 onClick={() => setShowRelatedItems((visible) => !visible)}
                 aria-expanded={showRelatedItems}
-                sx={{ mt: 1, px: 0, textTransform: "none" }}
+                variant="outlined"
+                size="small"
+                sx={{
+                  mt: 1,
+                  color: "var(--brand)",
+                  backgroundColor: "var(--brand-soft)",
+                  borderColor: "var(--brand)",
+                  borderRadius: 1.5,
+                  fontWeight: 600,
+                  textTransform: "none",
+                  "&:hover": {
+                    backgroundColor: "var(--brand-soft)",
+                    borderColor: "var(--accent)",
+                  },
+                }}
               >
                 {showRelatedItems
-                  ? t("hideRelatedItems")
-                  : `${t("viewRelatedItems")} (${relatedItems.length})`}
+                  ? t("project.hideTasks")
+                  : `${t("project.viewTasks")} (${relatedItems.length})`}
               </Button>
               <Collapse in={showRelatedItems}>
                 <div aria-label={relatedItemsLabel}>
                   <Typography
-                    component="p"
+                    sx={{ mt: 1, color: "var(--foreground)", fontWeight: 600 }}
                     variant="body2"
-                    sx={{ mt: 1, fontWeight: 600 }}
+                    component="p"
                   >
                     {relatedItemsLabel}
                   </Typography>
                   <List dense disablePadding>
                     {relatedItems.map((item, index) => (
-                      <ListItem key={`${index}-${item}`} disableGutters>
-                        <ListItemText primary={item} />
+                      <ListItem
+                        key={`${index}-${item}`}
+                        disableGutters
+                        sx={{
+                          mt: 0.75,
+                          px: 1.25,
+                          py: 0.75,
+                          border: "1px solid var(--line)",
+                          borderRadius: 1,
+                          backgroundColor: "var(--background)",
+                        }}
+                      >
+                        <ListItemText
+                          sx={{ color: "var(--foreground)" }}
+                          primary={t("project.taskWillBeDeleted", {
+                            name: item,
+                          })}
+                        />
                       </ListItem>
                     ))}
                   </List>
@@ -93,13 +123,13 @@ export function ConfirmDialog({
         </DialogContent>
         <DialogActions>
           <Button
-            className="dark:text-blue-400"
-            onClick={onClose}
-            color="primary"
-            disabled={isLoading}
+            sx={{ color: "var(--brand)" }}
             ref={cancelButtonRef}
+            color="primary"
+            onClick={onClose}
+            disabled={isLoading}
           >
-            {t("cancel")}
+            {t("common.cancel")}
           </Button>
           <Button
             onClick={onConfirm}
@@ -107,7 +137,7 @@ export function ConfirmDialog({
             variant="contained"
             disabled={isLoading}
           >
-            {isLoading ? t("deleting") : t("confirm")}
+            {isLoading ? t("common.deleting") : t("common.confirm")}
           </Button>
         </DialogActions>
       </div>

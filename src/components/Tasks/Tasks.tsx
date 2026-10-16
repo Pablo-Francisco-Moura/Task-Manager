@@ -1,103 +1,86 @@
 import { Task } from "../Task/Task";
-import { Form } from "../Form";
-import { Dialog } from "@mui/material";
-import { useForm } from "react-hook-form";
+import {
+  Stack,
+  Dialog,
+  Select,
+  MenuItem,
+  TextField,
+  InputLabel,
+  FormControl,
+} from "@mui/material";
 import { TaskForm } from "@/components/TaskForm";
 import { useState } from "react";
-import { deleteTask } from "@/hooks/useTasks/useCase/deleteTask.api";
-import { QUERY_KEYS } from "@/constants/queryKeys";
-import { updateTask } from "@/hooks/useTasks/useCase/updateTask.api";
+import { TaskBoard } from "./TaskBoard";
 import { AlertMessage } from "@/components/AlertMessage";
 import { useMainStore } from "@/store/mainStore";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useTranslation } from "react-i18next";
 import { useProjectStore } from "@/store/projectStore";
-import { Task as TypeTask } from "@prisma/client";
-import { useFeedbackStore } from "@/store/feedbackStore";
+import { useTaskMutations } from "./useTaskMutations";
+import { toTaskDueAtISOString } from "@/utils/taskDueDate";
 import { useProjects, useTasks } from "@/hooks";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import AddIcon from "@mui/icons-material/Add";
+import { TaskEditDialog, type TypeTaskEditFormValues } from "./TaskEditDialog";
+import type { TypeReorderTasksInput } from "@/types";
+import type {
+  TypeLocalTask,
+  TypeLocalTaskPriority,
+  TypeLocalTaskStatus,
+} from "@/types/localData";
 import ChecklistOutlinedIcon from "@mui/icons-material/ChecklistOutlined";
 import FolderOpenOutlinedIcon from "@mui/icons-material/FolderOpenOutlined";
+import { ProjectActivityDrawer } from "./ProjectActivityDrawer";
 
-export function Tasks() {
+interface IProps {
+  openAddTask: boolean;
+  onCloseAddTask: () => void;
+  isChatOpen: boolean;
+  onCloseChat: () => void;
+}
+
+export function Tasks({
+  openAddTask,
+  onCloseAddTask,
+  isChatOpen,
+  onCloseChat,
+}: IProps) {
   const setSelectedTab = useMainStore((s) => s.setSelectedTab);
   const selectedProject = useProjectStore((s) => s.selectedProject);
+  const activeWorkspaceId = useProjectStore((s) => s.activeWorkspaceId);
 
-  const [editTask, setEditTask] = useState<TypeTask | null>(null);
+  const [editTask, setEditTask] = useState<TypeLocalTask | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
-  const [taskToDelete, setTaskToDelete] = useState<TypeTask | null>(null);
-  const [openAddTask, toggleOpenAddTask] = useState(false);
+  const [taskToDelete, setTaskToDelete] = useState<TypeLocalTask | null>(null);
   const [openEditDialog, setOpenEditDialog] = useState(false);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<TypeLocalTaskStatus | "all">(
+    "all",
+  );
+  const [priorityFilter, setPriorityFilter] = useState<
+    TypeLocalTaskPriority | "all"
+  >("all");
+  const workspaceRole = useProjectStore((state) => state.workspaceRole);
 
   const { t } = useTranslation();
-  const queryClient = useQueryClient();
-  const showFeedback = useFeedbackStore((state) => state.showFeedback);
-
-  // Mutation to delete task.
-  const deleteMutation = useMutation({
-    mutationFn: async (id: number) => deleteTask(id),
-    onSuccess: async () => {
-      if (selectedProject?.id) {
-        await queryClient.invalidateQueries({
-          queryKey: [QUERY_KEYS.PROJECTS, selectedProject?.id],
-        });
-        await queryClient.refetchQueries({
-          queryKey: [QUERY_KEYS.PROJECTS, selectedProject?.id],
-        });
-
-        await queryClient.invalidateQueries({
-          queryKey: [QUERY_KEYS.TASKS, selectedProject.id],
-        });
-        await queryClient.refetchQueries({
-          queryKey: [QUERY_KEYS.TASKS, selectedProject.id],
-        });
-      }
+  const {
+    deleteMutation,
+    updateMutation,
+    updateStatusMutation,
+    reorderTasksMutation,
+  } = useTaskMutations({
+    projectId: selectedProject?.id,
+    activeWorkspaceId,
+    onDeleteSuccess: () => {
       setTaskToDelete(null);
       setOpenDialog(false);
-      showFeedback(t("taskDeleted"));
     },
-    onError: () => showFeedback(t("errorDeletingTask"), "error"),
-  });
-
-  // Mutation to edit task.
-  const updateMutation = useMutation({
-    mutationFn: updateTask,
-    onSuccess: async (updatedTask) => {
-      if (selectedProject?.id) {
-        queryClient.setQueryData<TypeTask[]>(
-          [QUERY_KEYS.TASKS, selectedProject.id],
-          (currentTasks) =>
-            currentTasks?.map((task) =>
-              task.id === updatedTask.id ? updatedTask : task,
-            ),
-        );
-        await queryClient.invalidateQueries({
-          queryKey: [QUERY_KEYS.TASKS, selectedProject.id],
-        });
-        await queryClient.refetchQueries({
-          queryKey: [QUERY_KEYS.TASKS, selectedProject.id],
-        });
-      }
-
+    onUpdateSuccess: () => {
       setEditTask(null);
       setOpenEditDialog(false);
-      showFeedback(t("taskUpdated"));
     },
-  });
-
-  // Edit form.
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { isSubmitting },
-  } = useForm<{ name: string }>({
-    defaultValues: { name: "" },
   });
 
   // Handlers
-  const handleDeleteClick = (task: TypeTask) => {
+  const handleDeleteClick = (task: TypeLocalTask) => {
     setTaskToDelete(task);
     setOpenDialog(true);
   };
@@ -113,9 +96,8 @@ export function Tasks() {
     setTaskToDelete(null);
   };
 
-  const handleEditClick = (task: TypeTask) => {
+  const handleEditClick = (task: TypeLocalTask) => {
     setEditTask(task);
-    reset({ name: task.name });
     setOpenEditDialog(true);
   };
 
@@ -124,14 +106,27 @@ export function Tasks() {
     setEditTask(null);
   };
 
-  const onEditSubmit = async (data: { name: string }) => {
+  const onEditSubmit = async (data: TypeTaskEditFormValues) => {
     if (editTask) {
+      const dueAt = toTaskDueAtISOString(data.dueDate, data.dueTime);
       await updateMutation.mutateAsync({
         id: editTask.id,
         name: data.name,
+        status: data.status,
+        dueDate: dueAt ? null : data.dueDate || null,
+        dueAt,
+        priority: data.priority,
         projectId: editTask.projectId,
+        description: data.description,
       });
     }
+  };
+
+  const handleStatusChange = (
+    task: TypeLocalTask,
+    status: TypeLocalTaskStatus,
+  ) => {
+    updateStatusMutation.mutate({ id: task.id, status });
   };
 
   const {
@@ -146,11 +141,26 @@ export function Tasks() {
     isLoading: isTasksLoading,
     refetch: refetchTasks,
   } = useTasks(selectedProject?.id);
+  const allTasks = tasks ?? [];
+  const normalizedSearch = search.trim().toLowerCase();
+  const filteredTasks = allTasks.filter(
+    (task) =>
+      (!normalizedSearch ||
+        `${task.name} ${task.description ?? ""}`
+          .toLowerCase()
+          .includes(normalizedSearch)) &&
+      (statusFilter === "all" || task.status === statusFilter) &&
+      (priorityFilter === "all" || task.priority === priorityFilter),
+  );
+  const canReorder =
+    !normalizedSearch && statusFilter === "all" && priorityFilter === "all";
+  const canManageProjects =
+    activeWorkspaceId === null || workspaceRole === "owner";
 
   if (isProjectsLoading && projects === undefined) {
     return (
       <div className="content-state" role="status">
-        <AlertMessage type="loading" message={t("loadingProjects")} />
+        <AlertMessage type="loading" message={t("project.loading")} />
       </div>
     );
   }
@@ -160,8 +170,8 @@ export function Tasks() {
       <div className="content-state">
         <AlertMessage
           type="error"
-          message={t("errorLoadingProjects")}
-          retryLabel={t("retry")}
+          message={t("project.loadError")}
+          retryLabel={t("common.retry")}
           onRetry={() => void refetchProjects()}
         />
       </div>
@@ -174,14 +184,18 @@ export function Tasks() {
         <span className="empty-state-mark" aria-hidden="true">
           <FolderOpenOutlinedIcon />
         </span>
-        <h3>{t("noProjectsFound")}</h3>
-        <button
-          type="button"
-          className="text-action"
-          onClick={() => setSelectedTab("project")}
-        >
-          {t("addProject")}
-        </button>
+        <h3>
+          {canManageProjects ? t("project.empty") : t("project.noneAvailable")}
+        </h3>
+        {canManageProjects ? (
+          <button
+            type="button"
+            className="text-action"
+            onClick={() => setSelectedTab("project")}
+          >
+            {t("project.add")}
+          </button>
+        ) : null}
       </div>
     );
   }
@@ -189,7 +203,7 @@ export function Tasks() {
   if (projects && !selectedProject) {
     return (
       <div className="content-state" role="status">
-        <AlertMessage message={t("selectProject")} />
+        <AlertMessage message={t("project.select")} />
       </div>
     );
   }
@@ -197,7 +211,7 @@ export function Tasks() {
   if (isTasksLoading) {
     return (
       <div className="content-state" role="status">
-        <AlertMessage type="loading" message={t("loadingTasks")} />
+        <AlertMessage type="loading" message={t("task.loading")} />
       </div>
     );
   }
@@ -207,8 +221,8 @@ export function Tasks() {
       <div className="content-state">
         <AlertMessage
           type="error"
-          message={t("errorLoadingTasks")}
-          retryLabel={t("retry")}
+          message={t("task.loadError")}
+          retryLabel={t("common.retry")}
           onRetry={() => void refetchTasks()}
         />
       </div>
@@ -217,89 +231,132 @@ export function Tasks() {
 
   return (
     <div className="task-workspace">
-      <div className="task-heading">
-        <div>
-          <p className="screen-eyebrow">{t("tasks")}</p>
-          <h2 className="screen-title task-title">{selectedProject?.name}</h2>
-          <p className="task-count">
-            <span className="task-count-value">{tasks?.length ?? 0}</span>
-            {t(
-              (tasks?.length ?? 0) === 1
-                ? "taskCountSingular"
-                : "taskCountPlural",
-            )}
-          </p>
-        </div>
-        <button
-          type="button"
-          className="primary-action"
-          onClick={() => toggleOpenAddTask(!openAddTask)}
-          aria-expanded={openAddTask}
-        >
-          <AddIcon fontSize="small" />
-          <span>{t("registerTask")}</span>
-        </button>
-      </div>
+      <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ mb: 2 }}>
+        <TextField
+          size="small"
+          label={t("task.search")}
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          sx={{ flex: 1 }}
+        />
+        <FormControl size="small" sx={{ minWidth: 160 }}>
+          <InputLabel id="task-status-filter-label">
+            {t("task.filterStatus")}
+          </InputLabel>
+          <Select
+            labelId="task-status-filter-label"
+            label={t("task.filterStatus")}
+            value={statusFilter}
+            onChange={(event) => {
+              setStatusFilter(
+                event.target.value as TypeLocalTaskStatus | "all",
+              );
+            }}
+          >
+            <MenuItem value="all">{t("task.allStatuses")}</MenuItem>
+            <MenuItem value="todo">{t("task.status.todo")}</MenuItem>
+            <MenuItem value="in_progress">
+              {t("task.status.inProgress")}
+            </MenuItem>
+            <MenuItem value="done">{t("task.status.done")}</MenuItem>
+          </Select>
+        </FormControl>
+        <FormControl size="small" sx={{ minWidth: 160 }}>
+          <InputLabel id="task-priority-filter-label">
+            {t("task.filterPriority")}
+          </InputLabel>
+          <Select
+            labelId="task-priority-filter-label"
+            label={t("task.filterPriority")}
+            value={priorityFilter}
+            onChange={(event) => {
+              setPriorityFilter(
+                event.target.value as TypeLocalTaskPriority | "all",
+              );
+            }}
+          >
+            <MenuItem value="all">{t("task.allPriorities")}</MenuItem>
+            <MenuItem value="low">{t("task.priority.low")}</MenuItem>
+            <MenuItem value="normal">{t("task.priority.normal")}</MenuItem>
+            <MenuItem value="high">{t("task.priority.high")}</MenuItem>
+          </Select>
+        </FormControl>
+      </Stack>
+      <ProjectActivityDrawer
+        open={isChatOpen}
+        projectId={selectedProject?.id ?? null}
+        onClose={onCloseChat}
+      />
+      <Dialog
+        open={Boolean(selectedProject && openAddTask)}
+        onClose={onCloseAddTask}
+      >
+        {selectedProject && (
+          <TaskForm onClose={onCloseAddTask} projectId={selectedProject.id} />
+        )}
+      </Dialog>
 
-      {selectedProject && openAddTask && (
-        <div className="form-surface task-form-surface">
-          <TaskForm
-            onClose={() => toggleOpenAddTask(false)}
-            projectId={selectedProject.id}
+      {allTasks.length > 0 && filteredTasks.length > 0 ? (
+        <>
+          <div className="task-mobile-list">
+            <ul className="task-list">
+              {[...filteredTasks]
+                .sort((a, b) => a.name.localeCompare(b.name))
+                .map((task: TypeLocalTask, index: number) => (
+                  <Task
+                    key={task.id}
+                    task={task}
+                    position={index + 1}
+                    onEditClick={handleEditClick}
+                    onDeleteClick={handleDeleteClick}
+                    onStatusChange={handleStatusChange}
+                  />
+                ))}
+            </ul>
+          </div>
+          <TaskBoard
+            tasks={filteredTasks}
+            isSaving={reorderTasksMutation.isPending || !canReorder}
+            onEditClick={handleEditClick}
+            onDeleteClick={handleDeleteClick}
+            onReorder={(orderedTaskIdsByStatus) => {
+              if (selectedProject && canReorder) {
+                reorderTasksMutation.mutate({
+                  projectId: selectedProject.id,
+                  orderedTaskIdsByStatus,
+                } satisfies TypeReorderTasksInput);
+              }
+            }}
           />
+        </>
+      ) : allTasks.length > 0 ? (
+        <div className="empty-state">
+          <h3>{t("task.noMatches")}</h3>
         </div>
-      )}
-
-      {tasks && tasks.length > 0 ? (
-        <ul className="task-list">
-          {[...tasks]
-            .sort((a, b) => a.name.localeCompare(b.name))
-            .map((task: TypeTask, index: number) => (
-              <Task
-                key={task.id}
-                task={task}
-                position={index + 1}
-                onEditClick={handleEditClick}
-                onDeleteClick={handleDeleteClick}
-              />
-            ))}
-        </ul>
       ) : (
         <div className="empty-state task-empty-state">
           <span className="empty-state-mark" aria-hidden="true">
             <ChecklistOutlinedIcon />
           </span>
-          <h3>{t("noTasks")}</h3>
-          <button
-            type="button"
-            className="text-action"
-            onClick={() => toggleOpenAddTask(true)}
-          >
-            {t("registerTask")}
-          </button>
+          <h3>{t("task.empty")}</h3>
         </div>
       )}
 
-      <Dialog open={openEditDialog} onClose={handleEditClose}>
-        <Form
-          title={t("editTask")}
-          error={updateMutation.isError ? t("errorUpdatingTask") : undefined}
-          inputId={`task-edit-name-${editTask?.id ?? "pending"}`}
-          onClose={handleEditClose}
-          register={register}
-          onSubmit={handleSubmit(onEditSubmit)}
-          placeholder={t("taskName")}
-          submitLabel={t("save")}
-          isSubmitting={isSubmitting || updateMutation.isPending}
-        />
-      </Dialog>
+      <TaskEditDialog
+        task={editTask}
+        open={openEditDialog}
+        isSubmitting={updateMutation.isPending}
+        hasError={updateMutation.isError}
+        onClose={handleEditClose}
+        onSubmit={onEditSubmit}
+      />
 
       <ConfirmDialog
         open={openDialog}
         onClose={handleCloseDialog}
         onConfirm={handleConfirmDelete}
         isLoading={deleteMutation.isPending}
-        description={`${t("confirmDeleteTask")} "${taskToDelete?.name}"? ${t("infoToDeleteTask")}`}
+        description={`${t("task.delete.confirm")} "${taskToDelete?.name}"? ${t("task.delete.irreversible")}`}
       />
     </div>
   );

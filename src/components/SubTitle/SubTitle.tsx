@@ -16,7 +16,7 @@ export function SubTitle({ label, onClick }: IProps) {
       <h2 className="flex text-lg font-semibold text-black dark:text-gray-100">
         {label}
       </h2>
-      <Tooltip arrow title={`${t("add")} ${label}`}>
+      <Tooltip arrow title={`${t("common.add")} ${label}`}>
         <IconButton onClick={onClick}>
           <AddIcon className="text-black dark:text-gray-100" />
         </IconButton>

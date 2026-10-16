@@ -68,3 +68,5 @@ Esta seção descreve oportunidades visíveis do código, algumas podem ter sido
 - Não há autenticação ou autorização. Isso é aceitável para o desafio original, mas impede tratar os dados como privados em um produto multiusuário.
 - O layout carrega provedores de cliente na aplicação. Para evolução, vale avaliar cuidadosamente o que precisa ser interativo e o que pode permanecer renderizado no servidor.
 - Tailwind e Material UI convivem no projeto. A combinação funciona, mas sem regras de ownership visual pode aumentar duplicação e inconsistência conforme a interface cresce.
+
+[Voltar à Autoavaliação](../README.md#autoavaliacao)

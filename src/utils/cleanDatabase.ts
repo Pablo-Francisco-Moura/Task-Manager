@@ -1,4 +1,6 @@
 import { prisma } from "@/lib/prisma";
+import { createHash } from "node:crypto";
+import { TEST_GUEST_IDENTITY } from "@/constants/testGuest";
 
 export async function cleanDatabase() {
   // Detects the current schema from DATABASE_URL.
@@ -22,4 +24,35 @@ export async function cleanDatabase() {
   } finally {
     await prisma.$executeRawUnsafe(`SET session_replication_role = 'origin';`);
   }
+
+  await prisma.user.create({
+    data: {
+      id: TEST_GUEST_IDENTITY.userId,
+      displayName: "Test Guest",
+      kind: "guest",
+    },
+  });
+  await prisma.workspace.create({
+    data: {
+      id: TEST_GUEST_IDENTITY.workspaceId,
+      name: "Test Workspace",
+      kind: "personal",
+      members: {
+        create: {
+          userId: TEST_GUEST_IDENTITY.userId,
+          role: "owner",
+        },
+      },
+    },
+  });
+  await prisma.session.create({
+    data: {
+      userId: TEST_GUEST_IDENTITY.userId,
+      workspaceId: TEST_GUEST_IDENTITY.workspaceId,
+      tokenHash: createHash("sha256")
+        .update(TEST_GUEST_IDENTITY.sessionToken)
+        .digest("hex"),
+      expiresAt: new Date(Date.now() + 60 * 60 * 24 * 30 * 1000),
+    },
+  });
 }

@@ -12,6 +12,12 @@
   align-items: center;
 }
 
+.taskScreen :global(.task-project-toolbar .task-summary-heading > div) {
+  flex: 0 0 auto;
+  justify-content: flex-end;
+  margin-left: auto;
+}
+
 .taskScreen :global(.task-project-toolbar .task-toolbar-action) {
   box-sizing: border-box;
   height: 2.75rem;

@@ -108,9 +108,9 @@ export function ProfileMenu({
         </Stack>
       </Box>
       {accountSession ? (
-        <>
-          <Divider sx={{ my: 1 }} />
-          <Box sx={{ minWidth: 240, px: 2, pb: 1 }}>
+        [
+          <Divider key="workspace-divider" sx={{ my: 1 }} />,
+          <Box key="workspace-content" sx={{ minWidth: 240, px: 2, pb: 1 }}>
             <Typography
               id="active-workspace-label"
               variant="overline"
@@ -182,8 +182,8 @@ export function ProfileMenu({
                 {t("notifications.manageInvites")}
               </Button>
             ) : null}
-          </Box>
-        </>
+          </Box>,
+        ]
       ) : null}
       {workspaceError ? (
         <Box sx={{ maxWidth: 280, px: 2, py: 1 }}>

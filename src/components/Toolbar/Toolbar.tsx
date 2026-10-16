@@ -143,6 +143,7 @@ export function Toolbar({ openAddTask, onToggleAddTask, onOpenChat }: IProps) {
         <div className="flex items-center gap-2">
           {workspaceRole !== null ? (
             <Button
+              className="task-toolbar-action"
               size="small"
               variant="outlined"
               startIcon={<ChatOutlinedIcon />}
@@ -154,7 +155,7 @@ export function Toolbar({ openAddTask, onToggleAddTask, onOpenChat }: IProps) {
           ) : null}
           <button
             type="button"
-            className="primary-action"
+            className="primary-action task-toolbar-action"
             onClick={onToggleAddTask}
             aria-expanded={openAddTask}
             disabled={!selectedProject || isLoading}

@@ -12,6 +12,16 @@
   align-items: center;
 }
 
+.taskScreen :global(.task-project-toolbar .task-toolbar-action) {
+  box-sizing: border-box;
+  height: 2.75rem;
+  min-height: 2.75rem;
+  padding: 0.65rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
 .taskScreen :global(.task-project-toolbar .task-count) {
   flex: 1;
 }

@@ -58,6 +58,8 @@
     "empty": "No pending invitations.",
     "loading": "Loading invitations...",
     "loadError": "Could not load invitations.",
+    "projectsLoadError": "Could not load projects: {{error}}",
+    "invitesLoadError": "Could not load invitations: {{error}}",
     "inviteFrom": "{{name}} invited you to {{workspace}}.",
     "projects": "{{count}} project(s) available",
     "accept": "Accept",

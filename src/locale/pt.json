@@ -58,6 +58,8 @@
     "empty": "Nenhum convite pendente.",
     "loading": "Carregando convites...",
     "loadError": "Não foi possível carregar os convites.",
+    "projectsLoadError": "Não foi possível carregar projetos: {{error}}",
+    "invitesLoadError": "Não foi possível carregar convites: {{error}}",
     "inviteFrom": "{{name}} convidou você para {{workspace}}.",
     "projects": "{{count}} projeto(s) disponível(is)",
     "accept": "Aceitar",

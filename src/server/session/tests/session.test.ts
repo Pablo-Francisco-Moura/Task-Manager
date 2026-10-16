@@ -776,6 +776,27 @@ describe("Guest workspace session", () => {
     });
     expect(new Date(invite.expiresAt).getTime()).toBeGreaterThan(Date.now());
 
+    const ownerProjectsResponse = await nextApiGet(
+      apiRequest("project", ownerCookie),
+    );
+    expect(ownerProjectsResponse.status).toBe(200);
+    expect(await ownerProjectsResponse.json()).toEqual([
+      expect.objectContaining({ id: projectId, name: "Pessoal" }),
+    ]);
+
+    const sentInvitesResponse = await nextApiGet(
+      apiRequest(`session/workspace/${workspaceId}/invites`, ownerCookie),
+    );
+    expect(sentInvitesResponse.status).toBe(200);
+    expect((await sentInvitesResponse.json()).invites).toEqual([
+      expect.objectContaining({
+        id: invite.id,
+        targetUserId: memberUserId,
+        status: "pending",
+        projectIds: [projectId],
+      }),
+    ]);
+
     const inboxResponse = await nextApiGet(
       apiRequest("session/workspace/invites", memberCookie),
     );
@@ -796,7 +817,10 @@ describe("Guest workspace session", () => {
       }),
     );
     expect(readResponse.status).toBe(200);
-    expect(await readResponse.json()).toMatchObject({ read: true, status: "pending" });
+    expect(await readResponse.json()).toMatchObject({
+      read: true,
+      status: "pending",
+    });
     expect(
       await prisma.workspaceInvite.findUnique({ where: { id: inviteId } }),
     ).toMatchObject({ status: "pending", readAt: expect.any(Date) });

@@ -48,6 +48,8 @@ export function WorkspaceInviteDialog({ open, workspaceId, onClose }: IProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [workingInviteId, setWorkingInviteId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [projectsError, setProjectsError] = useState<string | null>(null);
+  const [invitesError, setInvitesError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
   useEffect(() => {
@@ -55,26 +57,37 @@ export function WorkspaceInviteDialog({ open, workspaceId, onClose }: IProps) {
 
     let isCurrent = true;
     setIsLoading(true);
-    void Promise.all([
+    const getRequestError = (reason: unknown) =>
+      reason instanceof Error ? reason.message : t("notifications.loadError");
+
+    void Promise.allSettled([
       accountWorkspaceRequest<TypeProjectOption[]>("/api/project"),
       accountWorkspaceRequest<{ invites: TypeSentInvite[] }>(
         `/api/session/workspace/${workspaceId}/invites`,
       ),
-    ])
-      .then(([loadedProjects, loadedInvites]) => {
-        if (!isCurrent) return;
-        setProjects(loadedProjects);
+    ]).then(([projectsResult, invitesResult]) => {
+      if (!isCurrent) return;
+
+      if (projectsResult.status === "fulfilled") {
+        setProjects(projectsResult.value);
+        setProjectsError(null);
+      } else {
+        setProjectsError(getRequestError(projectsResult.reason));
+      }
+
+      if (invitesResult.status === "fulfilled") {
         setSentInvites(
-          loadedInvites.invites.filter((invite) => invite.status === "pending"),
+          invitesResult.value.invites.filter(
+            (invite) => invite.status === "pending",
+          ),
         );
-        setError(null);
-      })
-      .catch(() => {
-        if (isCurrent) setError(t("notifications.loadError"));
-      })
-      .finally(() => {
-        if (isCurrent) setIsLoading(false);
-      });
+        setInvitesError(null);
+      } else {
+        setInvitesError(getRequestError(invitesResult.reason));
+      }
+    }).finally(() => {
+      if (isCurrent) setIsLoading(false);
+    });
 
     return () => {
       isCurrent = false;
@@ -83,10 +96,12 @@ export function WorkspaceInviteDialog({ open, workspaceId, onClose }: IProps) {
 
   const reloadInvites = async () => {
     if (!workspaceId) return;
-    const payload = await accountWorkspaceRequest<{ invites: TypeSentInvite[] }>(
-      `/api/session/workspace/${workspaceId}/invites`,
+    const payload = await accountWorkspaceRequest<{
+      invites: TypeSentInvite[];
+    }>(`/api/session/workspace/${workspaceId}/invites`);
+    setSentInvites(
+      payload.invites.filter((invite) => invite.status === "pending"),
     );
-    setSentInvites(payload.invites.filter((invite) => invite.status === "pending"));
   };
 
   const sendInvite = async () => {
@@ -124,10 +139,15 @@ export function WorkspaceInviteDialog({ open, workspaceId, onClose }: IProps) {
     setWorkingInviteId(inviteId);
     setError(null);
     try {
-      await accountWorkspaceRequest(`/api/session/workspace/invites/${inviteId}`, {
-        method: "DELETE",
-      });
-      setSentInvites((current) => current.filter((invite) => invite.id !== inviteId));
+      await accountWorkspaceRequest(
+        `/api/session/workspace/invites/${inviteId}`,
+        {
+          method: "DELETE",
+        },
+      );
+      setSentInvites((current) =>
+        current.filter((invite) => invite.id !== inviteId),
+      );
     } catch {
       setError(t("notifications.revokeError"));
     } finally {
@@ -136,11 +156,34 @@ export function WorkspaceInviteDialog({ open, workspaceId, onClose }: IProps) {
   };
 
   return (
-    <Dialog open={open} onClose={() => !isSubmitting && onClose()} fullWidth maxWidth="sm">
+    <Dialog
+      open={open}
+      onClose={() => !isSubmitting && onClose()}
+      fullWidth
+      maxWidth="sm"
+    >
       <DialogTitle>{t("notifications.manageTitle")}</DialogTitle>
       <DialogContent>
-        {error ? <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert> : null}
-        {success ? <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert> : null}
+        {error ? (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        ) : null}
+        {projectsError ? (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {t("notifications.projectsLoadError", { error: projectsError })}
+          </Alert>
+        ) : null}
+        {invitesError ? (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {t("notifications.invitesLoadError", { error: invitesError })}
+          </Alert>
+        ) : null}
+        {success ? (
+          <Alert severity="success" sx={{ mb: 2 }}>
+            {success}
+          </Alert>
+        ) : null}
         <TextField
           autoFocus
           fullWidth
@@ -158,7 +201,7 @@ export function WorkspaceInviteDialog({ open, workspaceId, onClose }: IProps) {
         </Typography>
         {isLoading ? (
           <CircularProgress size={20} />
-        ) : projects.length ? (
+        ) : projectsError ? null : projects.length ? (
           <Stack>
             {projects.map((project) => (
               <FormControlLabel
@@ -190,7 +233,7 @@ export function WorkspaceInviteDialog({ open, workspaceId, onClose }: IProps) {
         </Typography>
         {isLoading ? (
           <CircularProgress size={20} />
-        ) : sentInvites.length ? (
+        ) : invitesError ? null : sentInvites.length ? (
           <Stack divider={<Divider flexItem />}>
             {sentInvites.map((invite) => (
               <Stack
@@ -202,10 +245,13 @@ export function WorkspaceInviteDialog({ open, workspaceId, onClose }: IProps) {
               >
                 <Box sx={{ flex: 1, minWidth: 0 }}>
                   <Typography variant="body2" noWrap>
-                    {invite.targetUser.displayName} (@{invite.targetUser.username})
+                    {invite.targetUser.displayName} (@
+                    {invite.targetUser.username})
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    {t("notifications.projects", { count: invite.projectIds.length })}
+                    {t("notifications.projects", {
+                      count: invite.projectIds.length,
+                    })}
                     {" · "}
                     {t("notifications.expires", {
                       date: new Intl.DateTimeFormat(i18n.language).format(

@@ -5,9 +5,13 @@ import {
   selectedProjectStorageKey,
 } from "@/constants/app";
 import {
-  MINIMUM_SESSION_LOADING_FIRST_MS,
+  DATABASE_HEALTH_POLL_INTERVAL_MS,
+  DATABASE_HEALTH_REQUEST_TIMEOUT_MS,
+  DATABASE_HEALTH_RETRY_INTERVAL_MS,
+  DATABASE_STARTUP_TIMEOUT_MS,
   SESSION_PROGRESS_COMPLETE_DISPLAY_MS,
 } from "@/constants";
+import Alert from "@mui/material/Alert";
 import { useMainStore } from "@/store/mainStore";
 import { useProjectStore } from "@/store/projectStore";
 import { useTranslation } from "react-i18next";
@@ -21,23 +25,105 @@ type ProvidersProps = {
 export function Providers({ children }: ProvidersProps) {
   const [queryClient] = useState(() => new QueryClient());
   const [isReady, setIsReady] = useState(false);
+  const [isDatabaseReady, setIsDatabaseReady] = useState(false);
+  const [isStartupWarningDismissed, setIsStartupWarningDismissed] =
+    useState(false);
   const [progress, setProgress] = useState(0);
   const { t } = useTranslation();
 
   useEffect(() => {
     let cancelled = false;
+    let loadingFinished = false;
     let completionTimer: number | undefined;
     let readyTimer: number | undefined;
     let readyFrame: number | undefined;
     let readyFrameAfterPaint: number | undefined;
+    let pollTimer: number | undefined;
+    let requestTimeout: number | undefined;
+    let activeRequest: AbortController | undefined;
     const loadingStartedAt = Date.now();
+    const loadingDeadline = loadingStartedAt + DATABASE_STARTUP_TIMEOUT_MS;
     const progressInterval = window.setInterval(() => {
       const elapsed = Date.now() - loadingStartedAt;
       const elapsedProgress = Math.floor(
-        (elapsed / MINIMUM_SESSION_LOADING_FIRST_MS) * 96,
+        (elapsed / DATABASE_STARTUP_TIMEOUT_MS) * 100,
       );
-      setProgress(Math.min(elapsedProgress, 96));
+      setProgress(Math.min(elapsedProgress, 99));
     }, 100);
+
+    const finishLoading = (databaseReady: boolean) => {
+      if (cancelled || loadingFinished) return;
+      loadingFinished = true;
+      window.clearInterval(progressInterval);
+      if (pollTimer !== undefined) window.clearTimeout(pollTimer);
+      activeRequest?.abort();
+      setIsDatabaseReady(databaseReady);
+      setProgress(100);
+      completionTimer = window.setTimeout(() => {
+        if (cancelled) return;
+        readyFrame = window.requestAnimationFrame(() => {
+          readyFrameAfterPaint = window.requestAnimationFrame(() => {
+            readyTimer = window.setTimeout(() => {
+              if (!cancelled) setIsReady(true);
+            }, SESSION_PROGRESS_COMPLETE_DISPLAY_MS);
+          });
+        });
+      }, 0);
+    };
+
+    const checkDatabase = async () => {
+      if (cancelled || loadingFinished) return;
+      if (Date.now() >= loadingDeadline) {
+        finishLoading(false);
+        return;
+      }
+
+      activeRequest = new AbortController();
+      requestTimeout = window.setTimeout(
+        () => activeRequest?.abort(),
+        Math.min(
+          DATABASE_HEALTH_REQUEST_TIMEOUT_MS,
+          loadingDeadline - Date.now(),
+        ),
+      );
+
+      try {
+        const response = await fetch("/api/health", {
+          cache: "no-store",
+          signal: activeRequest.signal,
+        });
+        if (response.ok) {
+          const health = (await response.json()) as {
+            status?: unknown;
+            database?: unknown;
+          };
+          if (
+            health.status === "ok" &&
+            health.database === "connected" &&
+            Date.now() < loadingDeadline
+          ) {
+            finishLoading(true);
+            return;
+          }
+        }
+      } catch {
+        // Wait for the next probe or the startup deadline.
+      } finally {
+        if (requestTimeout !== undefined) {
+          window.clearTimeout(requestTimeout);
+          requestTimeout = undefined;
+        }
+      }
+
+      if (Date.now() >= loadingDeadline) {
+        finishLoading(false);
+      } else {
+        pollTimer = window.setTimeout(
+          () => void checkDatabase(),
+          DATABASE_HEALTH_POLL_INTERVAL_MS,
+        );
+      }
+    };
 
     try {
       const storedTab = window.localStorage.getItem(selectedTabStorageKey);
@@ -59,27 +145,15 @@ export function Providers({ children }: ProvidersProps) {
       useProjectStore.getState().setSelectedProjectId(null);
     } finally {
       useProjectStore.getState().setPreferencesLoaded();
-      const remainingLoadingTime = Math.max(
-        MINIMUM_SESSION_LOADING_FIRST_MS - (Date.now() - loadingStartedAt),
-        0,
-      );
-      completionTimer = window.setTimeout(() => {
-        if (cancelled) return;
-        window.clearInterval(progressInterval);
-        setProgress(100);
-        readyFrame = window.requestAnimationFrame(() => {
-          readyFrameAfterPaint = window.requestAnimationFrame(() => {
-            readyTimer = window.setTimeout(() => {
-              if (!cancelled) setIsReady(true);
-            }, SESSION_PROGRESS_COMPLETE_DISPLAY_MS);
-          });
-        });
-      }, remainingLoadingTime);
+      void checkDatabase();
     }
 
     return () => {
       cancelled = true;
       window.clearInterval(progressInterval);
+      if (pollTimer !== undefined) window.clearTimeout(pollTimer);
+      if (requestTimeout !== undefined) window.clearTimeout(requestTimeout);
+      activeRequest?.abort();
       if (completionTimer !== undefined) window.clearTimeout(completionTimer);
       if (readyTimer !== undefined) window.clearTimeout(readyTimer);
       if (readyFrame !== undefined) window.cancelAnimationFrame(readyFrame);
@@ -88,6 +162,62 @@ export function Providers({ children }: ProvidersProps) {
       }
     };
   }, []);
+
+  useEffect(() => {
+    if (!isReady || isDatabaseReady) return;
+
+    let cancelled = false;
+    let retryTimer: number | undefined;
+    let requestTimeout: number | undefined;
+    let activeRequest: AbortController | undefined;
+
+    const retryDatabase = async () => {
+      activeRequest = new AbortController();
+      requestTimeout = window.setTimeout(
+        () => activeRequest?.abort(),
+        DATABASE_HEALTH_REQUEST_TIMEOUT_MS,
+      );
+
+      try {
+        const response = await fetch("/api/health", {
+          cache: "no-store",
+          signal: activeRequest.signal,
+        });
+        if (response.ok) {
+          const health = (await response.json()) as {
+            status?: unknown;
+            database?: unknown;
+          };
+          if (health.status === "ok" && health.database === "connected") {
+            setIsDatabaseReady(true);
+            return;
+          }
+        }
+      } catch {
+        // Keep retrying while the application remains open.
+      } finally {
+        if (requestTimeout !== undefined) {
+          window.clearTimeout(requestTimeout);
+          requestTimeout = undefined;
+        }
+      }
+
+      if (!cancelled) {
+        retryTimer = window.setTimeout(
+          () => void retryDatabase(),
+          DATABASE_HEALTH_RETRY_INTERVAL_MS,
+        );
+      }
+    };
+
+    retryTimer = window.setTimeout(() => void retryDatabase(), 0);
+    return () => {
+      cancelled = true;
+      if (retryTimer !== undefined) window.clearTimeout(retryTimer);
+      if (requestTimeout !== undefined) window.clearTimeout(requestTimeout);
+      activeRequest?.abort();
+    };
+  }, [isDatabaseReady, isReady]);
 
   if (!isReady) {
     return (
@@ -135,6 +265,26 @@ export function Providers({ children }: ProvidersProps) {
   }
 
   return (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    <QueryClientProvider client={queryClient}>
+      {isReady && !isDatabaseReady && !isStartupWarningDismissed ? (
+        <Alert
+          severity="warning"
+          onClose={() => setIsStartupWarningDismissed(true)}
+          sx={{
+            position: "fixed",
+            zIndex: (theme) => theme.zIndex.snackbar,
+            right: 2,
+            bottom: 2,
+            left: 2,
+            width: "fit-content",
+            maxWidth: "calc(100vw - 32px)",
+            mx: "auto",
+          }}
+        >
+          {t("common.databaseStarting")}
+        </Alert>
+      ) : null}
+      {children}
+    </QueryClientProvider>
   );
 }

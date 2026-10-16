@@ -582,7 +582,10 @@ describe("Task API", () => {
 
     await app.request(`/tasks/${taskId}`, {
       method: "PATCH",
-      body: JSON.stringify({ name: "Renamed task" }),
+      body: JSON.stringify({
+        name: "Renamed task",
+        dueDate: "2026-11-20",
+      }),
       headers: { "Content-Type": "application/json" },
     });
     await app.request(`/tasks/${taskId}`, {
@@ -610,6 +613,15 @@ describe("Task API", () => {
       actorId: TEST_GUEST_IDENTITY.userId,
       actorName: "Test Guest",
       taskName: "First task",
+    });
+    expect(activities[1].details).toMatchObject({
+      changes: {
+        name: { from: "First task", to: "Renamed task" },
+        dueDate: { from: null, to: "2026-11-20T00:00:00.000Z" },
+      },
+    });
+    expect(activities[2].details).toMatchObject({
+      changes: { status: { from: "todo", to: "in_progress" } },
     });
     expect(activities[3]).toMatchObject({
       taskId: null,

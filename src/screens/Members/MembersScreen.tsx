@@ -33,6 +33,7 @@ import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 type TypeMemberProject = { id: number; name: string };
 type TypeWorkspaceMember = {
   userId: string;
+  isCurrentUser: boolean;
   displayName: string;
   username: string | null;
   role: "owner" | "member";
@@ -178,7 +179,7 @@ export function MembersScreen() {
               key={member.userId}
               direction={{ xs: "column", sm: "row" }}
               spacing={2}
-              alignItems={{ xs: "stretch", sm: "center" }}
+              alignItems={{ xs: "stretch", sm: "flex-start" }}
               sx={{ py: 2 }}
             >
               <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -187,6 +188,14 @@ export function MembersScreen() {
                   <Typography variant="subtitle2" fontWeight={700}>
                     {member.displayName}
                   </Typography>
+                  {member.isCurrentUser ? (
+                    <Chip
+                      size="small"
+                      color="primary"
+                      variant="outlined"
+                      label={t("members.you")}
+                    />
+                  ) : null}
                   <Chip
                     size="small"
                     variant="outlined"

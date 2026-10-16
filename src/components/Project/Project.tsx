@@ -19,12 +19,14 @@ import FolderOutlinedIcon from "@mui/icons-material/FolderOutlined";
 
 interface IProps {
   project: TypeProjectWithTasks;
+  canManageProjects: boolean;
   setOpenDialog: (open: boolean) => void;
   setProjectToDelete: (project: TypeProjectWithTasks | null) => void;
 }
 
 export function Project({
   project,
+  canManageProjects,
   setOpenDialog,
   setProjectToDelete,
 }: IProps) {
@@ -118,49 +120,51 @@ export function Project({
         </span>
         <ArrowForwardIcon className="project-card-arrow" fontSize="small" />
       </button>
-      <div className="project-card-actions">
-        <Tooltip arrow title={`${t("project.update.label")}: ${project.name}`}>
-          <IconButton
-            aria-label={`${t("project.update.label")}: ${project.name}`}
-            onClick={() => handleEditClick(project)}
-            size="small"
-          >
-            <EditIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
-        <Dialog open={openEditDialog} onClose={handleEditClose}>
-          <Form
-            inputId={`project-edit-name-${project.id}`}
-            title={t("project.update.label")}
-            error={
-              updateMutation.isError ? t("project.update.error") : undefined
-            }
-            nameError={errors.name?.message}
-            submitDisabled={!isValid}
-            onClose={handleEditClose}
-            onSubmit={handleSubmit(onEditSubmit)}
-            register={register}
-            placeholder={t("project.name")}
-            submitLabel={t("common.save")}
-            descriptionField={{
-              inputId: `project-edit-description-${project.id}`,
-              label: t("project.description"),
-              placeholder: t("project.enterDescription"),
-              maxLength: MAX_DESCRIPTION_LENGTH,
-            }}
-            isSubmitting={isSubmitting || updateMutation.isPending}
-          />
-        </Dialog>
-        <Tooltip arrow title={`${t("project.delete.label")}: ${project.name}`}>
-          <IconButton
-            aria-label={`${t("project.delete.label")}: ${project.name}`}
-            onClick={() => handleDeleteClick(project)}
-            size="small"
-          >
-            <DeleteIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
-      </div>
+      {canManageProjects ? (
+        <div className="project-card-actions">
+          <Tooltip arrow title={`${t("project.update.label")}: ${project.name}`}>
+            <IconButton
+              aria-label={`${t("project.update.label")}: ${project.name}`}
+              onClick={() => handleEditClick(project)}
+              size="small"
+            >
+              <EditIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          <Dialog open={openEditDialog} onClose={handleEditClose}>
+            <Form
+              inputId={`project-edit-name-${project.id}`}
+              title={t("project.update.label")}
+              error={
+                updateMutation.isError ? t("project.update.error") : undefined
+              }
+              nameError={errors.name?.message}
+              submitDisabled={!isValid}
+              onClose={handleEditClose}
+              onSubmit={handleSubmit(onEditSubmit)}
+              register={register}
+              placeholder={t("project.name")}
+              submitLabel={t("common.save")}
+              descriptionField={{
+                inputId: `project-edit-description-${project.id}`,
+                label: t("project.description"),
+                placeholder: t("project.enterDescription"),
+                maxLength: MAX_DESCRIPTION_LENGTH,
+              }}
+              isSubmitting={isSubmitting || updateMutation.isPending}
+            />
+          </Dialog>
+          <Tooltip arrow title={`${t("project.delete.label")}: ${project.name}`}>
+            <IconButton
+              aria-label={`${t("project.delete.label")}: ${project.name}`}
+              onClick={() => handleDeleteClick(project)}
+              size="small"
+            >
+              <DeleteIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </div>
+      ) : null}
     </article>
   );
 }

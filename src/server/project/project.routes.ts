@@ -59,13 +59,22 @@ projectRoutes.post(
     if (name === null) {
       return c.json({ error: "name must be a non-empty string" }, 400);
     }
-    const project = await prisma.project.create({
-      data: {
-        name,
-        description: normalizeDescription(parsedBody.data.description),
-        workspaceId,
-        createdById: userId,
-      },
+    const project = await prisma.$transaction(async (transaction) => {
+      const createdProject = await transaction.project.create({
+        data: {
+          name,
+          description: normalizeDescription(parsedBody.data.description),
+          workspaceId,
+          createdById: userId,
+        },
+      });
+      await createProjectActivity(transaction, {
+        projectId: createdProject.id,
+        actorId: userId,
+        type: "project_created",
+        details: { projectName: createdProject.name },
+      });
+      return createdProject;
     });
 
     return c.json(project, 201);
@@ -125,6 +134,9 @@ projectRoutes.delete(
     if (!role) {
       return c.json({ error: "Workspace membership required" }, 403);
     }
+    if (role !== "owner") {
+      return c.json({ error: "Workspace owner required to delete projects" }, 403);
+    }
 
     try {
       const deleted = await prisma.project.deleteMany({
@@ -180,6 +192,9 @@ projectRoutes.patch(
     if (!role) {
       return c.json({ error: "Workspace membership required" }, 403);
     }
+    if (role !== "owner") {
+      return c.json({ error: "Workspace owner required to update projects" }, 403);
+    }
     const body = await readJsonObject(c.req);
     if (!body) {
       return c.json({ error: "Invalid project payload" }, 400);
@@ -207,22 +222,45 @@ projectRoutes.patch(
       updateData.description = normalizeDescription(description);
     }
     try {
-      const updated = await prisma.project.updateMany({
-        where: {
-          id,
-          ...projectAccessWhere(workspaceId, userId, role),
-        },
-        data: updateData,
+      const updatedProject = await prisma.$transaction(async (transaction) => {
+        const currentProject = await transaction.project.findFirst({
+          where: {
+            id,
+            ...projectAccessWhere(workspaceId, userId, role),
+          },
+        });
+        if (!currentProject) return null;
+
+        const updated = await transaction.project.update({
+          where: { id },
+          data: updateData,
+        });
+        const changes: Record<string, { from: string | null; to: string | null }> = {};
+        if (name !== undefined && updated.name !== currentProject.name) {
+          changes.name = { from: currentProject.name, to: updated.name };
+        }
+        if (
+          description !== undefined &&
+          updated.description !== currentProject.description
+        ) {
+          changes.description = {
+            from: currentProject.description,
+            to: updated.description,
+          };
+        }
+        if (Object.keys(changes).length) {
+          await createProjectActivity(transaction, {
+            projectId: id,
+            actorId: userId,
+            type: "project_updated",
+            details: { projectName: updated.name, changes },
+          });
+        }
+        return updated;
       });
-      if (updated.count === 0) {
+      if (!updatedProject) {
         return c.json({ error: "Project not found" }, 404);
       }
-      const updatedProject = await prisma.project.findFirstOrThrow({
-        where: {
-          id,
-          ...projectAccessWhere(workspaceId, userId, role),
-        },
-      });
       return c.json(updatedProject, 200);
     } catch (error: unknown) {
       if (

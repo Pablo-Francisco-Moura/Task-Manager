@@ -5,6 +5,7 @@ import {
   DELETE as nextApiDelete,
 } from "@/app/api/[[...route]]/route";
 import { prisma } from "@/lib/prisma";
+import { createHash } from "node:crypto";
 import { cleanDatabase } from "@/utils";
 import { expect, test, describe, beforeEach, afterAll } from "vitest";
 
@@ -175,6 +176,78 @@ describe("Guest workspace session", () => {
     expect(emailSignin.status).toBe(200);
   });
 
+  test("should migrate legacy SHA-256 password hashes after successful sign-in", async () => {
+    const signup = await POST(
+      apiRequest("session/account", undefined, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          displayName: "Legacy user",
+          username: "legacy-user",
+          password: "supersecret",
+        }),
+      }),
+    );
+    expect(signup.status).toBe(201);
+    const userId = (await signup.json()).user.id as string;
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        passwordHash: createHash("sha256")
+          .update("supersecret")
+          .digest("hex"),
+      },
+    });
+
+    const signin = await POST(
+      apiRequest("session/sign-in", undefined, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          identifier: "legacy-user",
+          password: "supersecret",
+        }),
+      }),
+    );
+
+    expect(signin.status).toBe(200);
+    const migratedUser = await prisma.user.findUniqueOrThrow({
+      where: { id: userId },
+      select: { passwordHash: true },
+    });
+    expect(migratedUser.passwordHash).toMatch(/^[a-f0-9]{32}:[a-f0-9]{128}$/);
+  });
+
+  test("should revoke the current account session when signing out", async () => {
+    const signup = await POST(
+      apiRequest("session/account", undefined, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: "ana",
+          password: "supersecret",
+          workspaceName: "Estudos",
+        }),
+      }),
+    );
+    const cookie = cookieFrom(signup);
+
+    const signout = await POST(
+      apiRequest("session/sign-out", cookie, { method: "POST" }),
+    );
+
+    expect(signout.status).toBe(200);
+    expect(await signout.json()).toEqual({ signedOut: true });
+    expect(signout.headers.get("set-cookie")).toContain("account_session=");
+    expect(signout.headers.get("set-cookie")).toContain("guest_session=");
+
+    const workspaceResponse = await nextApiGet(
+      apiRequest("session/workspace", cookie),
+    );
+    expect(workspaceResponse.status).toBe(401);
+  });
+
   test("should list and create additional workspaces for the account session", async () => {
     const accountResponse = await POST(
       apiRequest("session/account", undefined, {
@@ -198,6 +271,7 @@ describe("Guest workspace session", () => {
     );
     expect(listResponse.status).toBe(200);
     expect(await listResponse.json()).toMatchObject({
+      user: { displayName: "Ana" },
       activeWorkspaceId: expect.any(String),
       workspaces: [
         expect.objectContaining({
@@ -235,6 +309,252 @@ describe("Guest workspace session", () => {
         expect.objectContaining({ name: "Casa" }),
       ]),
     );
+  });
+
+  test("should let workspace owners rename workspaces but not members", async () => {
+    const ownerResponse = await POST(
+      apiRequest("session/account", undefined, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          displayName: "Ana",
+          username: "ana",
+          password: "supersecret",
+          workspaceName: "Estudos",
+        }),
+      }),
+    );
+    const ownerCookie = cookieFrom(ownerResponse);
+    const workspaceId = (await ownerResponse.json()).workspaceId as string;
+
+    const renameResponse = await nextApiPatch(
+      apiRequest(`session/workspace/${workspaceId}`, ownerCookie, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: "Projetos pessoais" }),
+      }),
+    );
+    expect(renameResponse.status).toBe(200);
+    expect(await renameResponse.json()).toMatchObject({
+      workspace: {
+        id: workspaceId,
+        name: "Projetos pessoais",
+        role: "owner",
+      },
+    });
+
+    const emptyNameResponse = await nextApiPatch(
+      apiRequest(`session/workspace/${workspaceId}`, ownerCookie, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: "   " }),
+      }),
+    );
+    expect(emptyNameResponse.status).toBe(400);
+
+    const memberResponse = await POST(
+      apiRequest("session/account", undefined, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          displayName: "Bia",
+          username: "bia",
+          password: "supersecret",
+          workspaceName: "Bia",
+        }),
+      }),
+    );
+    const memberCookie = cookieFrom(memberResponse);
+    const memberUserId = (await memberResponse.json()).user.id as string;
+    await prisma.workspaceMember.create({
+      data: { workspaceId, userId: memberUserId, role: "member" },
+    });
+
+    const forbiddenResponse = await nextApiPatch(
+      apiRequest(`session/workspace/${workspaceId}`, memberCookie, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: "Tentativa" }),
+      }),
+    );
+    expect(forbiddenResponse.status).toBe(403);
+  });
+
+  test("should switch only to a workspace the account belongs to", async () => {
+    const accountResponse = await POST(
+      apiRequest("session/account", undefined, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          displayName: "Ana",
+          username: "ana",
+          password: "supersecret",
+          workspaceName: "Estudos",
+        }),
+      }),
+    );
+    const cookie = cookieFrom(accountResponse);
+    const initialWorkspace = (await accountResponse.json())
+      .workspaceId as string;
+    const initialProject = await POST(
+      apiRequest("project", cookie, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: "Estudos project" }),
+      }),
+    );
+    expect(initialProject.status).toBe(201);
+
+    const createdWorkspace = await POST(
+      apiRequest("session/workspace", cookie, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: "Casa" }),
+      }),
+    );
+    const otherWorkspaceId = (await createdWorkspace.json()).workspace
+      .id as string;
+    const otherProject = await POST(
+      apiRequest("project", cookie, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: "Casa project" }),
+      }),
+    );
+    expect(otherProject.status).toBe(201);
+
+    const switchResponse = await nextApiPatch(
+      apiRequest("session/workspace", cookie, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ workspaceId: initialWorkspace }),
+      }),
+    );
+
+    expect(switchResponse.status).toBe(200);
+    expect(await switchResponse.json()).toMatchObject({
+      activeWorkspaceId: initialWorkspace,
+      workspace: { id: initialWorkspace, name: "Estudos" },
+    });
+    const scopedProjects = await nextApiGet(apiRequest("project", cookie));
+    expect(await scopedProjects.json()).toEqual([
+      expect.objectContaining({ name: "Estudos project" }),
+    ]);
+
+    const outsiderResponse = await POST(
+      apiRequest("session/account", undefined, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          displayName: "Bia",
+          username: "bia",
+          password: "supersecret",
+          workspaceName: "Pessoal da Bia",
+        }),
+      }),
+    );
+    const outsiderWorkspaceId = (await outsiderResponse.json()).workspaceId;
+
+    const forbiddenSwitch = await nextApiPatch(
+      apiRequest("session/workspace", cookie, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ workspaceId: outsiderWorkspaceId }),
+      }),
+    );
+    expect(forbiddenSwitch.status).toBe(403);
+
+    const invalidSwitch = await nextApiPatch(
+      apiRequest("session/workspace", cookie, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ workspaceId: "not-a-uuid" }),
+      }),
+    );
+    expect(invalidSwitch.status).toBe(400);
+    expect(otherWorkspaceId).not.toBe(initialWorkspace);
+  });
+
+  test("should delete a workspace and move its active session safely", async () => {
+    const accountResponse = await POST(
+      apiRequest("session/account", undefined, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          displayName: "Ana",
+          username: "ana",
+          password: "supersecret",
+          workspaceName: "Estudos",
+        }),
+      }),
+    );
+    const cookie = cookieFrom(accountResponse);
+    const initialWorkspaceId = (await accountResponse.json())
+      .workspaceId as string;
+
+    const createResponse = await POST(
+      apiRequest("session/workspace", cookie, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: "Casa" }),
+      }),
+    );
+    const activeWorkspaceId = (await createResponse.json()).workspace
+      .id as string;
+
+    const deleteResponse = await nextApiDelete(
+      apiRequest(`session/workspace/${activeWorkspaceId}`, cookie, {
+        method: "DELETE",
+      }),
+    );
+    expect(deleteResponse.status).toBe(200);
+    expect(await deleteResponse.json()).toMatchObject({
+      deletedWorkspaceId: activeWorkspaceId,
+      activeWorkspaceId: initialWorkspaceId,
+      workspaceName: "Estudos",
+    });
+    const workspaceList = await nextApiGet(
+      apiRequest("session/workspace", cookie),
+    );
+    expect(await workspaceList.json()).toMatchObject({
+      activeWorkspaceId: initialWorkspaceId,
+      workspaces: [expect.objectContaining({ name: "Estudos" })],
+    });
+
+    const memberAccount = await POST(
+      apiRequest("session/account", undefined, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          displayName: "Bia",
+          username: "bia",
+          password: "supersecret",
+          workspaceName: "Bia",
+        }),
+      }),
+    );
+    const memberCookie = cookieFrom(memberAccount);
+    const memberUserId = (await memberAccount.json()).user.id as string;
+    await prisma.workspaceMember.create({
+      data: {
+        workspaceId: initialWorkspaceId,
+        userId: memberUserId,
+        role: "member",
+      },
+    });
+    const memberDelete = await nextApiDelete(
+      apiRequest(`session/workspace/${initialWorkspaceId}`, memberCookie, {
+        method: "DELETE",
+      }),
+    );
+    expect(memberDelete.status).toBe(403);
+
+    const lastWorkspaceDelete = await nextApiDelete(
+      apiRequest(`session/workspace/${initialWorkspaceId}`, cookie, {
+        method: "DELETE",
+      }),
+    );
+    expect(lastWorkspaceDelete.status).toBe(409);
   });
 
   test("should create an account without email by upgrading the guest workspace", async () => {

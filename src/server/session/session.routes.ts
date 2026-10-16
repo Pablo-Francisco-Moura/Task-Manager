@@ -1,4 +1,10 @@
 import {
+  createHash,
+  scryptSync,
+  randomBytes,
+  timingSafeEqual,
+} from "node:crypto";
+import {
   GUEST_SESSION_COOKIE_NAME,
   GUEST_SESSION_TTL_SECONDS,
   ACCOUNT_SESSION_COOKIE_NAME,
@@ -7,8 +13,7 @@ import {
 import { Hono } from "hono";
 import { prisma } from "@/lib/prisma";
 import { hashSessionToken } from "./session";
-import { getCookie, setCookie } from "hono/cookie";
-import { randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
+import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 
 function hashPassword(password: string): string {
   const salt = randomBytes(16).toString("hex");
@@ -18,6 +23,12 @@ function hashPassword(password: string): string {
 
 function verifyPassword(password: string, storedHash: string | null): boolean {
   if (!storedHash) return false;
+
+  if (/^[a-f0-9]{64}$/i.test(storedHash)) {
+    const actualLegacyHash = createHash("sha256").update(password).digest();
+    const expectedLegacyHash = Buffer.from(storedHash, "hex");
+    return timingSafeEqual(actualLegacyHash, expectedLegacyHash);
+  }
 
   const [salt, expectedHash] = storedHash.split(":");
   if (!salt || !expectedHash) return false;
@@ -113,6 +124,9 @@ sessionRoutes.get("/workspace", async (context) => {
   });
 
   return context.json({
+    user: {
+      displayName: accountSession.user.displayName,
+    },
     activeWorkspaceId: accountSession.workspaceId,
     workspaces: memberships.map(({ workspace, role }) => ({
       id: workspace.id,
@@ -120,6 +134,194 @@ sessionRoutes.get("/workspace", async (context) => {
       kind: workspace.kind,
       role,
     })),
+  });
+});
+
+sessionRoutes.patch("/workspace", async (context) => {
+  const providedToken = getCookie(context, ACCOUNT_SESSION_COOKIE_NAME);
+  if (!providedToken) {
+    return context.json({ error: "Account session required" }, 401);
+  }
+
+  const body = await context.req.json().catch(() => ({}));
+  const workspaceId =
+    typeof body.workspaceId === "string" ? body.workspaceId : "";
+  if (
+    !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+      workspaceId,
+    )
+  ) {
+    return context.json({ error: "Invalid workspace id" }, 400);
+  }
+
+  const accountSession = await getAccountSessionByToken(providedToken);
+  if (!accountSession || accountSession.user.kind !== "account") {
+    return context.json({ error: "Account session expired" }, 401);
+  }
+
+  const membership = await prisma.workspaceMember.findUnique({
+    where: {
+      workspaceId_userId: {
+        workspaceId,
+        userId: accountSession.userId,
+      },
+    },
+    include: {
+      workspace: { select: { id: true, name: true, kind: true } },
+    },
+  });
+  if (!membership) {
+    return context.json({ error: "Workspace is not available" }, 403);
+  }
+
+  await prisma.session.update({
+    where: { id: accountSession.id },
+    data: {
+      workspaceId,
+      expiresAt: new Date(Date.now() + ACCOUNT_SESSION_TTL_SECONDS * 1000),
+      lastSeenAt: new Date(),
+    },
+  });
+
+  setAccountCookie(context, providedToken);
+  return context.json({
+    activeWorkspaceId: workspaceId,
+    workspace: {
+      ...membership.workspace,
+      role: membership.role,
+    },
+  });
+});
+
+sessionRoutes.patch("/workspace/:workspaceId", async (context) => {
+  const providedToken = getCookie(context, ACCOUNT_SESSION_COOKIE_NAME);
+  if (!providedToken) {
+    return context.json({ error: "Account session required" }, 401);
+  }
+
+  const workspaceId = context.req.param("workspaceId");
+  if (
+    !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+      workspaceId,
+    )
+  ) {
+    return context.json({ error: "Invalid workspace id" }, 400);
+  }
+
+  const body = await context.req.json().catch(() => ({}));
+  const name = typeof body.name === "string" ? body.name.trim() : "";
+  if (!name || name.length > 200) {
+    return context.json({ error: "A valid workspace name is required" }, 400);
+  }
+
+  const accountSession = await getAccountSessionByToken(providedToken);
+  if (!accountSession || accountSession.user.kind !== "account") {
+    return context.json({ error: "Account session expired" }, 401);
+  }
+
+  const membership = await prisma.workspaceMember.findUnique({
+    where: {
+      workspaceId_userId: {
+        workspaceId,
+        userId: accountSession.userId,
+      },
+    },
+    include: { workspace: true },
+  });
+  if (!membership) {
+    return context.json({ error: "Workspace is not available" }, 404);
+  }
+  if (membership.role !== "owner") {
+    return context.json({ error: "Workspace owner required" }, 403);
+  }
+
+  const workspace = await prisma.workspace.update({
+    where: { id: workspaceId },
+    data: { name },
+  });
+
+  return context.json({
+    workspace: {
+      id: workspace.id,
+      name: workspace.name,
+      kind: workspace.kind,
+      role: membership.role,
+    },
+  });
+});
+
+sessionRoutes.delete("/workspace/:workspaceId", async (context) => {
+  const providedToken = getCookie(context, ACCOUNT_SESSION_COOKIE_NAME);
+  if (!providedToken) {
+    return context.json({ error: "Account session required" }, 401);
+  }
+
+  const workspaceId = context.req.param("workspaceId");
+  if (
+    !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+      workspaceId,
+    )
+  ) {
+    return context.json({ error: "Invalid workspace id" }, 400);
+  }
+
+  const accountSession = await getAccountSessionByToken(providedToken);
+  if (!accountSession || accountSession.user.kind !== "account") {
+    return context.json({ error: "Account session expired" }, 401);
+  }
+
+  const membership = await prisma.workspaceMember.findUnique({
+    where: {
+      workspaceId_userId: {
+        workspaceId,
+        userId: accountSession.userId,
+      },
+    },
+    include: { workspace: { select: { id: true, name: true } } },
+  });
+  if (!membership) {
+    return context.json({ error: "Workspace is not available" }, 404);
+  }
+  if (membership.role !== "owner") {
+    return context.json({ error: "Workspace owner required" }, 403);
+  }
+
+  const memberships = await prisma.workspaceMember.findMany({
+    where: { userId: accountSession.userId },
+    include: { workspace: { select: { id: true, name: true } } },
+    orderBy: { joinedAt: "asc" },
+  });
+  if (memberships.length <= 1) {
+    return context.json({ error: "Cannot delete the last workspace" }, 409);
+  }
+
+  const nextWorkspace =
+    accountSession.workspaceId === workspaceId
+      ? memberships.find((item) => item.workspaceId !== workspaceId)?.workspace
+      : undefined;
+  if (accountSession.workspaceId === workspaceId && !nextWorkspace) {
+    return context.json({ error: "No workspace available to switch to" }, 409);
+  }
+
+  await prisma.$transaction(async (transaction) => {
+    if (nextWorkspace) {
+      await transaction.session.update({
+        where: { id: accountSession.id },
+        data: {
+          workspaceId: nextWorkspace.id,
+          expiresAt: new Date(Date.now() + ACCOUNT_SESSION_TTL_SECONDS * 1000),
+          lastSeenAt: new Date(),
+        },
+      });
+    }
+    await transaction.workspace.delete({ where: { id: workspaceId } });
+  });
+
+  setAccountCookie(context, providedToken);
+  return context.json({
+    deletedWorkspaceId: workspaceId,
+    activeWorkspaceId: nextWorkspace?.id ?? accountSession.workspaceId,
+    workspaceName: nextWorkspace?.name ?? accountSession.workspace.name,
   });
 });
 
@@ -225,6 +427,13 @@ sessionRoutes.post("/sign-in", async (context) => {
     return context.json({ error: "Invalid credentials" }, 401);
   }
 
+  if (user.passwordHash && !user.passwordHash.includes(":")) {
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { passwordHash: hashPassword(password) },
+    });
+  }
+
   const now = new Date();
   const workspaceMembership = await prisma.workspaceMember.findFirst({
     where: { userId: user.id },
@@ -271,6 +480,28 @@ sessionRoutes.post("/sign-in", async (context) => {
     },
     200,
   );
+});
+
+sessionRoutes.post("/sign-out", async (context) => {
+  const accountToken = getCookie(context, ACCOUNT_SESSION_COOKIE_NAME);
+  const guestToken = getCookie(context, GUEST_SESSION_COOKIE_NAME);
+  const providedTokens = [...new Set([accountToken, guestToken])].filter(
+    (token): token is string => Boolean(token),
+  );
+
+  if (providedTokens.length > 0) {
+    await prisma.session.updateMany({
+      where: {
+        tokenHash: { in: providedTokens.map(hashSessionToken) },
+        revokedAt: null,
+      },
+      data: { revokedAt: new Date() },
+    });
+  }
+
+  deleteCookie(context, ACCOUNT_SESSION_COOKIE_NAME, { path: "/" });
+  deleteCookie(context, GUEST_SESSION_COOKIE_NAME, { path: "/" });
+  return context.json({ signedOut: true });
 });
 
 sessionRoutes.post("/account", async (context) => {

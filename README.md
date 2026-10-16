@@ -2,7 +2,15 @@
 
 ## Visão Geral
 
-Este é um desafio técnico full stack que consiste no desenvolvimento de um sistema de cadastro de projetos e tarefas. A aplicação deve permitir que os usuários criem projetos e adicionem tarefas relacionadas a cada projeto.
+Este é um sistema full stack de gerenciamento de projetos e tarefas. É possível usar a aplicação como visitante ou criar uma conta com username e senha. Contas podem organizar dados em múltiplos workspaces e colaborar por meio de convites e permissões por projeto.
+
+## Funcionalidades
+
+- Projetos e tarefas com descrições opcionais, status, prioridade e prazo.
+- Uso como visitante ou com conta, autenticação por username ou e-mail e workspaces pessoais ou compartilhados.
+- Convites para workspaces por username; owners podem administrar membros e o acesso de cada pessoa aos projetos.
+- Timeline de atividade do projeto e comentários no Chat.
+- Interface responsiva com suporte a português e inglês e temas claro e escuro.
 
 ## Tecnologias Utilizadas
 
@@ -21,7 +29,12 @@ erDiagram
    USER {
       uuid id PK
       string displayName
-      string kind
+      string username UK
+      string email UK
+      string passwordHash
+      UserKind kind
+      datetime createdAt
+      datetime updatedAt
    }
 
    SESSION {
@@ -30,32 +43,84 @@ erDiagram
       uuid workspaceId FK
       string tokenHash UK
       datetime expiresAt
+      datetime revokedAt
+      datetime createdAt
+      datetime lastSeenAt
    }
 
    WORKSPACE {
       uuid id PK
       string name
-      string kind
+      WorkspaceKind kind
+      datetime createdAt
+      datetime updatedAt
    }
 
    WORKSPACE_MEMBER {
       uuid workspaceId PK, FK
       uuid userId PK, FK
-      string role
+      WorkspaceRole role
+      datetime joinedAt
    }
 
     PROJECT {
         int id PK "Auto increment"
         string name "Nome do projeto"
+        string description
       uuid workspaceId FK
       uuid createdById FK
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    PROJECT_MEMBER {
+        int projectId PK, FK
+        uuid userId PK, FK
+        WorkspaceRole role
+        datetime joinedAt
     }
 
     TASK {
         int id PK "Auto increment"
         string name "Nome da tarefa"
+        string description
+        date dueDate
+        datetime dueAt
+        TaskStatus status
+        TaskPriority priority
+        int position
         int projectId FK "Referência ao projeto"
       uuid createdById FK
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    WORKSPACE_INVITE {
+        int id PK "Auto increment"
+        uuid workspaceId FK
+        uuid createdById FK
+        uuid targetUserId FK
+        WorkspaceInviteStatus status
+        int[] projectIds
+        datetime expiresAt
+        datetime readAt
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    PROJECT_ACTIVITY {
+        int id PK "Auto increment"
+        int projectId FK
+        int taskId FK
+        uuid actorId FK
+        string actorName
+        ProjectActivityType type
+        string taskName
+        string content
+        json details
+        boolean isDeleted
+        datetime createdAt
+        datetime updatedAt
     }
 
    USER ||--o{ SESSION : owns
@@ -64,7 +129,16 @@ erDiagram
    WORKSPACE ||--o{ WORKSPACE_MEMBER : contains
    USER ||--o{ PROJECT : creates
    USER ||--o{ TASK : creates
+   USER ||--o{ PROJECT_MEMBER : joins
+   PROJECT ||--o{ PROJECT_MEMBER : grants
    WORKSPACE ||--o{ PROJECT : contains
+   PROJECT ||--o{ WORKSPACE_INVITE : invites
+   WORKSPACE ||--o{ WORKSPACE_INVITE : contains
+   USER ||--o{ WORKSPACE_INVITE : creates
+   USER ||--o{ WORKSPACE_INVITE : receives
+   PROJECT ||--o{ PROJECT_ACTIVITY : logs
+   TASK o|--o{ PROJECT_ACTIVITY : relates
+   USER ||--o{ PROJECT_ACTIVITY : acts
     PROJECT ||--o{ TASK : "possui"
 ```
 
@@ -159,17 +233,18 @@ Desenvolver um sistema full stack de gerenciamento de projetos e tarefas utiliza
 ├── vitest.config.ts            # Configuração vitest
 ├── package.json                # Dependências do projeto
 └── README.md                   # Documentação do projeto
-
 ```
 
 ## Endpoints da API
 
-- `POST /api/session/guest` - Cria uma sessão guest ou reutiliza uma sessão válida.
-- `GET /api/project` - Lista os projetos e tarefas do workspace da sessão.
-- `POST /api/project` - Cria um projeto no workspace da sessão.
-- `PATCH /api/project/:id` e `DELETE /api/project/:id` - Atualiza ou exclui um projeto do workspace da sessão.
-- `GET /api/task?projectId=:id` e `POST /api/task` - Lista ou cria tarefas no projeto autorizado.
-- `PATCH /api/task/:id`, `DELETE /api/task/:id` e `PATCH /api/task/reorder` - Atualiza, exclui ou reordena tarefas autorizadas.
+- `POST /api/session/guest`, `POST /api/session/account`, `POST /api/session/sign-in` e `POST /api/session/sign-out` - Inicia ou encerra sessões de visitante e de conta.
+- `GET /api/session/workspace`, `PATCH /api/session/workspace`, `POST /api/session/workspace`, `PATCH /api/session/workspace/:workspaceId` e `DELETE /api/session/workspace/:workspaceId` - Lista, troca, cria, renomeia ou exclui workspaces.
+- `GET /api/session/workspace/:workspaceId/members`, `PUT /api/session/workspace/:workspaceId/members/:userId/projects` e `DELETE /api/session/workspace/:workspaceId/members/:userId` - Lista membros, atualiza o acesso a projetos ou remove uma pessoa do workspace.
+- `GET /api/session/workspace/:workspaceId/invites` e `POST /api/session/workspace/:workspaceId/invite` - Lista e cria convites do workspace.
+- `GET /api/session/workspace/invites`, `PATCH /api/session/workspace/invites/:inviteId/read`, `POST /api/session/workspace/invites/:inviteId/accept`, `POST /api/session/workspace/invites/:inviteId/decline` e `DELETE /api/session/workspace/invites/:inviteId` - Lista e atualiza convites recebidos.
+- `GET /api/project`, `POST /api/project`, `PATCH /api/project/:id` e `DELETE /api/project/:id` - Lista, cria, atualiza ou exclui projetos autorizados.
+- `GET /api/project/:projectId/activity`, `POST /api/project/:projectId/comments`, `PATCH /api/project/:projectId/activity/:activityId` e `DELETE /api/project/:projectId/activity/:activityId` - Consulta atividade e cria, edita ou exclui comentários.
+- `GET /api/task?projectId=:id`, `POST /api/task`, `PATCH /api/task/:id`, `DELETE /api/task/:id` e `PATCH /api/task/reorder` - Lista, cria, atualiza, exclui ou reordena tarefas autorizadas.
 
 ## Considerações
 
@@ -220,3 +295,6 @@ Boa sorte no desafio! 🚀
   - [x] [Adicionar horário opcional ao prazo da tarefa](docs/03-news.md#task-due-time)
   - [x] [Adicionar identidade guest e isolamento por workspace](docs/03-news.md#guest-workspace)
   - [x] [Adicionar contas e múltiplos workspaces](docs/03-news.md#account-workspaces)
+  - [x] [Convidar membros e controlar acesso a projetos](docs/03-news.md#workspace-members-and-invites)
+  - [x] [Consultar atividade e comentários no Chat do projeto](docs/03-news.md#project-chat)
+  - [x] [Identificar o username usado em convites](docs/03-news.md#username-invites)

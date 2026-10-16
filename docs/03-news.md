@@ -54,4 +54,28 @@
 
 **Escopo:** permitir cadastro com login e senha, e-mail opcional, e autenticação por login ou e-mail. Após entrar na conta, permitir criar, trocar, renomear e excluir workspaces, respeitando a membership e o papel de owner no servidor. Projetos e tarefas da conta são persistidos e consultados no workspace ativo; dados locais só são importados após confirmação explícita. O encerramento da sessão revoga os tokens e retorna a aplicação ao fluxo de visitante.
 
+<a id="workspace-members-and-invites"></a>
+
+## Convidar membros e controlar acesso a projetos
+
+**Objetivo:** permitir colaboração em workspaces sem dar a todos os membros acesso irrestrito a todos os projetos.
+
+**Escopo:** owners podem convidar pessoas pelo username, acompanhar convites recebidos e administrar os membros do workspace. O owner pode conceder ou remover acesso individual a projetos e remover membros; cada membro visualiza somente os projetos autorizados.
+
+<a id="project-chat"></a>
+
+## Consultar atividade e comentários no Chat do projeto
+
+**Objetivo:** reunir a conversa do projeto e o histórico de mudanças em um único lugar.
+
+**Escopo:** disponibilizar o Chat junto à ação de criar tarefa, mostrando comentários e eventos de atividade do projeto em ordem cronológica. Permitir criar, editar e excluir comentários conforme as permissões do usuário.
+
+<a id="username-invites"></a>
+
+## Identificar o username usado em convites
+
+**Objetivo:** deixar claro qual identificador outras pessoas devem usar para convidar alguém ao workspace.
+
+**Escopo:** usar o rótulo Username no cadastro, explicar que ele pode ser usado em convites e identificar username ou e-mail como opções de login.
+
 [Voltar à News](../README.md#news)

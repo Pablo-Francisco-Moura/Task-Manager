@@ -430,7 +430,16 @@ taskRoutes.patch(
     const accessWhere = projectAccessWhere(workspaceId, userId, role);
     const currentTask = await prisma.task.findFirst({
       where: { id, project: accessWhere },
-      select: { projectId: true, status: true, name: true },
+      select: {
+        projectId: true,
+        status: true,
+        name: true,
+        description: true,
+        dueDate: true,
+        dueAt: true,
+        priority: true,
+        project: { select: { name: true } },
+      },
     });
     if (!currentTask) {
       return c.json({ error: "Task not found" }, 404);
@@ -438,6 +447,7 @@ taskRoutes.patch(
 
     const updateData: Prisma.TaskUncheckedUpdateInput = {};
     let parsedProjectId: number | undefined;
+    let destinationProjectName = currentTask.project.name;
     if (name !== undefined) {
       const parsedName = parseName(name);
       if (parsedName === null) {
@@ -448,13 +458,14 @@ taskRoutes.patch(
     if (projectId !== undefined) {
       const destinationProject = await prisma.project.findFirst({
         where: { id: projectId, ...accessWhere },
-        select: { id: true },
+        select: { id: true, name: true },
       });
       if (!destinationProject) {
         return c.json({ error: "Project not found" }, 404);
       }
       updateData.projectId = projectId;
       parsedProjectId = projectId;
+      destinationProjectName = destinationProject.name;
     }
     if (description !== undefined) {
       updateData.description = normalizeDescription(description);
@@ -506,29 +517,62 @@ taskRoutes.patch(
         const moved =
           task.projectId !== currentTask.projectId ||
           task.status !== currentTask.status;
-        await createProjectActivity(transaction, {
-          projectId: task.projectId,
-          taskId: task.id,
-          taskName: task.name,
-          actorId: userId,
-          type: moved ? "task_moved" : "task_updated",
-          details: {
-            changedFields: Object.keys(updateData),
-            fromProjectId: currentTask.projectId,
-            toProjectId: task.projectId,
-            fromStatus: currentTask.status,
-            toStatus: task.status,
-          },
-        });
+        const changes: Record<string, { from: unknown; to: unknown }> = {};
+        const compare = (
+          field: string,
+          from: unknown,
+          to: unknown,
+        ) => {
+          if (from !== to) changes[field] = { from, to };
+        };
+        compare("name", currentTask.name, task.name);
+        compare("description", currentTask.description, task.description);
+        compare(
+          "dueDate",
+          currentTask.dueDate?.toISOString() ?? null,
+          task.dueDate?.toISOString() ?? null,
+        );
+        compare(
+          "dueAt",
+          currentTask.dueAt?.toISOString() ?? null,
+          task.dueAt?.toISOString() ?? null,
+        );
+        compare("priority", currentTask.priority, task.priority);
+        compare("status", currentTask.status, task.status);
         if (task.projectId !== currentTask.projectId) {
+          changes.project = {
+            from: currentTask.project.name,
+            to: destinationProjectName,
+          };
+        }
+        const activityDetails = {
+          changes,
+          fromProjectId: currentTask.projectId,
+          toProjectId: task.projectId,
+          fromProjectName: currentTask.project.name,
+          toProjectName: destinationProjectName,
+          fromStatus: currentTask.status,
+          toStatus: task.status,
+        };
+        if (Object.keys(changes).length) {
           await createProjectActivity(transaction, {
-            projectId: currentTask.projectId,
+            projectId: task.projectId,
             taskId: task.id,
             taskName: task.name,
             actorId: userId,
-            type: "task_moved",
-            details: { toProjectId: task.projectId },
+            type: moved ? "task_moved" : "task_updated",
+            details: activityDetails,
           });
+          if (task.projectId !== currentTask.projectId) {
+            await createProjectActivity(transaction, {
+              projectId: currentTask.projectId,
+              taskId: task.id,
+              taskName: task.name,
+              actorId: userId,
+              type: "task_moved",
+              details: activityDetails,
+            });
+          }
         }
         return task;
       });

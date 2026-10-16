@@ -7,6 +7,10 @@ type ActivityClient = Pick<
 
 interface ICreateProjectActivityInput {
   type:
+    | "project_created"
+    | "project_updated"
+    | "member_added"
+    | "member_removed"
     | "task_created"
     | "task_updated"
     | "task_moved"

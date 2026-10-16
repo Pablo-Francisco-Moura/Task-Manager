@@ -83,16 +83,7 @@ body {
   font-family: "Avenir Next", Avenir, "Segoe UI", sans-serif;
 }
 
-html
-  :is(
-    button,
-    a,
-    input,
-    select,
-    textarea,
-    [role="combobox"],
-    [role="switch"]
-  ):focus-visible {
+html :is(button, a):focus-visible {
   outline: 3px solid var(--accent);
   outline-offset: 3px;
 }

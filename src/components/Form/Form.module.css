@@ -33,14 +33,14 @@
 }
 
 .input:focus-visible {
-  outline: 2px solid var(--brand);
-  outline-offset: 1px;
+  outline: none;
+  border-color: var(--brand);
 }
 
 .inputError,
 .inputError:focus-visible {
   border-color: var(--danger-text);
-  outline-color: var(--danger-text);
+  outline: none;
 }
 
 .fieldError {
@@ -65,7 +65,8 @@
 
 .statusSelect:focus-visible,
 .prioritySelect:focus-visible {
-  outline-color: var(--field-ink);
+  outline: none;
+  border-color: var(--field-ink);
 }
 
 .statusSelect[data-status="todo"] {

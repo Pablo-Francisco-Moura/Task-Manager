@@ -6,6 +6,7 @@ import {
 import { taskRoutes } from "../task.routes";
 import { cleanDatabase } from "@/utils";
 import { POST as nextApiPost } from "@/app/api/[[...route]]/route";
+import { TEST_GUEST_IDENTITY } from "@/constants/testGuest";
 import { expect, test, describe, afterAll, beforeEach } from "vitest";
 
 const app = createAuthenticatedTestApp("/tasks", taskRoutes);
@@ -566,6 +567,113 @@ describe("Task API", () => {
         expect.objectContaining({ name: "Second task", projectId: project.id }),
       ]),
     );
+  });
+
+  test("should restrict every task operation to projects granted to a member", async () => {
+    const [allowedProject, hiddenProject] = await Promise.all([
+      prisma.project.create({ data: { name: "Granted project" } }),
+      prisma.project.create({ data: { name: "Hidden project" } }),
+    ]);
+    const [allowedTask, hiddenTask] = await Promise.all([
+      prisma.task.create({
+        data: { name: "Allowed task", projectId: allowedProject.id },
+      }),
+      prisma.task.create({
+        data: { name: "Hidden task", projectId: hiddenProject.id },
+      }),
+    ]);
+    await prisma.workspaceMember.update({
+      where: {
+        workspaceId_userId: {
+          workspaceId: TEST_GUEST_IDENTITY.workspaceId,
+          userId: TEST_GUEST_IDENTITY.userId,
+        },
+      },
+      data: { role: "member" },
+    });
+    await prisma.projectMember.create({
+      data: {
+        projectId: allowedProject.id,
+        userId: TEST_GUEST_IDENTITY.userId,
+      },
+    });
+
+    expect(
+      await (await app.request(`/tasks?projectId=${allowedProject.id}`)).json(),
+    ).toHaveLength(1);
+    expect(
+      (await app.request(`/tasks?projectId=${hiddenProject.id}`)).status,
+    ).toBe(404);
+
+    const createDenied = await app.request("/tasks", {
+      method: "POST",
+      body: JSON.stringify({ name: "No access", projectId: hiddenProject.id }),
+      headers: { "Content-Type": "application/json" },
+    });
+    expect(createDenied.status).toBe(404);
+
+    const updateDenied = await app.request(`/tasks/${hiddenTask.id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ name: "No access" }),
+      headers: { "Content-Type": "application/json" },
+    });
+    expect(updateDenied.status).toBe(404);
+
+    const deleteDenied = await app.request(`/tasks/${hiddenTask.id}`, {
+      method: "DELETE",
+    });
+    expect(deleteDenied.status).toBe(404);
+
+    const reorderDenied = await app.request("/tasks/reorder", {
+      method: "PATCH",
+      body: JSON.stringify({
+        projectId: hiddenProject.id,
+        orderedTaskIdsByStatus: {
+          todo: [hiddenTask.id],
+          in_progress: [],
+          done: [],
+        },
+      }),
+      headers: { "Content-Type": "application/json" },
+    });
+    expect(reorderDenied.status).toBe(404);
+
+    const authorizedUpdate = await app.request(`/tasks/${allowedTask.id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ name: "Updated allowed task" }),
+      headers: { "Content-Type": "application/json" },
+    });
+    expect(authorizedUpdate.status).toBe(200);
+
+    const authorizedCreate = await app.request("/tasks", {
+      method: "POST",
+      body: JSON.stringify({
+        name: "Created by member",
+        projectId: allowedProject.id,
+      }),
+      headers: { "Content-Type": "application/json" },
+    });
+    expect(authorizedCreate.status).toBe(201);
+    const createdTaskId = (await authorizedCreate.json()).id as number;
+
+    const authorizedReorder = await app.request("/tasks/reorder", {
+      method: "PATCH",
+      body: JSON.stringify({
+        projectId: allowedProject.id,
+        orderedTaskIdsByStatus: {
+          todo: [allowedTask.id, createdTaskId],
+          in_progress: [],
+          done: [],
+        },
+      }),
+      headers: { "Content-Type": "application/json" },
+    });
+    expect(authorizedReorder.status).toBe(200);
+
+    const authorizedDelete = await app.request(`/tasks/${createdTaskId}`, {
+      method: "DELETE",
+    });
+    expect(authorizedDelete.status).toBe(200);
   });
   // DELETE /api/task/:id - Delete a task by id.
   test("should delete a task by id", async () => {

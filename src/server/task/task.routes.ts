@@ -1,4 +1,8 @@
 import {
+  getWorkspaceRole,
+  projectAccessWhere,
+} from "@/server/session/projectAccess";
+import {
   parseName,
   readJsonObject,
   taskCreateSchema,
@@ -49,8 +53,17 @@ taskRoutes.post(
       return c.json({ error: "name and projectId must be valid" }, 400);
     }
 
-    const project = await prisma.project.findUnique({
-      where: { id: projectId, workspaceId: c.get("workspaceId") },
+    const workspaceId = c.get("workspaceId");
+    const userId = c.get("userId");
+    const role = await getWorkspaceRole(prisma, workspaceId, userId);
+    if (!role) {
+      return c.json({ error: "Workspace membership required" }, 403);
+    }
+    const project = await prisma.project.findFirst({
+      where: {
+        id: projectId,
+        ...projectAccessWhere(workspaceId, userId, role),
+      },
     });
     if (!project) {
       return c.json({ error: "Project not found" }, 404);
@@ -83,7 +96,7 @@ taskRoutes.post(
           priority,
           position: (lastTask?.position ?? -1) + 1,
           projectId,
-          createdById: c.get("userId"),
+          createdById: userId,
           description: normalizeDescription(parsedBody.data.description),
         },
       });
@@ -126,15 +139,27 @@ taskRoutes.get(
     }
 
     // Check if the project exists.
-    const project = await prisma.project.findUnique({
-      where: { id: projectId, workspaceId: c.get("workspaceId") },
+    const workspaceId = c.get("workspaceId");
+    const userId = c.get("userId");
+    const role = await getWorkspaceRole(prisma, workspaceId, userId);
+    if (!role) {
+      return c.json({ error: "Workspace membership required" }, 403);
+    }
+    const project = await prisma.project.findFirst({
+      where: {
+        id: projectId,
+        ...projectAccessWhere(workspaceId, userId, role),
+      },
     });
     if (!project) {
       return c.json({ error: "Project not found" }, 404);
     }
 
     const tasks = await prisma.task.findMany({
-      where: { projectId, project: { workspaceId: c.get("workspaceId") } },
+      where: {
+        projectId,
+        project: projectAccessWhere(workspaceId, userId, role),
+      },
     });
     return c.json(
       tasks.map((task) => ({
@@ -174,6 +199,8 @@ taskRoutes.patch(
     }
 
     const { projectId, orderedTaskIdsByStatus } = parsedBody.data;
+    const workspaceId = c.get("workspaceId");
+    const userId = c.get("userId");
     const submittedIds = [
       ...orderedTaskIdsByStatus.todo,
       ...orderedTaskIdsByStatus.in_progress,
@@ -184,8 +211,13 @@ taskRoutes.patch(
     }
 
     const result = await prisma.$transaction(async (transaction) => {
-      const project = await transaction.project.findUnique({
-        where: { id: projectId, workspaceId: c.get("workspaceId") },
+      const role = await getWorkspaceRole(transaction, workspaceId, userId);
+      if (!role) {
+        return { kind: "project-not-found" as const };
+      }
+      const accessWhere = projectAccessWhere(workspaceId, userId, role);
+      const project = await transaction.project.findFirst({
+        where: { id: projectId, ...accessWhere },
         select: { id: true },
       });
       if (!project) {
@@ -193,7 +225,7 @@ taskRoutes.patch(
       }
 
       const existingTasks = await transaction.task.findMany({
-        where: { projectId, project: { workspaceId: c.get("workspaceId") } },
+        where: { projectId, project: accessWhere },
         select: { id: true },
       });
       const existingIds = new Set(existingTasks.map((task) => task.id));
@@ -210,7 +242,7 @@ taskRoutes.patch(
             transaction.task.update({
               where: {
                 id,
-                project: { workspaceId: c.get("workspaceId") },
+                project: accessWhere,
               },
               data: { status, position },
             }),
@@ -219,7 +251,7 @@ taskRoutes.patch(
       }
 
       const tasks = await transaction.task.findMany({
-        where: { projectId, project: { workspaceId: c.get("workspaceId") } },
+        where: { projectId, project: accessWhere },
         orderBy: [{ status: "asc" }, { position: "asc" }, { id: "asc" }],
       });
       return { kind: "success" as const, tasks };
@@ -255,9 +287,16 @@ taskRoutes.delete(
       return c.json({ error: "id must be a positive integer" }, 400);
     }
 
+    const workspaceId = c.get("workspaceId");
+    const userId = c.get("userId");
+    const role = await getWorkspaceRole(prisma, workspaceId, userId);
+    if (!role) {
+      return c.json({ error: "Workspace membership required" }, 403);
+    }
+
     try {
       const deleted = await prisma.task.deleteMany({
-        where: { id, project: { workspaceId: c.get("workspaceId") } },
+        where: { id, project: projectAccessWhere(workspaceId, userId, role) },
       });
       if (deleted.count === 0) {
         return c.json({ error: "Task not found" }, 404);
@@ -324,8 +363,15 @@ taskRoutes.patch(
       );
     }
 
+    const workspaceId = c.get("workspaceId");
+    const userId = c.get("userId");
+    const role = await getWorkspaceRole(prisma, workspaceId, userId);
+    if (!role) {
+      return c.json({ error: "Workspace membership required" }, 403);
+    }
+    const accessWhere = projectAccessWhere(workspaceId, userId, role);
     const currentTask = await prisma.task.findFirst({
-      where: { id, project: { workspaceId: c.get("workspaceId") } },
+      where: { id, project: accessWhere },
       select: { projectId: true, status: true },
     });
     if (!currentTask) {
@@ -343,7 +389,7 @@ taskRoutes.patch(
     }
     if (projectId !== undefined) {
       const destinationProject = await prisma.project.findFirst({
-        where: { id: projectId, workspaceId: c.get("workspaceId") },
+        where: { id: projectId, ...accessWhere },
         select: { id: true },
       });
       if (!destinationProject) {
@@ -390,14 +436,14 @@ taskRoutes.patch(
     }
     try {
       const updatedCount = await prisma.task.updateMany({
-        where: { id, project: { workspaceId: c.get("workspaceId") } },
+        where: { id, project: accessWhere },
         data: updateData,
       });
       if (updatedCount.count === 0) {
         return c.json({ error: "Task not found" }, 404);
       }
       const updatedTask = await prisma.task.findFirstOrThrow({
-        where: { id, project: { workspaceId: c.get("workspaceId") } },
+        where: { id, project: accessWhere },
       });
       return c.json(
         {

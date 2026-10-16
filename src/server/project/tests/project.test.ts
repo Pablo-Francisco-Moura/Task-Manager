@@ -14,6 +14,7 @@ import {
 import { projectRoutes } from "../project.routes";
 import { cleanDatabase } from "@/utils";
 import { POST as nextApiPost } from "@/app/api/[[...route]]/route";
+import { TEST_GUEST_IDENTITY } from "@/constants/testGuest";
 
 const app = createAuthenticatedTestApp("/projects", projectRoutes);
 
@@ -175,6 +176,51 @@ describe("Project API", () => {
         }),
       ),
     );
+  });
+
+  test("should restrict members to granted projects and prevent project creation", async () => {
+    const [allowedProject, hiddenProject] = await Promise.all([
+      prisma.project.create({ data: { name: "Granted project" } }),
+      prisma.project.create({ data: { name: "Hidden project" } }),
+    ]);
+    await prisma.workspaceMember.update({
+      where: {
+        workspaceId_userId: {
+          workspaceId: TEST_GUEST_IDENTITY.workspaceId,
+          userId: TEST_GUEST_IDENTITY.userId,
+        },
+      },
+      data: { role: "member" },
+    });
+    await prisma.projectMember.create({
+      data: {
+        projectId: allowedProject.id,
+        userId: TEST_GUEST_IDENTITY.userId,
+      },
+    });
+
+    const listResponse = await app.request("/projects");
+    expect(await listResponse.json()).toEqual([
+      expect.objectContaining({ id: allowedProject.id }),
+    ]);
+
+    const createResponse = await app.request("/projects", {
+      method: "POST",
+      body: JSON.stringify({ name: "Forbidden project" }),
+      headers: { "Content-Type": "application/json" },
+    });
+    expect(createResponse.status).toBe(403);
+
+    const deniedUpdate = await app.request(`/projects/${hiddenProject.id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ name: "No access" }),
+      headers: { "Content-Type": "application/json" },
+    });
+    expect(deniedUpdate.status).toBe(404);
+    const deniedDelete = await app.request(`/projects/${hiddenProject.id}`, {
+      method: "DELETE",
+    });
+    expect(deniedDelete.status).toBe(404);
   });
 
   // DELETE /api/project/:id - Delete project and its linked tasks.

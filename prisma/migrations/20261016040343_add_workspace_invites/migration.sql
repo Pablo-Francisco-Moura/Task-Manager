@@ -1,7 +1,1 @@
--- AlterTable
-ALTER TABLE "project_members" ALTER COLUMN "joinedAt" SET DATA TYPE TIMESTAMP(3);
-
--- AlterTable
-ALTER TABLE "workspace_invites" ALTER COLUMN "expiresAt" SET DATA TYPE TIMESTAMP(3),
-ALTER COLUMN "createdAt" SET DATA TYPE TIMESTAMP(3),
-ALTER COLUMN "updatedAt" SET DATA TYPE TIMESTAMP(3);
+-- Timestamp adjustments were moved to 20261016105000, after the tables are created.

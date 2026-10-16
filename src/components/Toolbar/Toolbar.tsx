@@ -9,17 +9,21 @@ import AddIcon from "@mui/icons-material/Add";
 import MenuItem from "@mui/material/MenuItem";
 import InputLabel from "@mui/material/InputLabel";
 import FormControl from "@mui/material/FormControl";
+import Button from "@mui/material/Button";
+import ChatOutlinedIcon from "@mui/icons-material/ChatOutlined";
 
 interface IProps {
   openAddTask: boolean;
   onToggleAddTask: () => void;
+  onOpenChat: () => void;
 }
 
-export function Toolbar({ openAddTask, onToggleAddTask }: IProps) {
+export function Toolbar({ openAddTask, onToggleAddTask, onOpenChat }: IProps) {
   const selectedProject = useProjectStore((s) => s.selectedProject);
   const selectedProjectId = useProjectStore((s) => s.selectedProjectId);
   const preferencesLoaded = useProjectStore((s) => s.preferencesLoaded);
   const setSelectedProject = useProjectStore((s) => s.setSelectedProject);
+  const workspaceRole = useProjectStore((state) => state.workspaceRole);
 
   const { t } = useTranslation();
   const { projects, isLoading } = useProjects();
@@ -136,16 +140,29 @@ export function Toolbar({ openAddTask, onToggleAddTask }: IProps) {
             )}
           </p>
         )}
-        <button
-          type="button"
-          className="primary-action"
-          onClick={onToggleAddTask}
-          aria-expanded={openAddTask}
-          disabled={!selectedProject || isLoading}
-        >
-          <AddIcon fontSize="small" />
-          <span>{t("task.create.submit")}</span>
-        </button>
+        <div className="flex items-center gap-2">
+          {workspaceRole !== null ? (
+            <Button
+              size="small"
+              variant="outlined"
+              startIcon={<ChatOutlinedIcon />}
+              onClick={onOpenChat}
+              disabled={!selectedProject || isLoading}
+            >
+              {t("activity.title")}
+            </Button>
+          ) : null}
+          <button
+            type="button"
+            className="primary-action"
+            onClick={onToggleAddTask}
+            aria-expanded={openAddTask}
+            disabled={!selectedProject || isLoading}
+          >
+            <AddIcon fontSize="small" />
+            <span>{t("task.create.submit")}</span>
+          </button>
+        </div>
       </div>
     </div>
   );

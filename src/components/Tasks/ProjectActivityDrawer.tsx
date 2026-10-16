@@ -1,32 +1,37 @@
 "use client";
 
-import { api } from "@/lib/axios";
-import { QUERY_KEYS } from "@/constants/queryKeys";
 import {
-  Alert,
   Box,
-  Button,
-  CircularProgress,
-  Divider,
-  Drawer,
-  IconButton,
+  Alert,
   Stack,
-  TextField,
+  Button,
+  Drawer,
+  Divider,
   Tooltip,
+  TextField,
+  IconButton,
   Typography,
+  CircularProgress,
 } from "@mui/material";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useTranslation } from "react-i18next";
+import { api } from "@/lib/axios";
 import { useState } from "react";
+import { QUERY_KEYS } from "@/constants/queryKeys";
+import { useTranslation } from "react-i18next";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import CloseOutlinedIcon from "@mui/icons-material/CloseOutlined";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
-import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 
 type TypeProjectActivity = {
   id: number;
   actorId: string;
   actorName: string;
-  type: "task_created" | "task_updated" | "task_moved" | "task_deleted" | "comment";
+  type:
+    | "task_created"
+    | "task_updated"
+    | "task_moved"
+    | "task_deleted"
+    | "comment";
   taskName: string | null;
   content: string | null;
   isDeleted: boolean;
@@ -51,7 +56,13 @@ export function ProjectActivityDrawer({ open, projectId, onClose }: IProps) {
   const [error, setError] = useState<string | null>(null);
   const queryKey = [QUERY_KEYS.ACTIVITY, projectId];
 
-  const { data: activities = [], isLoading, isError } = useQuery({
+  const {
+    data: activities = [],
+    isLoading,
+    isError,
+    error: queryError,
+    refetch,
+  } = useQuery({
     queryKey,
     queryFn: async () => {
       const response = await api.get<TypeProjectActivity[]>(
@@ -158,6 +169,24 @@ export function ProjectActivityDrawer({ open, projectId, onClose }: IProps) {
             <Stack alignItems="center" sx={{ py: 4 }}>
               <CircularProgress size={24} />
             </Stack>
+          ) : isError ? (
+            <Stack spacing={1} sx={{ py: 2 }}>
+              <Typography variant="body2" color="error">
+                {t("activity.loadError")}
+              </Typography>
+              {queryError instanceof Error ? (
+                <Typography variant="caption" color="text.secondary">
+                  {queryError.message}
+                </Typography>
+              ) : null}
+              <Button
+                size="small"
+                onClick={() => void refetch()}
+                sx={{ alignSelf: "flex-start" }}
+              >
+                {t("common.retry")}
+              </Button>
+            </Stack>
           ) : activities.length ? (
             activities.map((activity) => (
               <Box key={activity.id} sx={{ py: 1.5 }}>
@@ -175,10 +204,15 @@ export function ProjectActivityDrawer({ open, projectId, onClose }: IProps) {
                             minRows={2}
                             size="small"
                             value={editingContent}
-                            onChange={(event) => setEditingContent(event.target.value)}
+                            onChange={(event) =>
+                              setEditingContent(event.target.value)
+                            }
                           />
                         ) : (
-                          <Typography variant="body2" sx={{ whiteSpace: "pre-wrap" }}>
+                          <Typography
+                            variant="body2"
+                            sx={{ whiteSpace: "pre-wrap" }}
+                          >
                             {activity.isDeleted
                               ? t("activity.commentDeleted")
                               : activity.content}
@@ -264,11 +298,12 @@ export function ProjectActivityDrawer({ open, projectId, onClose }: IProps) {
             value={comment}
             onChange={(event) => setComment(event.target.value)}
             inputProps={{ maxLength: 2000 }}
+            disabled={isError}
           />
           <Button
             variant="contained"
             onClick={() => void submitComment()}
-            disabled={isSaving || !comment.trim()}
+            disabled={isSaving || isError || !comment.trim()}
             sx={{ alignSelf: "flex-end" }}
           >
             {isSaving ? t("common.saving") : t("activity.send")}

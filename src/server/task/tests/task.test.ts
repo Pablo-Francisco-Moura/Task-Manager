@@ -569,7 +569,9 @@ describe("Task API", () => {
   });
 
   test("should record task creation, edits, moves and deletion with author snapshots", async () => {
-    const project = await prisma.project.create({ data: { name: "Activity project" } });
+    const project = await prisma.project.create({
+      data: { name: "Activity project" },
+    });
     const createResponse = await app.request("/tasks", {
       method: "POST",
       body: JSON.stringify({ name: "First task", projectId: project.id }),
@@ -593,7 +595,7 @@ describe("Task API", () => {
     });
 
     expect(deleteResponse.status).toBe(200);
-  expect(await prisma.task.findUnique({ where: { id: taskId } })).toBeNull();
+    expect(await prisma.task.findUnique({ where: { id: taskId } })).toBeNull();
     const activities = await prisma.projectActivity.findMany({
       where: { projectId: project.id },
       orderBy: { id: "asc" },

@@ -1,5 +1,6 @@
 import { Project } from "../Project/Project";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { TextField } from "@mui/material";
 import { QUERY_KEYS } from "@/constants/queryKeys";
 import { useProjects } from "@/hooks";
 import { AlertMessage } from "../AlertMessage";
@@ -10,7 +11,6 @@ import { useFeedbackStore } from "@/store/feedbackStore";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { TypeProjectWithTasks } from "@/types";
 import FolderOpenOutlinedIcon from "@mui/icons-material/FolderOpenOutlined";
-import { TablePagination, TextField } from "@mui/material";
 
 interface IProps {
   openAddProject: boolean;
@@ -18,14 +18,16 @@ interface IProps {
   canManageProjects: boolean;
 }
 
-export function Projects({ openAddProject, toggleOpenAddProject, canManageProjects }: IProps) {
+export function Projects({
+  openAddProject,
+  toggleOpenAddProject,
+  canManageProjects,
+}: IProps) {
   const { t } = useTranslation();
   const { projects, isLoading, isError, refetch } = useProjects();
 
   const [openDialog, setOpenDialog] = useState(false);
   const [search, setSearch] = useState("");
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(12);
 
   const [projectToDelete, setProjectToDelete] =
     useState<TypeProjectWithTasks | null>(null);
@@ -67,18 +69,6 @@ export function Projects({ openAddProject, toggleOpenAddProject, canManageProjec
   const sortedProjects = filteredProjects
     .slice()
     .sort((first, second) => first.name.localeCompare(second.name));
-  const pagedProjects =
-    rowsPerPage === -1
-      ? sortedProjects
-      : sortedProjects.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
-
-  useEffect(() => {
-    const maxPage =
-      rowsPerPage === -1
-        ? 0
-        : Math.max(0, Math.ceil(filteredProjects.length / rowsPerPage) - 1);
-    setPage((currentPage) => Math.min(currentPage, maxPage));
-  }, [filteredProjects.length, rowsPerPage]);
 
   return (
     <>
@@ -103,47 +93,25 @@ export function Projects({ openAddProject, toggleOpenAddProject, canManageProjec
             size="small"
             label={t("project.search")}
             value={search}
-            onChange={(event) => {
-              setSearch(event.target.value);
-              setPage(0);
-            }}
+            onChange={(event) => setSearch(event.target.value)}
             sx={{ mb: 2, width: { xs: "100%", sm: 320 } }}
           />
-          {pagedProjects.length > 0 ? (
+          {sortedProjects.length > 0 ? (
             <div className="projects-grid">
-              {pagedProjects.map((project: TypeProjectWithTasks) => (
-              <Project
-                key={project.id}
-                project={project}
-                setOpenDialog={setOpenDialog}
-                setProjectToDelete={setProjectToDelete}
-              />
+              {sortedProjects.map((project: TypeProjectWithTasks) => (
+                <Project
+                  key={project.id}
+                  project={project}
+                  setOpenDialog={setOpenDialog}
+                  setProjectToDelete={setProjectToDelete}
+                />
               ))}
             </div>
           ) : (
-            <div className="empty-state"><h3>{t("project.noMatches")}</h3></div>
+            <div className="empty-state">
+              <h3>{t("project.noMatches")}</h3>
+            </div>
           )}
-          <TablePagination
-            component="div"
-            count={filteredProjects.length}
-            page={page}
-            onPageChange={(_event, nextPage) => setPage(nextPage)}
-            rowsPerPage={rowsPerPage}
-            onRowsPerPageChange={(event) => {
-              setRowsPerPage(Number(event.target.value));
-              setPage(0);
-            }}
-            rowsPerPageOptions={[
-              12,
-              24,
-              48,
-              { value: -1, label: t("common.all") },
-            ]}
-            labelRowsPerPage={t("common.rowsPerPage")}
-            labelDisplayedRows={({ from, to, count }) =>
-              t("common.pagination", { from, to, count })
-            }
-          />
         </>
       )}
       {projects && projects.length === 0 && !isLoading && canManageProjects && (
@@ -163,7 +131,9 @@ export function Projects({ openAddProject, toggleOpenAddProject, canManageProjec
         </div>
       )}
       {projects && projects.length === 0 && !isLoading && !canManageProjects ? (
-        <div className="empty-state"><h3>{t("project.noneAvailable")}</h3></div>
+        <div className="empty-state">
+          <h3>{t("project.noneAvailable")}</h3>
+        </div>
       ) : null}
       <ConfirmDialog
         open={openDialog}

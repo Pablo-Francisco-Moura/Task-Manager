@@ -7,13 +7,16 @@ import {
   beforeEach,
 } from "vitest";
 import {
+  GET as nextApiGet,
+  POST as nextApiPost,
+} from "@/app/api/[[...route]]/route";
+import {
   createTestRequest,
   testPrisma as prisma,
   createAuthenticatedTestApp,
 } from "@/server/tests/testDatabase";
 import { projectRoutes } from "../project.routes";
 import { cleanDatabase } from "@/utils";
-import { POST as nextApiPost } from "@/app/api/[[...route]]/route";
 import { TEST_GUEST_IDENTITY } from "@/constants/testGuest";
 
 const app = createAuthenticatedTestApp("/projects", projectRoutes);
@@ -224,12 +227,17 @@ describe("Project API", () => {
   });
 
   test("should allow authors to edit comments and owners to moderate them", async () => {
-    const project = await prisma.project.create({ data: { name: "Discussion" } });
-    const createResponse = await app.request(`/projects/${project.id}/comments`, {
-      method: "POST",
-      body: JSON.stringify({ content: "Initial comment" }),
-      headers: { "Content-Type": "application/json" },
+    const project = await prisma.project.create({
+      data: { name: "Discussion" },
     });
+    const createResponse = await app.request(
+      `/projects/${project.id}/comments`,
+      {
+        method: "POST",
+        body: JSON.stringify({ content: "Initial comment" }),
+        headers: { "Content-Type": "application/json" },
+      },
+    );
     expect(createResponse.status).toBe(201);
     const comment = await createResponse.json();
     expect(comment).toMatchObject({
@@ -284,6 +292,40 @@ describe("Project API", () => {
         where: { id: otherComment.id },
       }),
     ).toMatchObject({ content: null, isDeleted: true });
+  });
+
+  test("should load project activity for an authorized workspace member", async () => {
+    const project = await prisma.project.create({
+      data: { name: "Activity timeline" },
+    });
+    await prisma.projectActivity.create({
+      data: {
+        projectId: project.id,
+        actorId: TEST_GUEST_IDENTITY.userId,
+        actorName: "Test Guest",
+        type: "task_created",
+        taskName: "Example task",
+      },
+    });
+
+    const response = await app.request(`/projects/${project.id}/activity`);
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual([
+      expect.objectContaining({
+        type: "task_created",
+        actorName: "Test Guest",
+        taskName: "Example task",
+      }),
+    ]);
+
+    const nextApiResponse = await nextApiGet(
+      createTestRequest(`/api/project/${project.id}/activity`),
+    );
+    expect(nextApiResponse.status).toBe(200);
+    expect(await nextApiResponse.json()).toEqual([
+      expect.objectContaining({ taskName: "Example task" }),
+    ]);
   });
 
   // DELETE /api/project/:id - Delete project and its linked tasks.

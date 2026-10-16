@@ -1,17 +1,15 @@
 import { Task } from "../Task/Task";
 import {
-  Button,
-  Dialog,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
   Stack,
-  TablePagination,
+  Dialog,
+  Select,
+  MenuItem,
   TextField,
+  InputLabel,
+  FormControl,
 } from "@mui/material";
 import { TaskForm } from "@/components/TaskForm";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { TaskBoard } from "./TaskBoard";
 import { AlertMessage } from "@/components/AlertMessage";
 import { useMainStore } from "@/store/mainStore";
@@ -30,15 +28,21 @@ import type {
 } from "@/types/localData";
 import ChecklistOutlinedIcon from "@mui/icons-material/ChecklistOutlined";
 import FolderOpenOutlinedIcon from "@mui/icons-material/FolderOpenOutlined";
-import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import { ProjectActivityDrawer } from "./ProjectActivityDrawer";
 
 interface IProps {
   openAddTask: boolean;
   onCloseAddTask: () => void;
+  isChatOpen: boolean;
+  onCloseChat: () => void;
 }
 
-export function Tasks({ openAddTask, onCloseAddTask }: IProps) {
+export function Tasks({
+  openAddTask,
+  onCloseAddTask,
+  isChatOpen,
+  onCloseChat,
+}: IProps) {
   const setSelectedTab = useMainStore((s) => s.setSelectedTab);
   const selectedProject = useProjectStore((s) => s.selectedProject);
   const activeWorkspaceId = useProjectStore((s) => s.activeWorkspaceId);
@@ -47,12 +51,13 @@ export function Tasks({ openAddTask, onCloseAddTask }: IProps) {
   const [openDialog, setOpenDialog] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState<TypeLocalTask | null>(null);
   const [openEditDialog, setOpenEditDialog] = useState(false);
-  const [isActivityOpen, setIsActivityOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<TypeLocalTaskStatus | "all">("all");
-  const [priorityFilter, setPriorityFilter] = useState<TypeLocalTaskPriority | "all">("all");
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(25);
+  const [statusFilter, setStatusFilter] = useState<TypeLocalTaskStatus | "all">(
+    "all",
+  );
+  const [priorityFilter, setPriorityFilter] = useState<
+    TypeLocalTaskPriority | "all"
+  >("all");
   const workspaceRole = useProjectStore((state) => state.workspaceRole);
 
   const { t } = useTranslation();
@@ -138,34 +143,19 @@ export function Tasks({ openAddTask, onCloseAddTask }: IProps) {
   } = useTasks(selectedProject?.id);
   const allTasks = tasks ?? [];
   const normalizedSearch = search.trim().toLowerCase();
-  const filteredTasks = allTasks.filter((task) =>
-    (!normalizedSearch || `${task.name} ${task.description ?? ""}`.toLowerCase().includes(normalizedSearch)) &&
-    (statusFilter === "all" || task.status === statusFilter) &&
-    (priorityFilter === "all" || task.priority === priorityFilter),
+  const filteredTasks = allTasks.filter(
+    (task) =>
+      (!normalizedSearch ||
+        `${task.name} ${task.description ?? ""}`
+          .toLowerCase()
+          .includes(normalizedSearch)) &&
+      (statusFilter === "all" || task.status === statusFilter) &&
+      (priorityFilter === "all" || task.priority === priorityFilter),
   );
-  const pagedTasks =
-    rowsPerPage === -1
-      ? filteredTasks
-      : filteredTasks.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
   const canReorder =
-    !normalizedSearch &&
-    statusFilter === "all" &&
-    priorityFilter === "all" &&
-    page === 0 &&
-    pagedTasks.length === allTasks.length;
-  const canManageProjects = activeWorkspaceId === null || workspaceRole === "owner";
-
-  useEffect(() => {
-    setPage(0);
-  }, [selectedProject?.id]);
-
-  useEffect(() => {
-    const maxPage =
-      rowsPerPage === -1
-        ? 0
-        : Math.max(0, Math.ceil(filteredTasks.length / rowsPerPage) - 1);
-    setPage((currentPage) => Math.min(currentPage, maxPage));
-  }, [filteredTasks.length, rowsPerPage]);
+    !normalizedSearch && statusFilter === "all" && priorityFilter === "all";
+  const canManageProjects =
+    activeWorkspaceId === null || workspaceRole === "owner";
 
   if (isProjectsLoading && projects === undefined) {
     return (
@@ -194,7 +184,9 @@ export function Tasks({ openAddTask, onCloseAddTask }: IProps) {
         <span className="empty-state-mark" aria-hidden="true">
           <FolderOpenOutlinedIcon />
         </span>
-        <h3>{canManageProjects ? t("project.empty") : t("project.noneAvailable")}</h3>
+        <h3>
+          {canManageProjects ? t("project.empty") : t("project.noneAvailable")}
+        </h3>
         {canManageProjects ? (
           <button
             type="button"
@@ -239,57 +231,48 @@ export function Tasks({ openAddTask, onCloseAddTask }: IProps) {
 
   return (
     <div className="task-workspace">
-      <div className="flex justify-end pb-3">
-        <Button
-          size="small"
-          variant="outlined"
-          startIcon={<HistoryOutlinedIcon />}
-          onClick={() => setIsActivityOpen(true)}
-        >
-          {t("activity.title")}
-        </Button>
-      </div>
-      <Stack
-        direction={{ xs: "column", sm: "row" }}
-        spacing={1}
-        sx={{ mb: 2 }}
-      >
+      <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ mb: 2 }}>
         <TextField
           size="small"
           label={t("task.search")}
           value={search}
-          onChange={(event) => {
-            setSearch(event.target.value);
-            setPage(0);
-          }}
+          onChange={(event) => setSearch(event.target.value)}
           sx={{ flex: 1 }}
         />
         <FormControl size="small" sx={{ minWidth: 160 }}>
-          <InputLabel id="task-status-filter-label">{t("task.filterStatus")}</InputLabel>
+          <InputLabel id="task-status-filter-label">
+            {t("task.filterStatus")}
+          </InputLabel>
           <Select
             labelId="task-status-filter-label"
             label={t("task.filterStatus")}
             value={statusFilter}
             onChange={(event) => {
-              setStatusFilter(event.target.value as TypeLocalTaskStatus | "all");
-              setPage(0);
+              setStatusFilter(
+                event.target.value as TypeLocalTaskStatus | "all",
+              );
             }}
           >
             <MenuItem value="all">{t("task.allStatuses")}</MenuItem>
             <MenuItem value="todo">{t("task.status.todo")}</MenuItem>
-            <MenuItem value="in_progress">{t("task.status.inProgress")}</MenuItem>
+            <MenuItem value="in_progress">
+              {t("task.status.inProgress")}
+            </MenuItem>
             <MenuItem value="done">{t("task.status.done")}</MenuItem>
           </Select>
         </FormControl>
         <FormControl size="small" sx={{ minWidth: 160 }}>
-          <InputLabel id="task-priority-filter-label">{t("task.filterPriority")}</InputLabel>
+          <InputLabel id="task-priority-filter-label">
+            {t("task.filterPriority")}
+          </InputLabel>
           <Select
             labelId="task-priority-filter-label"
             label={t("task.filterPriority")}
             value={priorityFilter}
             onChange={(event) => {
-              setPriorityFilter(event.target.value as TypeLocalTaskPriority | "all");
-              setPage(0);
+              setPriorityFilter(
+                event.target.value as TypeLocalTaskPriority | "all",
+              );
             }}
           >
             <MenuItem value="all">{t("task.allPriorities")}</MenuItem>
@@ -300,9 +283,9 @@ export function Tasks({ openAddTask, onCloseAddTask }: IProps) {
         </FormControl>
       </Stack>
       <ProjectActivityDrawer
-        open={isActivityOpen}
+        open={isChatOpen}
         projectId={selectedProject?.id ?? null}
-        onClose={() => setIsActivityOpen(false)}
+        onClose={onCloseChat}
       />
       <Dialog
         open={Boolean(selectedProject && openAddTask)}
@@ -317,7 +300,7 @@ export function Tasks({ openAddTask, onCloseAddTask }: IProps) {
         <>
           <div className="task-mobile-list">
             <ul className="task-list">
-              {[...pagedTasks]
+              {[...filteredTasks]
                 .sort((a, b) => a.name.localeCompare(b.name))
                 .map((task: TypeLocalTask, index: number) => (
                   <Task
@@ -332,7 +315,7 @@ export function Tasks({ openAddTask, onCloseAddTask }: IProps) {
             </ul>
           </div>
           <TaskBoard
-            tasks={pagedTasks}
+            tasks={filteredTasks}
             isSaving={reorderTasksMutation.isPending || !canReorder}
             onEditClick={handleEditClick}
             onDeleteClick={handleDeleteClick}
@@ -345,30 +328,11 @@ export function Tasks({ openAddTask, onCloseAddTask }: IProps) {
               }
             }}
           />
-          <TablePagination
-            component="div"
-            count={filteredTasks.length}
-            page={page}
-            onPageChange={(_event, nextPage) => setPage(nextPage)}
-            rowsPerPage={rowsPerPage}
-            onRowsPerPageChange={(event) => {
-              setRowsPerPage(Number(event.target.value));
-              setPage(0);
-            }}
-            rowsPerPageOptions={[
-              10,
-              25,
-              50,
-              { value: -1, label: t("common.all") },
-            ]}
-            labelRowsPerPage={t("common.rowsPerPage")}
-            labelDisplayedRows={({ from, to, count }) =>
-              t("common.pagination", { from, to, count })
-            }
-          />
         </>
       ) : allTasks.length > 0 ? (
-        <div className="empty-state"><h3>{t("task.noMatches")}</h3></div>
+        <div className="empty-state">
+          <h3>{t("task.noMatches")}</h3>
+        </div>
       ) : (
         <div className="empty-state task-empty-state">
           <span className="empty-state-mark" aria-hidden="true">

@@ -223,6 +223,69 @@ describe("Project API", () => {
     expect(deniedDelete.status).toBe(404);
   });
 
+  test("should allow authors to edit comments and owners to moderate them", async () => {
+    const project = await prisma.project.create({ data: { name: "Discussion" } });
+    const createResponse = await app.request(`/projects/${project.id}/comments`, {
+      method: "POST",
+      body: JSON.stringify({ content: "Initial comment" }),
+      headers: { "Content-Type": "application/json" },
+    });
+    expect(createResponse.status).toBe(201);
+    const comment = await createResponse.json();
+    expect(comment).toMatchObject({
+      type: "comment",
+      content: "Initial comment",
+      canEdit: true,
+      canDelete: true,
+    });
+
+    const updateResponse = await app.request(
+      `/projects/${project.id}/activity/${comment.id}`,
+      {
+        method: "PATCH",
+        body: JSON.stringify({ content: "Updated comment" }),
+        headers: { "Content-Type": "application/json" },
+      },
+    );
+    expect(updateResponse.status).toBe(200);
+    expect(await updateResponse.json()).toMatchObject({
+      content: "Updated comment",
+    });
+
+    const otherUser = await prisma.user.create({
+      data: { displayName: "Other author", kind: "account" },
+    });
+    const otherComment = await prisma.projectActivity.create({
+      data: {
+        projectId: project.id,
+        actorId: otherUser.id,
+        actorName: otherUser.displayName,
+        type: "comment",
+        content: "Another person's comment",
+      },
+    });
+    const deniedEdit = await app.request(
+      `/projects/${project.id}/activity/${otherComment.id}`,
+      {
+        method: "PATCH",
+        body: JSON.stringify({ content: "Owner cannot edit another comment" }),
+        headers: { "Content-Type": "application/json" },
+      },
+    );
+    expect(deniedEdit.status).toBe(403);
+
+    const moderatedDelete = await app.request(
+      `/projects/${project.id}/activity/${otherComment.id}`,
+      { method: "DELETE" },
+    );
+    expect(moderatedDelete.status).toBe(200);
+    expect(
+      await prisma.projectActivity.findUnique({
+        where: { id: otherComment.id },
+      }),
+    ).toMatchObject({ content: null, isDeleted: true });
+  });
+
   // DELETE /api/project/:id - Delete project and its linked tasks.
   test("should delete a project and its tasks", async () => {
     // Create project.

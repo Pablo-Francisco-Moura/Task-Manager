@@ -549,7 +549,6 @@ describe("Task API", () => {
     const project = await prisma.project.create({
       data: { name: "Project for List" },
     });
-
     await prisma.task.createMany({
       data: [
         { name: "First task", projectId: project.id },
@@ -567,6 +566,53 @@ describe("Task API", () => {
         expect.objectContaining({ name: "Second task", projectId: project.id }),
       ]),
     );
+  });
+
+  test("should record task creation, edits, moves and deletion with author snapshots", async () => {
+    const project = await prisma.project.create({ data: { name: "Activity project" } });
+    const createResponse = await app.request("/tasks", {
+      method: "POST",
+      body: JSON.stringify({ name: "First task", projectId: project.id }),
+      headers: { "Content-Type": "application/json" },
+    });
+    const createdTask = await createResponse.json();
+    const taskId = createdTask.id as number;
+
+    await app.request(`/tasks/${taskId}`, {
+      method: "PATCH",
+      body: JSON.stringify({ name: "Renamed task" }),
+      headers: { "Content-Type": "application/json" },
+    });
+    await app.request(`/tasks/${taskId}`, {
+      method: "PATCH",
+      body: JSON.stringify({ status: "in_progress" }),
+      headers: { "Content-Type": "application/json" },
+    });
+    const deleteResponse = await app.request(`/tasks/${taskId}`, {
+      method: "DELETE",
+    });
+
+    expect(deleteResponse.status).toBe(200);
+  expect(await prisma.task.findUnique({ where: { id: taskId } })).toBeNull();
+    const activities = await prisma.projectActivity.findMany({
+      where: { projectId: project.id },
+      orderBy: { id: "asc" },
+    });
+    expect(activities.map(({ type }) => type)).toEqual([
+      "task_created",
+      "task_updated",
+      "task_moved",
+      "task_deleted",
+    ]);
+    expect(activities[0]).toMatchObject({
+      actorId: TEST_GUEST_IDENTITY.userId,
+      actorName: "Test Guest",
+      taskName: "First task",
+    });
+    expect(activities[3]).toMatchObject({
+      taskId: null,
+      taskName: "Renamed task",
+    });
   });
 
   test("should restrict every task operation to projects granted to a member", async () => {

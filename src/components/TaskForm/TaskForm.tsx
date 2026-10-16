@@ -71,6 +71,9 @@ export function TaskForm({ projectId, onClose }: IProps) {
       await queryClient.refetchQueries({
         queryKey: [QUERY_KEYS.TASKS, projectId],
       });
+      await queryClient.invalidateQueries({
+        queryKey: [QUERY_KEYS.ACTIVITY, projectId],
+      });
 
       reset();
       setError(null);

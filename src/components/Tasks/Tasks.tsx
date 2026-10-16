@@ -1,5 +1,5 @@
 import { Task } from "../Task/Task";
-import { Dialog } from "@mui/material";
+import { Button, Dialog } from "@mui/material";
 import { TaskForm } from "@/components/TaskForm";
 import { useState } from "react";
 import { TaskBoard } from "./TaskBoard";
@@ -16,6 +16,8 @@ import type { TypeReorderTasksInput } from "@/types";
 import type { TypeLocalTask, TypeLocalTaskStatus } from "@/types/localData";
 import ChecklistOutlinedIcon from "@mui/icons-material/ChecklistOutlined";
 import FolderOpenOutlinedIcon from "@mui/icons-material/FolderOpenOutlined";
+import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
+import { ProjectActivityDrawer } from "./ProjectActivityDrawer";
 
 interface IProps {
   openAddTask: boolean;
@@ -31,6 +33,7 @@ export function Tasks({ openAddTask, onCloseAddTask }: IProps) {
   const [openDialog, setOpenDialog] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState<TypeLocalTask | null>(null);
   const [openEditDialog, setOpenEditDialog] = useState(false);
+  const [isActivityOpen, setIsActivityOpen] = useState(false);
 
   const { t } = useTranslation();
   const {
@@ -184,6 +187,21 @@ export function Tasks({ openAddTask, onCloseAddTask }: IProps) {
 
   return (
     <div className="task-workspace">
+      <div className="flex justify-end pb-3">
+        <Button
+          size="small"
+          variant="outlined"
+          startIcon={<HistoryOutlinedIcon />}
+          onClick={() => setIsActivityOpen(true)}
+        >
+          {t("activity.title")}
+        </Button>
+      </div>
+      <ProjectActivityDrawer
+        open={isActivityOpen}
+        projectId={selectedProject?.id ?? null}
+        onClose={() => setIsActivityOpen(false)}
+      />
       <Dialog
         open={Boolean(selectedProject && openAddTask)}
         onClose={onCloseAddTask}

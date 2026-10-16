@@ -65,6 +65,23 @@
     "declineError": "Não foi possível recusar o convite.",
     "readError": "Não foi possível marcar o convite como lido."
   },
+  "activity": {
+    "title": "Atividade e comentários",
+    "empty": "Nenhuma atividade neste projeto.",
+    "loadError": "Não foi possível carregar a atividade.",
+    "commentPlaceholder": "Escreva um comentário...",
+    "send": "Enviar",
+    "edit": "Editar comentário",
+    "delete": "Excluir comentário",
+    "save": "Salvar",
+    "cancel": "Cancelar edição",
+    "confirmDelete": "Excluir este comentário?",
+    "commentDeleted": "Comentário removido",
+    "task_created": "{{actor}} criou a tarefa {{task}}",
+    "task_updated": "{{actor}} editou a tarefa {{task}}",
+    "task_moved": "{{actor}} moveu a tarefa {{task}}",
+    "task_deleted": "{{actor}} excluiu a tarefa {{task}}"
+  },
   "account": {
     "signIn": {
       "button": "Entrar",

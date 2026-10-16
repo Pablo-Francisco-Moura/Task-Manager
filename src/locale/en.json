@@ -65,6 +65,23 @@
     "declineError": "Could not decline the invitation.",
     "readError": "Could not mark the invitation as read."
   },
+  "activity": {
+    "title": "Activity and comments",
+    "empty": "No activity in this project.",
+    "loadError": "Could not load project activity.",
+    "commentPlaceholder": "Write a comment...",
+    "send": "Send",
+    "edit": "Edit comment",
+    "delete": "Delete comment",
+    "save": "Save",
+    "cancel": "Cancel edit",
+    "confirmDelete": "Delete this comment?",
+    "commentDeleted": "Comment removed",
+    "task_created": "{{actor}} created task {{task}}",
+    "task_updated": "{{actor}} edited task {{task}}",
+    "task_moved": "{{actor}} moved task {{task}}",
+    "task_deleted": "{{actor}} deleted task {{task}}"
+  },
   "account": {
     "signIn": {
       "button": "Sign in",

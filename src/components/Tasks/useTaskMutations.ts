@@ -29,6 +29,9 @@ export function useTaskMutations({
     onSuccess: async () => {
       if (projectId) {
         await queryClient.invalidateQueries({
+          queryKey: [QUERY_KEYS.ACTIVITY, projectId],
+        });
+        await queryClient.invalidateQueries({
           queryKey: [QUERY_KEYS.PROJECTS, projectId],
         });
         await queryClient.refetchQueries({
@@ -51,6 +54,9 @@ export function useTaskMutations({
     mutationFn: updateTask,
     onSuccess: async (updatedTask) => {
       if (projectId) {
+        await queryClient.invalidateQueries({
+          queryKey: [QUERY_KEYS.ACTIVITY, projectId],
+        });
         queryClient.setQueryData<TypeLocalTask[]>(
           [QUERY_KEYS.TASKS, projectId, activeWorkspaceId],
           (currentTasks) =>
@@ -74,6 +80,9 @@ export function useTaskMutations({
     mutationFn: updateTask,
     onSuccess: async (updatedTask) => {
       if (projectId) {
+        await queryClient.invalidateQueries({
+          queryKey: [QUERY_KEYS.ACTIVITY, projectId],
+        });
         queryClient.setQueryData<TypeLocalTask[]>(
           [QUERY_KEYS.TASKS, projectId, activeWorkspaceId],
           (currentTasks) =>
@@ -138,6 +147,9 @@ export function useTaskMutations({
       );
     },
     onSettled: async (_data, _error, variables) => {
+      await queryClient.invalidateQueries({
+        queryKey: [QUERY_KEYS.ACTIVITY, variables.projectId],
+      });
       await queryClient.invalidateQueries({
         queryKey: [QUERY_KEYS.TASKS, variables.projectId],
       });

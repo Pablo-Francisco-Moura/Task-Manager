@@ -19,6 +19,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { describeRoute } from "hono-openapi";
 import { normalizeTaskPriority } from "@/utils/taskPriority";
+import { createProjectActivity } from "./taskActivity";
 import type { TypeSessionEnv } from "@/server/session";
 
 const taskRoutes = new Hono<TypeSessionEnv>();
@@ -87,18 +88,28 @@ taskRoutes.post(
 
     // Create the task.
     try {
-      const task = await prisma.task.create({
-        data: {
-          name,
-          dueAt,
-          status,
-          dueDate,
-          priority,
-          position: (lastTask?.position ?? -1) + 1,
+      const task = await prisma.$transaction(async (transaction) => {
+        const createdTask = await transaction.task.create({
+          data: {
+            name,
+            dueAt,
+            status,
+            dueDate,
+            priority,
+            position: (lastTask?.position ?? -1) + 1,
+            projectId,
+            createdById: userId,
+            description: normalizeDescription(parsedBody.data.description),
+          },
+        });
+        await createProjectActivity(transaction, {
           projectId,
-          createdById: userId,
-          description: normalizeDescription(parsedBody.data.description),
-        },
+          taskId: createdTask.id,
+          taskName: createdTask.name,
+          actorId: userId,
+          type: "task_created",
+        });
+        return createdTask;
       });
       return c.json(task, 201);
     } catch (error: unknown) {
@@ -226,7 +237,7 @@ taskRoutes.patch(
 
       const existingTasks = await transaction.task.findMany({
         where: { projectId, project: accessWhere },
-        select: { id: true },
+        select: { id: true, name: true, status: true, position: true },
       });
       const existingIds = new Set(existingTasks.map((task) => task.id));
       if (
@@ -248,6 +259,39 @@ taskRoutes.patch(
             }),
           ),
         );
+      }
+
+      const nextPositions = new Map<
+        number,
+        { status: string; position: number }
+      >();
+      for (const status of ["todo", "in_progress", "done"] as const) {
+        orderedTaskIdsByStatus[status].forEach((id, position) => {
+          nextPositions.set(id, { status, position });
+        });
+      }
+      for (const task of existingTasks) {
+        const nextPosition = nextPositions.get(task.id);
+        if (
+          !nextPosition ||
+          (task.status === nextPosition.status &&
+            task.position === nextPosition.position)
+        ) {
+          continue;
+        }
+        await createProjectActivity(transaction, {
+          projectId,
+          taskId: task.id,
+          taskName: task.name,
+          actorId: userId,
+          type: "task_moved",
+          details: {
+            fromStatus: task.status,
+            toStatus: nextPosition.status,
+            fromPosition: task.position,
+            toPosition: nextPosition.position,
+          },
+        });
       }
 
       const tasks = await transaction.task.findMany({
@@ -295,10 +339,24 @@ taskRoutes.delete(
     }
 
     try {
-      const deleted = await prisma.task.deleteMany({
-        where: { id, project: projectAccessWhere(workspaceId, userId, role) },
+      const deletedTask = await prisma.$transaction(async (transaction) => {
+        const task = await transaction.task.findFirst({
+          where: { id, project: projectAccessWhere(workspaceId, userId, role) },
+          select: { id: true, projectId: true, name: true },
+        });
+        if (!task) return null;
+
+        await createProjectActivity(transaction, {
+          projectId: task.projectId,
+          taskId: task.id,
+          taskName: task.name,
+          actorId: userId,
+          type: "task_deleted",
+        });
+        await transaction.task.delete({ where: { id: task.id } });
+        return task;
       });
-      if (deleted.count === 0) {
+      if (!deletedTask) {
         return c.json({ error: "Task not found" }, 404);
       }
       return c.json({ message: "Task deleted successfully" }, 200);
@@ -372,7 +430,7 @@ taskRoutes.patch(
     const accessWhere = projectAccessWhere(workspaceId, userId, role);
     const currentTask = await prisma.task.findFirst({
       where: { id, project: accessWhere },
-      select: { projectId: true, status: true },
+      select: { projectId: true, status: true, name: true },
     });
     if (!currentTask) {
       return c.json({ error: "Task not found" }, 404);
@@ -435,16 +493,48 @@ taskRoutes.patch(
       }
     }
     try {
-      const updatedCount = await prisma.task.updateMany({
-        where: { id, project: accessWhere },
-        data: updateData,
+      const updatedTask = await prisma.$transaction(async (transaction) => {
+        const updatedCount = await transaction.task.updateMany({
+          where: { id, project: accessWhere },
+          data: updateData,
+        });
+        if (updatedCount.count === 0) return null;
+
+        const task = await transaction.task.findFirstOrThrow({
+          where: { id, project: accessWhere },
+        });
+        const moved =
+          task.projectId !== currentTask.projectId ||
+          task.status !== currentTask.status;
+        await createProjectActivity(transaction, {
+          projectId: task.projectId,
+          taskId: task.id,
+          taskName: task.name,
+          actorId: userId,
+          type: moved ? "task_moved" : "task_updated",
+          details: {
+            changedFields: Object.keys(updateData),
+            fromProjectId: currentTask.projectId,
+            toProjectId: task.projectId,
+            fromStatus: currentTask.status,
+            toStatus: task.status,
+          },
+        });
+        if (task.projectId !== currentTask.projectId) {
+          await createProjectActivity(transaction, {
+            projectId: currentTask.projectId,
+            taskId: task.id,
+            taskName: task.name,
+            actorId: userId,
+            type: "task_moved",
+            details: { toProjectId: task.projectId },
+          });
+        }
+        return task;
       });
-      if (updatedCount.count === 0) {
+      if (!updatedTask) {
         return c.json({ error: "Task not found" }, 404);
       }
-      const updatedTask = await prisma.task.findFirstOrThrow({
-        where: { id, project: accessWhere },
-      });
       return c.json(
         {
           ...updatedTask,

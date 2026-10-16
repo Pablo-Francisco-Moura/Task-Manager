@@ -884,4 +884,122 @@ describe("Guest workspace session", () => {
       }),
     ).toBeNull();
   });
+
+  test("should keep an invited member in the workspace with no projects after project deletion", async () => {
+    const ownerResponse = await POST(
+      apiRequest("session/account", undefined, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          displayName: "Ana",
+          username: "ana",
+          password: "supersecret",
+          workspaceName: "Estudos",
+        }),
+      }),
+    );
+    const ownerCookie = cookieFrom(ownerResponse);
+    const ownerWorkspaceId = (await ownerResponse.json()).workspaceId as string;
+    const projectResponse = await POST(
+      apiRequest("project", ownerCookie, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: "Projeto que será removido" }),
+      }),
+    );
+    const projectId = (await projectResponse.json()).id as number;
+
+    const memberResponse = await POST(
+      apiRequest("session/account", undefined, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          displayName: "Bia",
+          username: "bia",
+          password: "supersecret",
+          workspaceName: "Bia",
+        }),
+      }),
+    );
+    const memberCookie = cookieFrom(memberResponse);
+    const member = await memberResponse.json();
+    const memberUserId = member.user.id as string;
+    const memberWorkspaceId = member.workspaceId as string;
+
+    const inviteResponse = await POST(
+      apiRequest(`session/workspace/${ownerWorkspaceId}/invite`, ownerCookie, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: "bia", projectIds: [] }),
+      }),
+    );
+    const inviteId = (await inviteResponse.json()).id as number;
+    const acceptResponse = await POST(
+      apiRequest(`session/workspace/invites/${inviteId}/accept`, memberCookie, {
+        method: "POST",
+      }),
+    );
+    expect(acceptResponse.status).toBe(200);
+    expect(
+      await prisma.projectMember.findMany({ where: { userId: memberUserId } }),
+    ).toHaveLength(0);
+
+    const deleteProjectResponse = await nextApiDelete(
+      apiRequest(`project/${projectId}`, ownerCookie, { method: "DELETE" }),
+    );
+    expect(deleteProjectResponse.status).toBe(200);
+    expect(
+      await prisma.workspaceMember.findUnique({
+        where: {
+          workspaceId_userId: {
+            workspaceId: ownerWorkspaceId,
+            userId: memberUserId,
+          },
+        },
+      }),
+    ).toMatchObject({ role: "member" });
+
+    const switchToSharedWorkspace = await nextApiPatch(
+      apiRequest("session/workspace", memberCookie, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ workspaceId: ownerWorkspaceId }),
+      }),
+    );
+    expect(switchToSharedWorkspace.status).toBe(200);
+    const sharedProjectsResponse = await nextApiGet(
+      apiRequest("project", memberCookie),
+    );
+    expect(await sharedProjectsResponse.json()).toEqual([]);
+
+    const deniedProjectCreate = await POST(
+      apiRequest("project", memberCookie, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: "Não permitido" }),
+      }),
+    );
+    expect(deniedProjectCreate.status).toBe(403);
+
+    const switchToPersonalWorkspace = await nextApiPatch(
+      apiRequest("session/workspace", memberCookie, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ workspaceId: memberWorkspaceId }),
+      }),
+    );
+    expect(switchToPersonalWorkspace.status).toBe(200);
+    const personalProjectResponse = await POST(
+      apiRequest("project", memberCookie, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: "Projeto pessoal" }),
+      }),
+    );
+    expect(personalProjectResponse.status).toBe(201);
+    expect(await personalProjectResponse.json()).toMatchObject({
+      workspaceId: memberWorkspaceId,
+      name: "Projeto pessoal",
+    });
+  });
 });

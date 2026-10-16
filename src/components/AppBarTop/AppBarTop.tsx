@@ -97,6 +97,7 @@ export function AppBarTop() {
   const [accountWorkspaces, setAccountWorkspaces] = useState<
     TypeWorkspaceMembership[]
   >([]);
+  const [workspaceListRefreshKey, setWorkspaceListRefreshKey] = useState(0);
   const [activeWorkspaceId, setActiveWorkspaceId] = useState<string | null>(
     null,
   );
@@ -359,7 +360,7 @@ export function AppBarTop() {
     return () => {
       isCurrent = false;
     };
-  }, [accountSession, setStoreWorkspaceId, t]);
+  }, [accountSession, setStoreWorkspaceId, t, workspaceListRefreshKey]);
 
   useEffect(() => {
     const activeWorkspace = accountWorkspaces.find(
@@ -799,7 +800,13 @@ export function AppBarTop() {
                 </Button>
               </Stack>
             )}
-            <WorkspaceInviteBell enabled={Boolean(accountSession)} language={language} />
+            <WorkspaceInviteBell
+              enabled={Boolean(accountSession)}
+              language={language}
+              onInviteAccepted={() =>
+                setWorkspaceListRefreshKey((current) => current + 1)
+              }
+            />
             <IconButton
               aria-label={t("profile.open")}
               aria-haspopup="menu"

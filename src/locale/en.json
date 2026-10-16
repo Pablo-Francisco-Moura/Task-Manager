@@ -21,7 +21,8 @@
   "navigation": {
     "mainLabel": "Main navigation",
     "projects": "Projects",
-    "tasks": "Tasks"
+    "tasks": "Tasks",
+    "members": "Members"
   },
   "app": {
     "title": "Project Management",
@@ -70,8 +71,31 @@
     "declineError": "Could not decline the invitation.",
     "readError": "Could not mark the invitation as read."
   },
+  "members": {
+    "title": "Workspace members",
+    "countSingular": "{{count}} member",
+    "countPlural": "{{count}} members",
+    "search": "Search members or projects",
+    "loading": "Loading members...",
+    "loadError": "Could not load workspace members.",
+    "empty": "No members found.",
+    "noMatches": "No members match this search.",
+    "noProjects": "No project access",
+    "allProjects": "Access to all workspace projects",
+    "joined": "Joined {{date}}",
+    "manageProjects": "Manage project access",
+    "manageTitle": "Project access for {{name}}",
+    "manageDescription": "Select which projects this member can access.",
+    "projectsUpdated": "Project access updated.",
+    "updateError": "Could not update project access.",
+    "remove": "Remove member",
+    "removeTitle": "Remove workspace member",
+    "removeConfirm": "Remove {{name}} from this workspace? Their personal workspace and account will remain.",
+    "memberRemoved": "Member removed from the workspace.",
+    "removeError": "Could not remove this member."
+  },
   "activity": {
-    "title": "Activity and comments",
+    "title": "Chat",
     "empty": "No activity in this project.",
     "loadError": "Could not load project activity.",
     "commentPlaceholder": "Write a comment...",
@@ -136,6 +160,10 @@
     "suggestions": "Workspace suggestions",
     "workspaceDefault": "Personal",
     "workspaces": "Workspaces",
+    "role": {
+      "owner": "Owner",
+      "member": "Member"
+    },
     "workspaceLoading": "Loading workspaces...",
     "workspaceSwitching": "Switching workspace...",
     "workspaceLoadError": "Could not load workspaces.",

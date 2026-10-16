@@ -21,7 +21,8 @@
   "navigation": {
     "mainLabel": "Navegação principal",
     "projects": "Projetos",
-    "tasks": "Tarefas"
+    "tasks": "Tarefas",
+    "members": "Membros"
   },
   "app": {
     "title": "Gerenciamento de Projetos",
@@ -70,8 +71,31 @@
     "declineError": "Não foi possível recusar o convite.",
     "readError": "Não foi possível marcar o convite como lido."
   },
+  "members": {
+    "title": "Membros do workspace",
+    "countSingular": "{{count}} membro",
+    "countPlural": "{{count}} membros",
+    "search": "Buscar membros ou projetos",
+    "loading": "Carregando membros...",
+    "loadError": "Não foi possível carregar os membros do workspace.",
+    "empty": "Nenhum membro encontrado.",
+    "noMatches": "Nenhum membro corresponde à busca.",
+    "noProjects": "Sem acesso a projetos",
+    "allProjects": "Acesso a todos os projetos do workspace",
+    "joined": "Entrou em {{date}}",
+    "manageProjects": "Gerenciar acesso a projetos",
+    "manageTitle": "Acesso a projetos de {{name}}",
+    "manageDescription": "Selecione quais projetos este membro pode acessar.",
+    "projectsUpdated": "Acesso a projetos atualizado.",
+    "updateError": "Não foi possível atualizar o acesso a projetos.",
+    "remove": "Remover membro",
+    "removeTitle": "Remover membro do workspace",
+    "removeConfirm": "Remover {{name}} deste workspace? A conta e o workspace pessoal continuam existindo.",
+    "memberRemoved": "Membro removido do workspace.",
+    "removeError": "Não foi possível remover este membro."
+  },
   "activity": {
-    "title": "Atividade e comentários",
+    "title": "Chat",
     "empty": "Nenhuma atividade neste projeto.",
     "loadError": "Não foi possível carregar a atividade.",
     "commentPlaceholder": "Escreva um comentário...",
@@ -136,6 +160,10 @@
     "suggestions": "Sugestões de workspace",
     "workspaceDefault": "Pessoal",
     "workspaces": "Workspaces",
+    "role": {
+      "owner": "Responsável",
+      "member": "Membro"
+    },
     "workspaceLoading": "Carregando workspaces...",
     "workspaceSwitching": "Trocando workspace...",
     "workspaceLoadError": "Não foi possível carregar os workspaces.",

@@ -33,9 +33,14 @@ type TypeWorkspaceInvite = {
 interface IProps {
   enabled: boolean;
   language: "pt" | "en";
+  onInviteAccepted: () => void;
 }
 
-export function WorkspaceInviteBell({ enabled, language }: IProps) {
+export function WorkspaceInviteBell({
+  enabled,
+  language,
+  onInviteAccepted,
+}: IProps) {
   const { t } = useTranslation();
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
   const [invites, setInvites] = useState<TypeWorkspaceInvite[]>([]);
@@ -83,7 +88,9 @@ export function WorkspaceInviteBell({ enabled, language }: IProps) {
     };
   }, [enabled, t]);
 
-  const pendingInvites = invites.filter((invite) => invite.status === "pending");
+  const pendingInvites = invites.filter(
+    (invite) => invite.status === "pending",
+  );
   const unreadCount = pendingInvites.filter((invite) => !invite.readAt).length;
 
   if (!enabled) return null;
@@ -102,7 +109,9 @@ export function WorkspaceInviteBell({ enabled, language }: IProps) {
         );
         setInvites((current) =>
           current.map((invite) =>
-            invite.id === inviteId ? { ...invite, readAt: payload.readAt } : invite,
+            invite.id === inviteId
+              ? { ...invite, readAt: payload.readAt }
+              : invite,
           ),
         );
       } else {
@@ -112,9 +121,15 @@ export function WorkspaceInviteBell({ enabled, language }: IProps) {
         );
         setInvites((current) =>
           current.map((invite) =>
-            invite.id === inviteId ? { ...invite, status: action === "accept" ? "accepted" : "declined" } : invite,
+            invite.id === inviteId
+              ? {
+                  ...invite,
+                  status: action === "accept" ? "accepted" : "declined",
+                }
+              : invite,
           ),
         );
+        if (action === "accept") onInviteAccepted();
       }
     } catch {
       setError(t(`notifications.${action}Error`));
@@ -126,7 +141,11 @@ export function WorkspaceInviteBell({ enabled, language }: IProps) {
   return (
     <>
       <IconButton
-        aria-label={unreadCount ? t("notifications.unreadCount", { count: unreadCount }) : t("notifications.open")}
+        aria-label={
+          unreadCount
+            ? t("notifications.unreadCount", { count: unreadCount })
+            : t("notifications.open")
+        }
         aria-haspopup="dialog"
         aria-expanded={Boolean(anchor)}
         onClick={(event) => setAnchor(event.currentTarget)}
@@ -142,24 +161,45 @@ export function WorkspaceInviteBell({ enabled, language }: IProps) {
         onClose={() => setAnchor(null)}
         anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
         transformOrigin={{ vertical: "top", horizontal: "right" }}
-        slotProps={{ paper: { sx: { width: "min(360px, calc(100vw - 32px))", mt: 1 } } }}
+        slotProps={{
+          paper: { sx: { width: "min(360px, calc(100vw - 32px))", mt: 1 } },
+        }}
       >
         <Box sx={{ p: 2 }}>
-          <Stack direction="row" alignItems="center" justifyContent="space-between">
+          <Stack
+            direction="row"
+            alignItems="center"
+            justifyContent="space-between"
+          >
             <Typography variant="subtitle1" fontWeight={700}>
               {t("notifications.title")}
             </Typography>
             {unreadCount > 0 ? (
-              <Typography variant="caption" color="text.secondary" aria-live="polite">
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                aria-live="polite"
+              >
                 {t("notifications.unreadCount", { count: unreadCount })}
               </Typography>
             ) : null}
           </Stack>
-          {error ? <Alert severity="error" sx={{ mt: 1 }}>{error}</Alert> : null}
+          {error ? (
+            <Alert severity="error" sx={{ mt: 1 }}>
+              {error}
+            </Alert>
+          ) : null}
           {isLoading && pendingInvites.length === 0 ? (
-            <Stack direction="row" spacing={1} alignItems="center" sx={{ py: 3 }}>
+            <Stack
+              direction="row"
+              spacing={1}
+              alignItems="center"
+              sx={{ py: 3 }}
+            >
               <CircularProgress size={18} />
-              <Typography variant="body2">{t("notifications.loading")}</Typography>
+              <Typography variant="body2">
+                {t("notifications.loading")}
+              </Typography>
             </Stack>
           ) : pendingInvites.length === 0 ? (
             <Typography variant="body2" color="text.secondary" sx={{ py: 3 }}>
@@ -171,17 +211,30 @@ export function WorkspaceInviteBell({ enabled, language }: IProps) {
                 <Box key={invite.id} sx={{ py: 1.5 }}>
                   <Stack direction="row" alignItems="flex-start" spacing={1}>
                     <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Typography variant="body2" fontWeight={invite.readAt ? 500 : 700}>
+                      <Typography
+                        variant="body2"
+                        fontWeight={invite.readAt ? 500 : 700}
+                      >
                         {t("notifications.inviteFrom", {
-                          name: invite.createdBy.displayName || invite.createdBy.username,
+                          name:
+                            invite.createdBy.displayName ||
+                            invite.createdBy.username,
                           workspace: invite.workspace.name,
                         })}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        {t("notifications.projects", { count: invite.projectIds.length })}
+                        {t("notifications.projects", {
+                          count: invite.projectIds.length,
+                        })}
                       </Typography>
-                      <Typography variant="caption" color="text.secondary" display="block">
-                        {new Intl.DateTimeFormat(language).format(new Date(invite.createdAt))}
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        display="block"
+                      >
+                        {new Intl.DateTimeFormat(language).format(
+                          new Date(invite.createdAt),
+                        )}
                       </Typography>
                     </Box>
                     {!invite.readAt ? (

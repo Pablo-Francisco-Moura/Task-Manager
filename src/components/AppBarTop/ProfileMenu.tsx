@@ -131,7 +131,7 @@ export function ProfileMenu({
                   >
                     {accountWorkspaces.map((workspace) => (
                       <MenuItem key={workspace.id} value={workspace.id}>
-                        {workspace.name}
+                        {workspace.name} · {t(`account.role.${workspace.role}`)}
                       </MenuItem>
                     ))}
                   </Select>

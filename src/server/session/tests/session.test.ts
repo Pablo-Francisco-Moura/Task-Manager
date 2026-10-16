@@ -2,6 +2,7 @@ import {
   POST,
   GET as nextApiGet,
   PATCH as nextApiPatch,
+  PUT as nextApiPut,
   DELETE as nextApiDelete,
 } from "@/app/api/[[...route]]/route";
 import { prisma } from "@/lib/prisma";
@@ -848,6 +849,146 @@ describe("Guest workspace session", () => {
     ).toHaveLength(1);
   });
 
+  test("should let owners manage member project access and remove members", async () => {
+    const ownerResponse = await POST(
+      apiRequest("session/account", undefined, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          displayName: "Ana",
+          username: "ana",
+          password: "supersecret",
+          workspaceName: "Estudos",
+        }),
+      }),
+    );
+    const ownerCookie = cookieFrom(ownerResponse);
+    const owner = await ownerResponse.json();
+    const workspaceId = owner.workspaceId as string;
+
+    const firstProjectResponse = await POST(
+      apiRequest("project", ownerCookie, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: "Projeto um" }),
+      }),
+    );
+    const firstProjectId = (await firstProjectResponse.json()).id as number;
+    const secondProjectResponse = await POST(
+      apiRequest("project", ownerCookie, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: "Projeto dois" }),
+      }),
+    );
+    const secondProjectId = (await secondProjectResponse.json()).id as number;
+
+    const memberResponse = await POST(
+      apiRequest("session/account", undefined, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          displayName: "Bia",
+          username: "bia",
+          password: "supersecret",
+          workspaceName: "Pessoal da Bia",
+        }),
+      }),
+    );
+    const memberCookie = cookieFrom(memberResponse);
+    const member = await memberResponse.json();
+    const memberUserId = member.user.id as string;
+    const memberWorkspaceId = member.workspaceId as string;
+    await prisma.workspaceMember.create({
+      data: { workspaceId, userId: memberUserId, role: "member" },
+    });
+
+    const rosterResponse = await nextApiGet(
+      apiRequest(`session/workspace/${workspaceId}/members`, memberCookie),
+    );
+    expect(rosterResponse.status).toBe(200);
+    expect(await rosterResponse.json()).toMatchObject({
+      projects: expect.arrayContaining([
+        { id: firstProjectId, name: "Projeto um" },
+        { id: secondProjectId, name: "Projeto dois" },
+      ]),
+      members: expect.arrayContaining([
+        expect.objectContaining({ userId: memberUserId, projects: [] }),
+      ]),
+    });
+
+    const assignmentResponse = await nextApiPut(
+      apiRequest(
+        `session/workspace/${workspaceId}/members/${memberUserId}/projects`,
+        ownerCookie,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ projectIds: [firstProjectId] }),
+        },
+      ),
+    );
+    expect(assignmentResponse.status).toBe(200);
+    expect(await assignmentResponse.json()).toMatchObject({
+      userId: memberUserId,
+      projectIds: [firstProjectId],
+    });
+
+    const memberRosterResponse = await nextApiGet(
+      apiRequest(`session/workspace/${workspaceId}/members`, memberCookie),
+    );
+    expect(await memberRosterResponse.json()).toMatchObject({
+      members: expect.arrayContaining([
+        expect.objectContaining({
+          userId: memberUserId,
+          projects: [{ id: firstProjectId, name: "Projeto um" }],
+        }),
+      ]),
+    });
+
+    const deniedAssignment = await nextApiPut(
+      apiRequest(
+        `session/workspace/${workspaceId}/members/${memberUserId}/projects`,
+        memberCookie,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ projectIds: [secondProjectId] }),
+        },
+      ),
+    );
+    expect(deniedAssignment.status).toBe(403);
+
+    const deniedRemoval = await nextApiDelete(
+      apiRequest(
+        `session/workspace/${workspaceId}/members/${memberUserId}`,
+        memberCookie,
+        { method: "DELETE" },
+      ),
+    );
+    expect(deniedRemoval.status).toBe(403);
+
+    const removalResponse = await nextApiDelete(
+      apiRequest(
+        `session/workspace/${workspaceId}/members/${memberUserId}`,
+        ownerCookie,
+        { method: "DELETE" },
+      ),
+    );
+    expect(removalResponse.status).toBe(200);
+    expect(
+      await prisma.workspaceMember.findUnique({
+        where: { workspaceId_userId: { workspaceId, userId: memberUserId } },
+      }),
+    ).toBeNull();
+    expect(
+      await prisma.projectMember.findMany({ where: { userId: memberUserId } }),
+    ).toHaveLength(0);
+    expect(
+      await prisma.session.findFirst({ where: { userId: memberUserId } }),
+    ).toMatchObject({ workspaceId: memberWorkspaceId });
+  });
+
   test("should expire an invitation before accepting it after its deadline", async () => {
     const ownerResponse = await POST(
       apiRequest("session/account", undefined, {
@@ -1025,5 +1166,50 @@ describe("Guest workspace session", () => {
       workspaceId: memberWorkspaceId,
       name: "Projeto pessoal",
     });
+  });
+
+  test("should load task activity through the API for an account session", async () => {
+    const signupResponse = await POST(
+      apiRequest("session/account", undefined, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          displayName: "Ana",
+          username: "ana",
+          password: "supersecret",
+          workspaceName: "Estudos",
+        }),
+      }),
+    );
+    const accountCookie = cookieFrom(signupResponse);
+    const projectResponse = await POST(
+      apiRequest("project", accountCookie, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: "Account project" }),
+      }),
+    );
+    const projectId = (await projectResponse.json()).id as number;
+
+    const taskResponse = await POST(
+      apiRequest("task", accountCookie, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: "Account task", projectId }),
+      }),
+    );
+    expect(taskResponse.status).toBe(201);
+
+    const activityResponse = await nextApiGet(
+      apiRequest(`project/${projectId}/activity`, accountCookie),
+    );
+    expect(activityResponse.status).toBe(200);
+    expect(await activityResponse.json()).toEqual([
+      expect.objectContaining({
+        type: "task_created",
+        taskName: "Account task",
+        actorName: "Ana",
+      }),
+    ]);
   });
 });

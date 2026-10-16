@@ -1,5 +1,6 @@
 export const QUERY_KEYS = {
   TASKS: "TASKS",
+  MEMBERS: "MEMBERS",
   PROJECTS: "PROJECTS",
   ACTIVITY: "ACTIVITY",
 };

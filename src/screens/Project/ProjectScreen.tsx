@@ -6,9 +6,9 @@ import { Projects } from "@/components/Projects/Projects";
 import { ProjectForm } from "@/components/ProjectForm/ProjectForm";
 import { useProjects } from "@/hooks";
 import { useTranslation } from "react-i18next";
+import { useProjectStore } from "@/store/projectStore";
 import styles from "./ProjectScreen.module.css";
 import AddIcon from "@mui/icons-material/Add";
-import { useProjectStore } from "@/store/projectStore";
 
 export function ProjectScreen() {
   const [openAddProject, toggleOpenAddProject] = useState(false);
@@ -17,7 +17,8 @@ export function ProjectScreen() {
   const { projects } = useProjects();
   const activeWorkspaceId = useProjectStore((state) => state.activeWorkspaceId);
   const workspaceRole = useProjectStore((state) => state.workspaceRole);
-  const canManageProjects = activeWorkspaceId === null || workspaceRole === "owner";
+  const canManageProjects =
+    activeWorkspaceId === null || workspaceRole === "owner";
 
   return (
     <section className={`${styles.projectScreen} screen-content`}>

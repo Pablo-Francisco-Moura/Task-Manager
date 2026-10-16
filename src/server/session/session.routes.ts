@@ -434,6 +434,235 @@ sessionRoutes.post("/workspace", async (context) => {
   );
 });
 
+sessionRoutes.get("/workspace/:workspaceId/members", async (context) => {
+  const providedToken = getCookie(context, ACCOUNT_SESSION_COOKIE_NAME);
+  if (!providedToken) {
+    return context.json({ error: "Account session required" }, 401);
+  }
+
+  const workspaceId = context.req.param("workspaceId");
+  if (
+    !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+      workspaceId,
+    )
+  ) {
+    return context.json({ error: "Invalid workspace id" }, 400);
+  }
+
+  const accountSession = await getAccountSessionByToken(providedToken);
+  if (!accountSession || accountSession.user.kind !== "account") {
+    return context.json({ error: "Account session expired" }, 401);
+  }
+
+  const membership = await prisma.workspaceMember.findUnique({
+    where: {
+      workspaceId_userId: { workspaceId, userId: accountSession.userId },
+    },
+  });
+  if (!membership) {
+    return context.json({ error: "Workspace is not available" }, 404);
+  }
+
+  const [memberships, projects] = await Promise.all([
+    prisma.workspaceMember.findMany({
+      where: { workspaceId },
+      include: {
+        user: {
+          select: { id: true, displayName: true, username: true },
+        },
+      },
+      orderBy: [{ role: "asc" }, { joinedAt: "asc" }],
+    }),
+    prisma.project.findMany({
+      where: { workspaceId },
+      select: {
+        id: true,
+        name: true,
+        projectMembers: { select: { userId: true } },
+      },
+      orderBy: { name: "asc" },
+    }),
+  ]);
+
+  return context.json({
+    projects: projects.map(({ id, name }) => ({ id, name })),
+    members: memberships.map(({ user, role, joinedAt }) => ({
+      userId: user.id,
+      displayName: user.displayName,
+      username: user.username,
+      role,
+      joinedAt,
+      projects:
+        role === "owner"
+          ? projects.map(({ id, name }) => ({ id, name }))
+          : projects
+              .filter(({ projectMembers }) =>
+                projectMembers.some(({ userId }) => userId === user.id),
+              )
+              .map(({ id, name }) => ({ id, name })),
+    })),
+  });
+});
+
+sessionRoutes.put(
+  "/workspace/:workspaceId/members/:userId/projects",
+  async (context) => {
+    const providedToken = getCookie(context, ACCOUNT_SESSION_COOKIE_NAME);
+    if (!providedToken) {
+      return context.json({ error: "Account session required" }, 401);
+    }
+
+    const workspaceId = context.req.param("workspaceId");
+    const targetUserId = context.req.param("userId");
+    const uuidPattern =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidPattern.test(workspaceId) || !uuidPattern.test(targetUserId)) {
+      return context.json({ error: "Invalid workspace or user id" }, 400);
+    }
+
+    const body = await context.req.json().catch(() => ({}));
+    if (!Array.isArray(body.projectIds)) {
+      return context.json({ error: "projectIds must be an array" }, 400);
+    }
+    const projectIds = parseProjectIds(body.projectIds);
+    if (projectIds.length !== new Set(body.projectIds).size) {
+      return context.json({ error: "Invalid project ids" }, 400);
+    }
+
+    const accountSession = await getAccountSessionByToken(providedToken);
+    if (!accountSession || accountSession.user.kind !== "account") {
+      return context.json({ error: "Account session expired" }, 401);
+    }
+
+    const ownerMembership = await prisma.workspaceMember.findUnique({
+      where: {
+        workspaceId_userId: {
+          workspaceId,
+          userId: accountSession.userId,
+        },
+      },
+    });
+    if (!ownerMembership || ownerMembership.role !== "owner") {
+      return context.json({ error: "Workspace owner required" }, 403);
+    }
+
+    const targetMembership = await prisma.workspaceMember.findUnique({
+      where: { workspaceId_userId: { workspaceId, userId: targetUserId } },
+    });
+    if (!targetMembership) {
+      return context.json({ error: "Workspace member not found" }, 404);
+    }
+    if (targetMembership.role !== "member") {
+      return context.json({ error: "Cannot change owner project access" }, 409);
+    }
+
+    const validProjects = projectIds.length
+      ? await prisma.project.findMany({
+          where: { id: { in: projectIds }, workspaceId },
+          select: { id: true },
+        })
+      : [];
+    if (validProjects.length !== projectIds.length) {
+      return context.json(
+        { error: "One or more project ids are invalid" },
+        400,
+      );
+    }
+
+    await prisma.$transaction(async (transaction) => {
+      await transaction.projectMember.deleteMany({
+        where: { userId: targetUserId, project: { workspaceId } },
+      });
+      if (projectIds.length) {
+        await transaction.projectMember.createMany({
+          data: projectIds.map((projectId) => ({
+            projectId,
+            userId: targetUserId,
+            role: "member" as const,
+          })),
+        });
+      }
+    });
+
+    return context.json({ userId: targetUserId, projectIds });
+  },
+);
+
+sessionRoutes.delete(
+  "/workspace/:workspaceId/members/:userId",
+  async (context) => {
+    const providedToken = getCookie(context, ACCOUNT_SESSION_COOKIE_NAME);
+    if (!providedToken) {
+      return context.json({ error: "Account session required" }, 401);
+    }
+
+    const workspaceId = context.req.param("workspaceId");
+    const targetUserId = context.req.param("userId");
+    const uuidPattern =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidPattern.test(workspaceId) || !uuidPattern.test(targetUserId)) {
+      return context.json({ error: "Invalid workspace or user id" }, 400);
+    }
+
+    const accountSession = await getAccountSessionByToken(providedToken);
+    if (!accountSession || accountSession.user.kind !== "account") {
+      return context.json({ error: "Account session expired" }, 401);
+    }
+
+    const ownerMembership = await prisma.workspaceMember.findUnique({
+      where: {
+        workspaceId_userId: {
+          workspaceId,
+          userId: accountSession.userId,
+        },
+      },
+    });
+    if (!ownerMembership || ownerMembership.role !== "owner") {
+      return context.json({ error: "Workspace owner required" }, 403);
+    }
+    if (targetUserId === accountSession.userId) {
+      return context.json(
+        { error: "Workspace owner cannot remove themselves" },
+        409,
+      );
+    }
+
+    const targetMembership = await prisma.workspaceMember.findUnique({
+      where: { workspaceId_userId: { workspaceId, userId: targetUserId } },
+    });
+    if (!targetMembership) {
+      return context.json({ error: "Workspace member not found" }, 404);
+    }
+    if (targetMembership.role !== "member") {
+      return context.json({ error: "Workspace owner cannot be removed" }, 409);
+    }
+
+    await prisma.$transaction(async (transaction) => {
+      await transaction.projectMember.deleteMany({
+        where: { userId: targetUserId, project: { workspaceId } },
+      });
+      await transaction.workspaceMember.delete({
+        where: {
+          workspaceId_userId: { workspaceId, userId: targetUserId },
+        },
+      });
+      const fallbackMembership = await transaction.workspaceMember.findFirst({
+        where: { userId: targetUserId, workspaceId: { not: workspaceId } },
+        orderBy: { joinedAt: "asc" },
+        select: { workspaceId: true },
+      });
+      if (fallbackMembership) {
+        await transaction.session.updateMany({
+          where: { userId: targetUserId, workspaceId },
+          data: { workspaceId: fallbackMembership.workspaceId },
+        });
+      }
+    });
+
+    return context.json({ removed: true, workspaceId, userId: targetUserId });
+  },
+);
+
 sessionRoutes.get("/workspace/invites", async (context) => {
   const providedToken = getCookie(context, ACCOUNT_SESSION_COOKIE_NAME);
   if (!providedToken) {
@@ -515,7 +744,11 @@ sessionRoutes.patch("/workspace/invites/:inviteId/read", async (context) => {
 
   const readAt = invite.readAt ?? new Date();
   await prisma.workspaceInvite.updateMany({
-    where: { id: inviteId, targetUserId: accountSession.userId, status: "pending" },
+    where: {
+      id: inviteId,
+      targetUserId: accountSession.userId,
+      status: "pending",
+    },
     data: { readAt },
   });
 

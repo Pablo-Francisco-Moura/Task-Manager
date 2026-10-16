@@ -64,6 +64,7 @@ function parsePassword(value: unknown): string | null {
 }
 
 const sessionRoutes = new Hono();
+const WORKSPACE_INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 function setGuestCookie(
   context: Parameters<typeof setCookie>[0],
@@ -104,6 +105,47 @@ async function getAccountSessionByToken(token: string) {
       workspace: { select: { id: true, name: true, kind: true } },
     },
   });
+}
+
+function parseProjectIds(value: unknown): number[] {
+  if (!Array.isArray(value)) return [];
+
+  const projectIds = value.flatMap((item) => {
+    if (typeof item === "number" && Number.isInteger(item) && item > 0) {
+      return [item];
+    }
+    if (typeof item === "string" && /^\d+$/.test(item.trim())) {
+      const parsed = Number(item);
+      return Number.isInteger(parsed) && parsed > 0 ? [parsed] : [];
+    }
+    return [];
+  });
+
+  return [...new Set(projectIds)];
+}
+
+async function expirePendingInvites(where: {
+  workspaceId?: string;
+  targetUserId?: string;
+}) {
+  await prisma.workspaceInvite.updateMany({
+    where: {
+      ...where,
+      status: "pending",
+      expiresAt: { lte: new Date() },
+    },
+    data: { status: "expired" },
+  });
+}
+
+async function expireInviteIfNeeded(inviteId: number, expiresAt: Date) {
+  if (expiresAt > new Date()) return false;
+
+  await prisma.workspaceInvite.updateMany({
+    where: { id: inviteId, status: "pending" },
+    data: { status: "expired" },
+  });
+  return true;
 }
 
 sessionRoutes.get("/workspace", async (context) => {
@@ -390,6 +432,451 @@ sessionRoutes.post("/workspace", async (context) => {
     },
     201,
   );
+});
+
+sessionRoutes.get("/workspace/invites", async (context) => {
+  const providedToken = getCookie(context, ACCOUNT_SESSION_COOKIE_NAME);
+  if (!providedToken) {
+    return context.json({ error: "Account session required" }, 401);
+  }
+
+  const accountSession = await getAccountSessionByToken(providedToken);
+  if (!accountSession || accountSession.user.kind !== "account") {
+    return context.json({ error: "Account session expired" }, 401);
+  }
+
+  await expirePendingInvites({ targetUserId: accountSession.userId });
+  const invites = await prisma.workspaceInvite.findMany({
+    where: { targetUserId: accountSession.userId },
+    include: {
+      workspace: { select: { id: true, name: true, kind: true } },
+      createdBy: { select: { id: true, displayName: true, username: true } },
+      targetUser: { select: { id: true, displayName: true, username: true } },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return context.json({
+    invites: invites.map(({ workspace, createdBy, targetUser, ...invite }) => ({
+      ...invite,
+      workspaceId: invite.workspaceId,
+      createdById: invite.createdById,
+      targetUserId: invite.targetUserId,
+      workspace: {
+        id: workspace.id,
+        name: workspace.name,
+        kind: workspace.kind,
+      },
+      createdBy: {
+        id: createdBy.id,
+        displayName: createdBy.displayName,
+        username: createdBy.username,
+      },
+      targetUser: {
+        id: targetUser.id,
+        displayName: targetUser.displayName,
+        username: targetUser.username,
+      },
+    })),
+  });
+});
+
+sessionRoutes.get("/workspace/:workspaceId/invites", async (context) => {
+  const providedToken = getCookie(context, ACCOUNT_SESSION_COOKIE_NAME);
+  if (!providedToken) {
+    return context.json({ error: "Account session required" }, 401);
+  }
+
+  const workspaceId = context.req.param("workspaceId");
+  if (
+    !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+      workspaceId,
+    )
+  ) {
+    return context.json({ error: "Invalid workspace id" }, 400);
+  }
+
+  const accountSession = await getAccountSessionByToken(providedToken);
+  if (!accountSession || accountSession.user.kind !== "account") {
+    return context.json({ error: "Account session expired" }, 401);
+  }
+
+  const membership = await prisma.workspaceMember.findUnique({
+    where: {
+      workspaceId_userId: {
+        workspaceId,
+        userId: accountSession.userId,
+      },
+    },
+  });
+  if (!membership) {
+    return context.json({ error: "Workspace is not available" }, 404);
+  }
+  if (membership.role !== "owner") {
+    return context.json({ error: "Workspace owner required" }, 403);
+  }
+
+  await expirePendingInvites({ workspaceId });
+  const invites = await prisma.workspaceInvite.findMany({
+    where: { workspaceId },
+    include: {
+      createdBy: { select: { id: true, displayName: true, username: true } },
+      targetUser: { select: { id: true, displayName: true, username: true } },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return context.json({
+    invites: invites.map(({ createdBy, targetUser, ...invite }) => ({
+      ...invite,
+      createdBy: {
+        id: createdBy.id,
+        displayName: createdBy.displayName,
+        username: createdBy.username,
+      },
+      targetUser: {
+        id: targetUser.id,
+        displayName: targetUser.displayName,
+        username: targetUser.username,
+      },
+    })),
+  });
+});
+
+sessionRoutes.post("/workspace/:workspaceId/invite", async (context) => {
+  const providedToken = getCookie(context, ACCOUNT_SESSION_COOKIE_NAME);
+  if (!providedToken) {
+    return context.json({ error: "Account session required" }, 401);
+  }
+
+  const workspaceId = context.req.param("workspaceId");
+  if (
+    !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+      workspaceId,
+    )
+  ) {
+    return context.json({ error: "Invalid workspace id" }, 400);
+  }
+
+  const body = await context.req.json().catch(() => ({}));
+  const username = parseUsername(body.username);
+  const projectIds = parseProjectIds(body.projectIds);
+
+  if (!username) {
+    return context.json({ error: "A valid username is required" }, 400);
+  }
+
+  const accountSession = await getAccountSessionByToken(providedToken);
+  if (!accountSession || accountSession.user.kind !== "account") {
+    return context.json({ error: "Account session expired" }, 401);
+  }
+
+  const membership = await prisma.workspaceMember.findUnique({
+    where: {
+      workspaceId_userId: {
+        workspaceId,
+        userId: accountSession.userId,
+      },
+    },
+  });
+  if (!membership) {
+    return context.json({ error: "Workspace is not available" }, 404);
+  }
+  if (membership.role !== "owner") {
+    return context.json({ error: "Workspace owner required" }, 403);
+  }
+
+  const targetUser = await prisma.user.findUnique({
+    where: { username },
+    select: { id: true, username: true, displayName: true },
+  });
+  if (!targetUser) {
+    return context.json({ error: "User not found" }, 404);
+  }
+  if (targetUser.id === accountSession.userId) {
+    return context.json({ error: "You cannot invite yourself" }, 409);
+  }
+
+  const existingMembership = await prisma.workspaceMember.findUnique({
+    where: {
+      workspaceId_userId: {
+        workspaceId,
+        userId: targetUser.id,
+      },
+    },
+  });
+  if (existingMembership) {
+    return context.json({ error: "User is already a workspace member" }, 409);
+  }
+
+  await expirePendingInvites({ workspaceId, targetUserId: targetUser.id });
+
+  const validProjects = projectIds.length
+    ? await prisma.project.findMany({
+        where: { id: { in: projectIds }, workspaceId },
+        select: { id: true },
+      })
+    : [];
+  const validProjectIds = validProjects.map(({ id }) => id);
+  if (validProjectIds.length !== projectIds.length) {
+    return context.json({ error: "One or more project ids are invalid" }, 400);
+  }
+
+  const pendingInvite = await prisma.workspaceInvite.findFirst({
+    where: {
+      workspaceId,
+      targetUserId: targetUser.id,
+      status: "pending",
+    },
+  });
+  if (pendingInvite) {
+    return context.json(
+      {
+        id: pendingInvite.id,
+        workspaceId: pendingInvite.workspaceId,
+        createdById: pendingInvite.createdById,
+        targetUserId: pendingInvite.targetUserId,
+        status: pendingInvite.status,
+        projectIds: pendingInvite.projectIds,
+        createdAt: pendingInvite.createdAt,
+      },
+      200,
+    );
+  }
+
+  const invite = await prisma.workspaceInvite.create({
+    data: {
+      workspaceId,
+      createdById: accountSession.userId,
+      targetUserId: targetUser.id,
+      status: "pending",
+      projectIds: validProjectIds,
+      expiresAt: new Date(Date.now() + WORKSPACE_INVITE_TTL_MS),
+    },
+  });
+
+  return context.json(
+    {
+      id: invite.id,
+      workspaceId: invite.workspaceId,
+      createdById: invite.createdById,
+      targetUserId: invite.targetUserId,
+      status: invite.status,
+      projectIds: invite.projectIds,
+      expiresAt: invite.expiresAt,
+      createdAt: invite.createdAt,
+    },
+    201,
+  );
+});
+
+sessionRoutes.post("/workspace/invites/:inviteId/accept", async (context) => {
+  const providedToken = getCookie(context, ACCOUNT_SESSION_COOKIE_NAME);
+  if (!providedToken) {
+    return context.json({ error: "Account session required" }, 401);
+  }
+
+  const inviteId = Number(context.req.param("inviteId"));
+  if (!Number.isInteger(inviteId) || inviteId <= 0) {
+    return context.json({ error: "Invalid invite id" }, 400);
+  }
+
+  const accountSession = await getAccountSessionByToken(providedToken);
+  if (!accountSession || accountSession.user.kind !== "account") {
+    return context.json({ error: "Account session expired" }, 401);
+  }
+
+  const invite = await prisma.workspaceInvite.findUnique({
+    where: { id: inviteId },
+  });
+  if (!invite) {
+    return context.json({ error: "Invite not found" }, 404);
+  }
+  if (invite.targetUserId !== accountSession.userId) {
+    return context.json({ error: "Invite is not for this user" }, 403);
+  }
+  if (
+    invite.status === "pending" &&
+    (await expireInviteIfNeeded(invite.id, invite.expiresAt))
+  ) {
+    return context.json({ error: "Invite has expired" }, 409);
+  }
+  if (invite.status !== "pending") {
+    return context.json({ error: "Invite is not pending" }, 409);
+  }
+
+  const existingMembership = await prisma.workspaceMember.findUnique({
+    where: {
+      workspaceId_userId: {
+        workspaceId: invite.workspaceId,
+        userId: accountSession.userId,
+      },
+    },
+  });
+  if (existingMembership) {
+    return context.json({ error: "User is already a workspace member" }, 409);
+  }
+
+  const validProjects = invite.projectIds.length
+    ? await prisma.project.findMany({
+        where: {
+          id: { in: invite.projectIds },
+          workspaceId: invite.workspaceId,
+        },
+        select: { id: true },
+      })
+    : [];
+  const validProjectIds = validProjects.map(({ id }) => id);
+  if (validProjectIds.length !== invite.projectIds.length) {
+    return context.json(
+      { error: "Invite references projects outside the workspace" },
+      409,
+    );
+  }
+
+  const result = await prisma.$transaction(async (transaction) => {
+    await transaction.workspaceMember.upsert({
+      where: {
+        workspaceId_userId: {
+          workspaceId: invite.workspaceId,
+          userId: accountSession.userId,
+        },
+      },
+      update: { role: "member" },
+      create: {
+        workspaceId: invite.workspaceId,
+        userId: accountSession.userId,
+        role: "member",
+      },
+    });
+
+    for (const projectId of invite.projectIds) {
+      await transaction.projectMember.upsert({
+        where: {
+          projectId_userId: { projectId, userId: accountSession.userId },
+        },
+        update: {},
+        create: { projectId, userId: accountSession.userId, role: "member" },
+      });
+    }
+
+    await transaction.workspaceInvite.update({
+      where: { id: invite.id },
+      data: { status: "accepted" },
+    });
+
+    return {
+      accepted: true,
+      workspaceId: invite.workspaceId,
+      userId: accountSession.userId,
+      projectIds: invite.projectIds,
+    };
+  });
+
+  return context.json(result, 200);
+});
+
+sessionRoutes.post("/workspace/invites/:inviteId/decline", async (context) => {
+  const providedToken = getCookie(context, ACCOUNT_SESSION_COOKIE_NAME);
+  if (!providedToken) {
+    return context.json({ error: "Account session required" }, 401);
+  }
+
+  const inviteId = Number(context.req.param("inviteId"));
+  if (!Number.isInteger(inviteId) || inviteId <= 0) {
+    return context.json({ error: "Invalid invite id" }, 400);
+  }
+
+  const accountSession = await getAccountSessionByToken(providedToken);
+  if (!accountSession || accountSession.user.kind !== "account") {
+    return context.json({ error: "Account session expired" }, 401);
+  }
+
+  const invite = await prisma.workspaceInvite.findUnique({
+    where: { id: inviteId },
+  });
+  if (!invite) {
+    return context.json({ error: "Invite not found" }, 404);
+  }
+  if (invite.targetUserId !== accountSession.userId) {
+    return context.json({ error: "Invite is not for this user" }, 403);
+  }
+  if (
+    invite.status === "pending" &&
+    (await expireInviteIfNeeded(invite.id, invite.expiresAt))
+  ) {
+    return context.json({ error: "Invite has expired" }, 409);
+  }
+  if (invite.status !== "pending") {
+    return context.json({ error: "Invite is not pending" }, 409);
+  }
+
+  await prisma.workspaceInvite.update({
+    where: { id: inviteId },
+    data: { status: "declined" },
+  });
+
+  return context.json({
+    declined: true,
+    inviteId,
+    workspaceId: invite.workspaceId,
+  });
+});
+
+sessionRoutes.delete("/workspace/invites/:inviteId", async (context) => {
+  const providedToken = getCookie(context, ACCOUNT_SESSION_COOKIE_NAME);
+  if (!providedToken) {
+    return context.json({ error: "Account session required" }, 401);
+  }
+
+  const inviteId = Number(context.req.param("inviteId"));
+  if (!Number.isInteger(inviteId) || inviteId <= 0) {
+    return context.json({ error: "Invalid invite id" }, 400);
+  }
+
+  const accountSession = await getAccountSessionByToken(providedToken);
+  if (!accountSession || accountSession.user.kind !== "account") {
+    return context.json({ error: "Account session expired" }, 401);
+  }
+
+  const invite = await prisma.workspaceInvite.findUnique({
+    where: { id: inviteId },
+  });
+  if (!invite) {
+    return context.json({ error: "Invite not found" }, 404);
+  }
+
+  const membership = await prisma.workspaceMember.findUnique({
+    where: {
+      workspaceId_userId: {
+        workspaceId: invite.workspaceId,
+        userId: accountSession.userId,
+      },
+    },
+  });
+  if (!membership || membership.role !== "owner") {
+    return context.json({ error: "Workspace owner required" }, 403);
+  }
+  if (
+    invite.status === "pending" &&
+    (await expireInviteIfNeeded(invite.id, invite.expiresAt))
+  ) {
+    return context.json({ error: "Invite has expired" }, 409);
+  }
+  if (invite.status !== "pending") {
+    return context.json({ error: "Invite is not pending" }, 409);
+  }
+
+  await prisma.workspaceInvite.update({
+    where: { id: inviteId },
+    data: { status: "revoked" },
+  });
+
+  return context.json({
+    revoked: true,
+    inviteId,
+    workspaceId: invite.workspaceId,
+  });
 });
 
 sessionRoutes.post("/sign-in", async (context) => {

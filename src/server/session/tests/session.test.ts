@@ -194,9 +194,7 @@ describe("Guest workspace session", () => {
     await prisma.user.update({
       where: { id: userId },
       data: {
-        passwordHash: createHash("sha256")
-          .update("supersecret")
-          .digest("hex"),
+        passwordHash: createHash("sha256").update("supersecret").digest("hex"),
       },
     });
 
@@ -719,5 +717,159 @@ describe("Guest workspace session", () => {
     expect(
       await prisma.project.findUnique({ where: { id: project.id } }),
     ).not.toBeNull();
+  });
+
+  test("should allow workspace owners to invite a user by username and accept the invite", async () => {
+    const ownerResponse = await POST(
+      apiRequest("session/account", undefined, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          displayName: "Ana",
+          username: "ana",
+          password: "supersecret",
+          workspaceName: "Estudos",
+        }),
+      }),
+    );
+    const ownerCookie = cookieFrom(ownerResponse);
+    const workspaceId = (await ownerResponse.json()).workspaceId as string;
+
+    const projectResponse = await POST(
+      apiRequest("project", ownerCookie, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: "Pessoal" }),
+      }),
+    );
+    const projectId = (await projectResponse.json()).id as number;
+
+    const memberResponse = await POST(
+      apiRequest("session/account", undefined, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          displayName: "Bia",
+          username: "bia",
+          password: "supersecret",
+          workspaceName: "Bia",
+        }),
+      }),
+    );
+    const memberCookie = cookieFrom(memberResponse);
+    const memberUserId = (await memberResponse.json()).user.id as string;
+
+    const inviteResponse = await POST(
+      apiRequest(`session/workspace/${workspaceId}/invite`, ownerCookie, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: "bia", projectIds: [projectId] }),
+      }),
+    );
+    expect(inviteResponse.status).toBe(201);
+    const invite = await inviteResponse.json();
+    expect(invite).toMatchObject({
+      workspaceId,
+      targetUserId: memberUserId,
+      status: "pending",
+      projectIds: [projectId],
+    });
+    expect(new Date(invite.expiresAt).getTime()).toBeGreaterThan(Date.now());
+
+    const inboxResponse = await nextApiGet(
+      apiRequest("session/workspace/invites", memberCookie),
+    );
+    expect(inboxResponse.status).toBe(200);
+    expect((await inboxResponse.json()).invites).toEqual([
+      expect.objectContaining({
+        workspaceId,
+        targetUserId: memberUserId,
+        status: "pending",
+      }),
+    ]);
+
+    const inviteId = invite.id as number;
+    const acceptResponse = await POST(
+      apiRequest(`session/workspace/invites/${inviteId}/accept`, memberCookie, {
+        method: "POST",
+      }),
+    );
+    expect(acceptResponse.status).toBe(200);
+    expect(await acceptResponse.json()).toMatchObject({
+      accepted: true,
+      workspaceId,
+      userId: memberUserId,
+    });
+
+    const membership = await prisma.workspaceMember.findUnique({
+      where: { workspaceId_userId: { workspaceId, userId: memberUserId } },
+    });
+    expect(membership).toMatchObject({ role: "member" });
+    expect(
+      await prisma.projectMember.findMany({
+        where: { userId: memberUserId, projectId },
+      }),
+    ).toHaveLength(1);
+  });
+
+  test("should expire an invitation before accepting it after its deadline", async () => {
+    const ownerResponse = await POST(
+      apiRequest("session/account", undefined, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          displayName: "Ana",
+          username: "ana",
+          password: "supersecret",
+          workspaceName: "Estudos",
+        }),
+      }),
+    );
+    const ownerCookie = cookieFrom(ownerResponse);
+    const workspaceId = (await ownerResponse.json()).workspaceId as string;
+
+    const memberResponse = await POST(
+      apiRequest("session/account", undefined, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          displayName: "Bia",
+          username: "bia",
+          password: "supersecret",
+          workspaceName: "Bia",
+        }),
+      }),
+    );
+    const memberCookie = cookieFrom(memberResponse);
+    const memberUserId = (await memberResponse.json()).user.id as string;
+
+    const inviteResponse = await POST(
+      apiRequest(`session/workspace/${workspaceId}/invite`, ownerCookie, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: "bia" }),
+      }),
+    );
+    const inviteId = (await inviteResponse.json()).id as number;
+    await prisma.workspaceInvite.update({
+      where: { id: inviteId },
+      data: { expiresAt: new Date(Date.now() - 1000) },
+    });
+
+    const acceptResponse = await POST(
+      apiRequest(`session/workspace/invites/${inviteId}/accept`, memberCookie, {
+        method: "POST",
+      }),
+    );
+
+    expect(acceptResponse.status).toBe(409);
+    expect(
+      await prisma.workspaceInvite.findUnique({ where: { id: inviteId } }),
+    ).toMatchObject({ status: "expired" });
+    expect(
+      await prisma.workspaceMember.findUnique({
+        where: { workspaceId_userId: { workspaceId, userId: memberUserId } },
+      }),
+    ).toBeNull();
   });
 });

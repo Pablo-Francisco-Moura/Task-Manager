@@ -34,32 +34,44 @@ enum WorkspaceRole {
   member
 }
 
+enum WorkspaceInviteStatus {
+  pending
+  accepted
+  declined
+  revoked
+  expired
+}
+
 model User {
-  id               String            @id @default(uuid()) @db.Uuid
-  displayName      String
-  username         String?           @unique
-  email            String?           @unique
-  passwordHash     String?
-  kind             UserKind          @default(guest)
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @default(now()) @updatedAt
-  sessions         Session[]
-  workspaceMembers WorkspaceMember[]
-  createdProjects  Project[]         @relation("ProjectCreator")
-  createdTasks     Task[]            @relation("TaskCreator")
+  id                    String            @id @default(uuid()) @db.Uuid
+  displayName           String
+  username              String?           @unique
+  email                 String?           @unique
+  passwordHash          String?
+  kind                  UserKind          @default(guest)
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @default(now()) @updatedAt
+  sessions              Session[]
+  workspaceMembers      WorkspaceMember[]
+  invitedWorkspaceJobs  WorkspaceInvite[] @relation("WorkspaceInviteCreatedBy")
+  receivedWorkspaceInvites WorkspaceInvite[] @relation("WorkspaceInviteTarget")
+  createdProjects       Project[]         @relation("ProjectCreator")
+  createdTasks          Task[]            @relation("TaskCreator")
+  projectMembers        ProjectMember[]
 
   @@map("users")
 }
 
 model Workspace {
-  id        String            @id @default(uuid()) @db.Uuid
-  name      String
-  kind      WorkspaceKind     @default(personal)
-  createdAt DateTime          @default(now())
-  updatedAt DateTime          @default(now()) @updatedAt
-  members   WorkspaceMember[]
-  projects  Project[]
-  sessions  Session[]
+  id             String            @id @default(uuid()) @db.Uuid
+  name           String
+  kind           WorkspaceKind     @default(personal)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @default(now()) @updatedAt
+  members        WorkspaceMember[]
+  projects       Project[]
+  sessions       Session[]
+  workspaceInvites WorkspaceInvite[]
 
   @@map("workspaces")
 }
@@ -96,19 +108,34 @@ model Session {
 }
 
 model Project {
-  id          Int      @id @default(autoincrement())
-  name        String
-  description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @default(now()) @updatedAt
+  id           Int      @id @default(autoincrement())
+  name         String
+  description  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now()) @updatedAt
 
-  workspaceId String    @db.Uuid
-  createdById String    @db.Uuid
-  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  createdBy   User      @relation("ProjectCreator", fields: [createdById], references: [id], onDelete: Restrict)
-  tasks       Task[]
+  workspaceId   String         @db.Uuid
+  createdById  String         @db.Uuid
+  workspace    Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  createdBy    User           @relation("ProjectCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  tasks        Task[]
+  projectMembers ProjectMember[]
 
   @@map("projects")
+}
+
+model ProjectMember {
+  projectId Int
+  userId    String @db.Uuid
+  role      WorkspaceRole @default(member)
+  joinedAt  DateTime @default(now())
+
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([projectId, userId])
+  @@index([userId])
+  @@map("project_members")
 }
 
 model Task {
@@ -129,4 +156,24 @@ model Task {
   createdBy   User    @relation("TaskCreator", fields: [createdById], references: [id], onDelete: Restrict)
 
   @@map("tasks")
+}
+
+model WorkspaceInvite {
+  id            Int                    @id @default(autoincrement())
+  workspaceId   String                 @db.Uuid
+  createdById   String                 @db.Uuid
+  targetUserId  String                 @db.Uuid
+  status        WorkspaceInviteStatus  @default(pending)
+  projectIds    Int[]                  @default([])
+  expiresAt     DateTime
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @default(now()) @updatedAt
+
+  workspace     Workspace              @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  createdBy     User                   @relation("WorkspaceInviteCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  targetUser    User                   @relation("WorkspaceInviteTarget", fields: [targetUserId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, status])
+  @@index([targetUserId, status])
+  @@map("workspace_invites")
 }

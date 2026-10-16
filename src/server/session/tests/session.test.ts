@@ -785,10 +785,22 @@ describe("Guest workspace session", () => {
         workspaceId,
         targetUserId: memberUserId,
         status: "pending",
+        readAt: null,
       }),
     ]);
 
     const inviteId = invite.id as number;
+    const readResponse = await nextApiPatch(
+      apiRequest(`session/workspace/invites/${inviteId}/read`, memberCookie, {
+        method: "PATCH",
+      }),
+    );
+    expect(readResponse.status).toBe(200);
+    expect(await readResponse.json()).toMatchObject({ read: true, status: "pending" });
+    expect(
+      await prisma.workspaceInvite.findUnique({ where: { id: inviteId } }),
+    ).toMatchObject({ status: "pending", readAt: expect.any(Date) });
+
     const acceptResponse = await POST(
       apiRequest(`session/workspace/invites/${inviteId}/accept`, memberCookie, {
         method: "POST",

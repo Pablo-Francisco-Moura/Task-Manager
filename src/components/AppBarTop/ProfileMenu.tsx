@@ -25,6 +25,7 @@ import AddOutlinedIcon from "@mui/icons-material/AddOutlined";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import LogoutOutlinedIcon from "@mui/icons-material/LogoutOutlined";
+import GroupAddOutlinedIcon from "@mui/icons-material/GroupAddOutlined";
 
 interface IProps {
   anchor: HTMLElement | null;
@@ -46,6 +47,7 @@ interface IProps {
   onDeleteWorkspace: (workspace: TypeWorkspaceMembership) => void;
   onEditGuestProfile: () => void;
   onOpenAccountDialog: (mode: TypeAccountDialogMode) => void;
+  onInviteMember: () => void;
 }
 
 export function ProfileMenu({
@@ -68,6 +70,7 @@ export function ProfileMenu({
   onSelectLanguage,
   onSignOut,
   onOpenAccountDialog,
+  onInviteMember,
 }: IProps) {
   const { t } = useTranslation();
   const activeWorkspace = accountWorkspaces.find(
@@ -169,6 +172,16 @@ export function ProfileMenu({
                 </IconButton>
               ) : null}
             </Stack>
+            {activeWorkspace?.role === "owner" ? (
+              <Button
+                size="small"
+                startIcon={<GroupAddOutlinedIcon />}
+                onClick={onInviteMember}
+                sx={{ mt: 1 }}
+              >
+                {t("notifications.manageInvites")}
+              </Button>
+            ) : null}
           </Box>
         </>
       ) : null}

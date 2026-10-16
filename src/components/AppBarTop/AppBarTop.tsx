@@ -40,6 +40,8 @@ import type {
 import styles from "./AppBarTop.module.css";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import WorkspacesOutlinedIcon from "@mui/icons-material/WorkspacesOutlined";
+import { WorkspaceInviteBell } from "../Notifications/WorkspaceInviteBell";
+import { WorkspaceInviteDialog } from "../Notifications/WorkspaceInviteDialog";
 
 export function resolveAccountDialogContent(
   mode: TypeAccountDialogMode,
@@ -101,6 +103,7 @@ export function AppBarTop() {
   >(null);
   const [workspaceError, setWorkspaceError] = useState<string | null>(null);
   const [isCreateWorkspaceOpen, setIsCreateWorkspaceOpen] = useState(false);
+  const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [newWorkspaceName, setNewWorkspaceName] = useState("");
   const [isCreatingWorkspace, setIsCreatingWorkspace] = useState(false);
   const [isRenameWorkspaceOpen, setIsRenameWorkspaceOpen] = useState(false);
@@ -786,6 +789,7 @@ export function AppBarTop() {
                 </Button>
               </Stack>
             )}
+            <WorkspaceInviteBell enabled={Boolean(accountSession)} language={language} />
             <IconButton
               aria-label={t("profile.open")}
               aria-haspopup="menu"
@@ -896,8 +900,17 @@ export function AppBarTop() {
             setProfileAnchor(null);
             openCreateAccountDialog(mode);
           }}
+          onInviteMember={() => {
+            setProfileAnchor(null);
+            setIsInviteDialogOpen(true);
+          }}
         />
       </AppBarDialogs>
+      <WorkspaceInviteDialog
+        open={isInviteDialogOpen}
+        workspaceId={activeWorkspaceId}
+        onClose={() => setIsInviteDialogOpen(false)}
+      />
     </>
   );
 }

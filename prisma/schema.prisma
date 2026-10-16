@@ -166,6 +166,7 @@ model WorkspaceInvite {
   status        WorkspaceInviteStatus  @default(pending)
   projectIds    Int[]                  @default([])
   expiresAt     DateTime
+  readAt        DateTime?
   createdAt     DateTime               @default(now())
   updatedAt     DateTime               @default(now()) @updatedAt
 

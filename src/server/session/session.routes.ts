@@ -481,6 +481,47 @@ sessionRoutes.get("/workspace/invites", async (context) => {
   });
 });
 
+sessionRoutes.patch("/workspace/invites/:inviteId/read", async (context) => {
+  const providedToken = getCookie(context, ACCOUNT_SESSION_COOKIE_NAME);
+  if (!providedToken) {
+    return context.json({ error: "Account session required" }, 401);
+  }
+
+  const inviteId = Number(context.req.param("inviteId"));
+  if (!Number.isInteger(inviteId) || inviteId <= 0) {
+    return context.json({ error: "Invalid invite id" }, 400);
+  }
+
+  const accountSession = await getAccountSessionByToken(providedToken);
+  if (!accountSession || accountSession.user.kind !== "account") {
+    return context.json({ error: "Account session expired" }, 401);
+  }
+
+  const invite = await prisma.workspaceInvite.findUnique({
+    where: { id: inviteId },
+  });
+  if (!invite) {
+    return context.json({ error: "Invite not found" }, 404);
+  }
+  if (invite.targetUserId !== accountSession.userId) {
+    return context.json({ error: "Invite is not for this user" }, 403);
+  }
+  if (
+    invite.status !== "pending" ||
+    (await expireInviteIfNeeded(invite.id, invite.expiresAt))
+  ) {
+    return context.json({ error: "Invite is not pending" }, 409);
+  }
+
+  const readAt = invite.readAt ?? new Date();
+  await prisma.workspaceInvite.updateMany({
+    where: { id: inviteId, targetUserId: accountSession.userId, status: "pending" },
+    data: { readAt },
+  });
+
+  return context.json({ read: true, inviteId, status: invite.status, readAt });
+});
+
 sessionRoutes.get("/workspace/:workspaceId/invites", async (context) => {
   const providedToken = getCookie(context, ACCOUNT_SESSION_COOKIE_NAME);
   if (!providedToken) {

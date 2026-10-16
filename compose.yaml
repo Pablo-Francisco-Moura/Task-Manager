@@ -29,10 +29,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      DATABASE_URL: postgresql://postgres:postgres@db:5432/dev_db
-    depends_on:
-      db:
-        condition: service_healthy
+      DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL in .env}
     volumes:
       - ./:/app
       - /app/node_modules

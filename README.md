@@ -183,22 +183,35 @@ Desenvolver um sistema full stack de gerenciamento de projetos e tarefas utiliza
    cd desafio-tecnico-one-fullstack
    ```
 3. **Certifique-se de que o Docker e o Docker Compose estão instalados em seu sistema.**
-4. Inicie a aplicação e o banco de dados:
+4. Configure `DATABASE_URL` no `.env`. Para desenvolvimento local, use a URL
+   de `dev_db` do `.env.example`; não deixe a URL de produção nesse arquivo se
+   não quiser que a aplicação local leia e altere dados de produção.
+5. Inicie a aplicação e o banco de dados:
    ```sh
    docker compose up --build -d
    ```
-   O Compose aguarda o PostgreSQL ficar pronto, aplica as migrations e inicia a
-   aplicação. Acesse http://localhost:3000.
+   O Compose passa `DATABASE_URL` do `.env` ao container. Ele inicia o PostgreSQL
+   local como serviço auxiliar, mas a aplicação se conecta ao banco especificado
+   nessa variável. Migrations não são aplicadas automaticamente na inicialização.
+   Acesse http://localhost:3000.
    Se precisar reiniciar a aplicação limpando o cache do Next.js, sem apagar os
    dados do banco, use:
    ```sh
    npm run dev:docker:clean
    ```
-5. (Opcional) Preencha o banco com algumas informações iniciais:
+6. Para aplicar migrations explicitamente ao banco configurado em `DATABASE_URL`:
+   ```sh
+   npm run migrate:deploy
+   ```
+   Revise o destino antes de executar, especialmente quando `.env` aponta para
+   produção. Na Vercel, configure `DATABASE_URL` nas Environment Variables do
+   projeto; o build executa `prisma generate` antes de `next build`. Aplique as
+   migrations de produção separadamente com `npm run migrate:deploy`.
+7. (Opcional) Preencha o banco com algumas informações iniciais:
    ```sh
    docker compose exec app npm run db:seed
    ```
-6. Para desenvolvimento diretamente no host ou para executar testes, instale as
+8. Para desenvolvimento diretamente no host ou para executar testes, instale as
    dependências com `npm ci` e crie cada arquivo a partir de seu próprio exemplo:
    ```sh
    cp .env.example .env
@@ -206,7 +219,7 @@ Desenvolver um sistema full stack de gerenciamento de projetos e tarefas utiliza
    ```
    `.env.example` aponta para `dev_db`; `.env.test.example` aponta para
    `test_db`. Depois, use `npm run dev` ou `npm run test`.
-7. (Opcional) Execute os testes:
+9. (Opcional) Execute os testes:
    ```sh
    npm run test
    ```

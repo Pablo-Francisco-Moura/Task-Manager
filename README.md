@@ -219,3 +219,4 @@ Boa sorte no desafio! 🚀
   - [x] [Adicionar prioridade às tarefas (`low`, `normal`, `high`)](docs/03-news.md#task-priority)
   - [x] [Adicionar horário opcional ao prazo da tarefa](docs/03-news.md#task-due-time)
   - [x] [Adicionar identidade guest e isolamento por workspace](docs/03-news.md#guest-workspace)
+  - [x] [Adicionar contas e múltiplos workspaces](docs/03-news.md#account-workspaces)

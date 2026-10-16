@@ -46,4 +46,12 @@
 
 **Escopo:** `POST /api/session/guest` cria ou reutiliza um usuário guest, um workspace pessoal e a membership `owner`. O navegador recebe um token aleatório em cookie `HttpOnly`, `SameSite=Lax` e `Secure` em produção; somente o hash do token é persistido. As rotas de projeto e tarefa exigem sessão válida e membership, e limitam leituras e escritas ao workspace da sessão. O prazo configurado para a sessão é de 30 dias.
 
+<a id="account-workspaces"></a>
+
+## Adicionar contas e múltiplos workspaces
+
+**Objetivo:** permitir que a pessoa crie uma conta e organize projetos e tarefas em workspaces próprios, mantendo a opção de uso como visitante.
+
+**Escopo:** permitir cadastro com login e senha, e-mail opcional, e autenticação por login ou e-mail. Após entrar na conta, permitir criar, trocar, renomear e excluir workspaces, respeitando a membership e o papel de owner no servidor. Projetos e tarefas da conta são persistidos e consultados no workspace ativo; dados locais só são importados após confirmação explícita. O encerramento da sessão revoga os tokens e retorna a aplicação ao fluxo de visitante.
+
 [Voltar à News](../README.md#news)

@@ -154,6 +154,14 @@ describe("Project API", () => {
       createdAt: expect.any(String),
       updatedAt: expect.any(String),
     });
+    expect(
+      await prisma.projectActivity.findFirst({
+        where: { projectId: 1, type: "project_created" },
+      }),
+    ).toMatchObject({
+      actorName: "Test Guest",
+      details: { projectName: "Test Project" },
+    });
   });
 
   // GET /api/project - Get all projects with their tasks.
@@ -181,7 +189,7 @@ describe("Project API", () => {
     );
   });
 
-  test("should restrict members to granted projects and prevent project creation", async () => {
+  test("should restrict members to granted projects and prevent project changes", async () => {
     const [allowedProject, hiddenProject] = await Promise.all([
       prisma.project.create({ data: { name: "Granted project" } }),
       prisma.project.create({ data: { name: "Hidden project" } }),
@@ -213,6 +221,25 @@ describe("Project API", () => {
       headers: { "Content-Type": "application/json" },
     });
     expect(createResponse.status).toBe(403);
+
+    const deniedGrantedProjectUpdate = await app.request(
+      `/projects/${allowedProject.id}`,
+      {
+        method: "PATCH",
+        body: JSON.stringify({ name: "Member edit attempt" }),
+        headers: { "Content-Type": "application/json" },
+      },
+    );
+    expect(deniedGrantedProjectUpdate.status).toBe(403);
+
+    const deniedGrantedProjectDelete = await app.request(
+      `/projects/${allowedProject.id}`,
+      { method: "DELETE" },
+    );
+    expect(deniedGrantedProjectDelete.status).toBe(403);
+    expect(
+      await prisma.project.findUnique({ where: { id: allowedProject.id } }),
+    ).toMatchObject({ name: "Granted project" });
 
     const deniedUpdate = await app.request(`/projects/${hiddenProject.id}`, {
       method: "PATCH",
@@ -378,6 +405,16 @@ describe("Project API", () => {
     expect(res.status).toBe(200);
     const json = await res.json();
     expect(json).toMatchObject({ id: project.id, name: newName });
+    expect(
+      await prisma.projectActivity.findFirst({
+        where: { projectId: project.id, type: "project_updated" },
+      }),
+    ).toMatchObject({
+      details: {
+        projectName: newName,
+        changes: { name: { from: "Old Project Name", to: newName } },
+      },
+    });
   });
 
   test("should update and clear a project description", async () => {

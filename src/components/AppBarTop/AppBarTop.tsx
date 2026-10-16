@@ -1,41 +1,45 @@
 "use client";
 
 import {
-  Box,
-  Chip,
-  Menu,
-  Stack,
-  Button,
-  Dialog,
-  MenuItem,
-  TextField,
-  IconButton,
-  Typography,
-  ButtonGroup,
-  DialogTitle,
-  DialogActions,
-  DialogContent,
-} from "@mui/material";
+  GUEST_PROFILE_STORAGE_KEY,
+  ACCOUNT_IMPORT_STORAGE_KEY,
+  ACCOUNT_SESSION_STORAGE_KEY,
+  MINIMUM_SESSION_LOADING_REPEAT_MS,
+  SESSION_PROGRESS_COMPLETE_DISPLAY_MS,
+  SESSION_BOOTSTRAP_COMPLETED_STORAGE_KEY,
+} from "@/constants/session";
+import {
+  defaultSelectedTab,
+  selectedTabStorageKey,
+  selectedProjectStorageKey,
+} from "@/constants/app";
+import {
+  accountWorkspaceRequest,
+  isAccountSessionExpired,
+  ACCOUNT_SESSION_EXPIRED_EVENT,
+} from "@/lib/accountWorkspaceApi";
+import { QUERY_KEYS } from "@/constants/queryKeys";
+import { ProfileMenu } from "./ProfileMenu";
+import { useMainStore } from "@/store/mainStore";
+import { AppBarDialogs } from "./AppBarDialogs";
+import { AccountDialog } from "./AccountDialog";
+import { useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
+import { useProjectStore } from "@/store/projectStore";
+import { LOCAL_STORAGE_KEY } from "@/constants/localData";
+import { useWorkspaceActions } from "./useWorkspaceActions";
+import { importLocalWorkspaceData } from "@/lib/localDataRepository";
+import { useEffect, useRef, useState } from "react";
+import { Stack, Button, IconButton, Typography } from "@mui/material";
 import type {
   TypeAccountDialogMode,
   TypeGuestProfileState,
   TypeAccountSessionState,
+  TypeWorkspaceMembership,
 } from "@/types";
-import {
-  GUEST_PROFILE_STORAGE_KEY,
-  ACCOUNT_IMPORT_STORAGE_KEY,
-  ACCOUNT_SESSION_STORAGE_KEY,
-  ACCOUNT_WORKSPACE_SUGGESTIONS,
-} from "@/constants/session";
-import { ThemeSwitch } from "../ThemeSwitch";
-import { useTranslation } from "react-i18next";
-import { LOCAL_STORAGE_KEY } from "@/constants/localData";
-import { useEffect, useState } from "react";
-import { importLocalWorkspaceData } from "@/lib/localDataRepository";
 import styles from "./AppBarTop.module.css";
-import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
+import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import WorkspacesOutlinedIcon from "@mui/icons-material/WorkspacesOutlined";
-import AccountCircleOutlinedIcon from "@mui/icons-material/AccountCircleOutlined";
 
 export function resolveAccountDialogContent(
   mode: TypeAccountDialogMode,
@@ -56,13 +60,26 @@ export function AppBarTop() {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] =
+    useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [hasAttemptedAccountSubmit, setHasAttemptedAccountSubmit] =
+    useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [workspaceName, setWorkspaceName] = useState("");
   const [isCreateAccountOpen, setIsCreateAccountOpen] = useState(false);
   const [accountDialogMode, setAccountDialogMode] =
     useState<TypeAccountDialogMode>("signUp");
-  const accountDialogContent = resolveAccountDialogContent(accountDialogMode, t);
+  const queryClient = useQueryClient();
+  const setSelectedProject = useProjectStore(
+    (state) => state.setSelectedProject,
+  );
+  const setStoreWorkspaceId = useProjectStore(
+    (state) => state.setActiveWorkspaceId,
+  );
+  const setSelectedTab = useMainStore((state) => state.setSelectedTab);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [profileAnchor, setProfileAnchor] = useState<HTMLElement | null>(null);
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
@@ -72,13 +89,79 @@ export function AppBarTop() {
   const [editedProfileName, setEditedProfileName] = useState("");
   const [accountSession, setAccountSession] =
     useState<TypeAccountSessionState | null>(null);
+  const [accountWorkspaces, setAccountWorkspaces] = useState<
+    TypeWorkspaceMembership[]
+  >([]);
+  const [activeWorkspaceId, setActiveWorkspaceId] = useState<string | null>(
+    null,
+  );
+  const [isLoadingWorkspaces, setIsLoadingWorkspaces] = useState(false);
+  const [switchingWorkspaceId, setSwitchingWorkspaceId] = useState<
+    string | null
+  >(null);
+  const [workspaceError, setWorkspaceError] = useState<string | null>(null);
+  const [isCreateWorkspaceOpen, setIsCreateWorkspaceOpen] = useState(false);
+  const [newWorkspaceName, setNewWorkspaceName] = useState("");
+  const [isCreatingWorkspace, setIsCreatingWorkspace] = useState(false);
+  const [isRenameWorkspaceOpen, setIsRenameWorkspaceOpen] = useState(false);
+  const [renamedWorkspaceName, setRenamedWorkspaceName] = useState("");
+  const [isRenamingWorkspace, setIsRenamingWorkspace] = useState(false);
+  const [workspaceToDelete, setWorkspaceToDelete] =
+    useState<TypeWorkspaceMembership | null>(null);
+  const [isDeletingWorkspace, setIsDeletingWorkspace] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
+  const [isResettingWorkspace, setIsResettingWorkspace] = useState(false);
+  const signOutActionRef = useRef<() => Promise<void>>(async () => {});
+  const isSigningOutRef = useRef(false);
+  const workspaceActions = useWorkspaceActions({
+    accountSession,
+    setAccountSession,
+    accountWorkspaces,
+    setAccountWorkspaces,
+    activeWorkspaceId,
+    setActiveWorkspaceId,
+    newWorkspaceName,
+    setNewWorkspaceName,
+    renamedWorkspaceName,
+    setRenamedWorkspaceName,
+    workspaceToDelete,
+    setWorkspaceToDelete,
+    setIsCreateWorkspaceOpen,
+    setIsRenameWorkspaceOpen,
+    setSwitchingWorkspaceId,
+    setIsCreatingWorkspace,
+    setIsDeletingWorkspace,
+    setIsRenamingWorkspace,
+    setProfileAnchor,
+    setWorkspaceError,
+  });
+
+  useEffect(() => {
+    const handleExpiredAccountSession = () => {
+      void signOutActionRef.current();
+    };
+    window.addEventListener(
+      ACCOUNT_SESSION_EXPIRED_EVENT,
+      handleExpiredAccountSession,
+    );
+    return () => {
+      window.removeEventListener(
+        ACCOUNT_SESSION_EXPIRED_EVENT,
+        handleExpiredAccountSession,
+      );
+    };
+  }, []);
 
   useEffect(() => {
     try {
-      const savedProfile = window.localStorage.getItem(GUEST_PROFILE_STORAGE_KEY);
+      const savedProfile = window.localStorage.getItem(
+        GUEST_PROFILE_STORAGE_KEY,
+      );
       if (!savedProfile) return;
 
-      const parsedProfile = JSON.parse(savedProfile) as Partial<TypeGuestProfileState>;
+      const parsedProfile = JSON.parse(
+        savedProfile,
+      ) as Partial<TypeGuestProfileState>;
       setGuestProfile({
         displayName:
           typeof parsedProfile.displayName === "string"
@@ -130,34 +213,147 @@ export function AppBarTop() {
   }, [accountSession]);
 
   useEffect(() => {
-    try {
-      const savedValue = window.localStorage.getItem(
-        ACCOUNT_SESSION_STORAGE_KEY,
-      );
-      if (!savedValue) return;
+    let isCurrent = true;
+    const restoreAccountSession = async () => {
+      try {
+        const savedValue = window.localStorage.getItem(
+          ACCOUNT_SESSION_STORAGE_KEY,
+        );
+        if (savedValue) {
+          const parsedValue = JSON.parse(
+            savedValue,
+          ) as Partial<TypeAccountSessionState>;
+          const restoredSession: TypeAccountSessionState = {
+            displayName:
+              typeof parsedValue.displayName === "string"
+                ? parsedValue.displayName.trim()
+                : "",
+            workspaceName:
+              typeof parsedValue.workspaceName === "string" &&
+              parsedValue.workspaceName.trim()
+                ? parsedValue.workspaceName.trim()
+                : "Pessoal",
+            workspaceId:
+              typeof parsedValue.workspaceId === "string"
+                ? parsedValue.workspaceId
+                : undefined,
+          };
+          setAccountSession(restoredSession);
+          setStoreWorkspaceId(restoredSession.workspaceId ?? null);
+          return;
+        }
 
-      const parsedValue = JSON.parse(
-        savedValue,
-      ) as Partial<TypeAccountSessionState>;
-      const nextDisplayName =
-        typeof parsedValue.displayName === "string" &&
-        parsedValue.displayName.trim()
-          ? parsedValue.displayName.trim()
-          : "";
-      const nextWorkspaceName =
-        typeof parsedValue.workspaceName === "string" &&
-        parsedValue.workspaceName.trim()
-          ? parsedValue.workspaceName.trim()
-          : "Pessoal";
+        const response = await fetch("/api/session/workspace", {
+          credentials: "same-origin",
+        });
+        if (!response.ok) return;
 
-      setAccountSession({
-        displayName: nextDisplayName,
-        workspaceName: nextWorkspaceName,
-      });
-    } catch {
-      setAccountSession(null);
+        const payload = (await response.json()) as {
+          user?: { displayName?: unknown };
+          activeWorkspaceId?: unknown;
+          workspaces?: TypeWorkspaceMembership[];
+        };
+        const activeWorkspaceId =
+          typeof payload.activeWorkspaceId === "string"
+            ? payload.activeWorkspaceId
+            : null;
+        const activeWorkspace = payload.workspaces?.find(
+          (workspace) => workspace.id === activeWorkspaceId,
+        );
+        if (!activeWorkspaceId || !activeWorkspace || !isCurrent) return;
+
+        const restoredSession: TypeAccountSessionState = {
+          displayName:
+            typeof payload.user?.displayName === "string"
+              ? payload.user.displayName
+              : "",
+          workspaceName: activeWorkspace.name,
+          workspaceId: activeWorkspaceId,
+        };
+        setAccountSession(restoredSession);
+        setStoreWorkspaceId(activeWorkspaceId);
+        try {
+          window.localStorage.setItem(
+            ACCOUNT_SESSION_STORAGE_KEY,
+            JSON.stringify(restoredSession),
+          );
+        } catch {
+          // Continue with the server-backed account state when storage is unavailable.
+        }
+      } catch {
+        if (isCurrent) setAccountSession(null);
+      }
+    };
+
+    void restoreAccountSession();
+    return () => {
+      isCurrent = false;
+    };
+  }, [setStoreWorkspaceId]);
+
+  useEffect(() => {
+    if (!accountSession) {
+      setAccountWorkspaces([]);
+      setActiveWorkspaceId(null);
+      setStoreWorkspaceId(null);
+      setWorkspaceError(null);
+      return;
     }
-  }, []);
+
+    let isCurrent = true;
+    setIsLoadingWorkspaces(true);
+    setWorkspaceError(null);
+    void accountWorkspaceRequest<{
+      activeWorkspaceId: string;
+      workspaces: TypeWorkspaceMembership[];
+    }>("/api/session/workspace")
+      .then((payload) => {
+        if (!isCurrent) return;
+
+        setAccountWorkspaces(payload.workspaces);
+        setActiveWorkspaceId(payload.activeWorkspaceId);
+        setStoreWorkspaceId(payload.activeWorkspaceId);
+        const activeWorkspace = payload.workspaces.find(
+          (workspace) => workspace.id === payload.activeWorkspaceId,
+        );
+        if (
+          activeWorkspace &&
+          (accountSession.workspaceId !== activeWorkspace.id ||
+            accountSession.workspaceName !== activeWorkspace.name)
+        ) {
+          const nextSession = {
+            ...accountSession,
+            workspaceId: activeWorkspace.id,
+            workspaceName: activeWorkspace.name,
+          };
+          setAccountSession(nextSession);
+          try {
+            window.localStorage.setItem(
+              ACCOUNT_SESSION_STORAGE_KEY,
+              JSON.stringify(nextSession),
+            );
+          } catch {
+            // Keep the active workspace in memory when storage is unavailable.
+          }
+        }
+      })
+      .catch((error: unknown) => {
+        if (isCurrent && !isAccountSessionExpired(error)) {
+          setWorkspaceError(
+            error instanceof Error
+              ? error.message
+              : t("account.workspaceLoadError"),
+          );
+        }
+      })
+      .finally(() => {
+        if (isCurrent) setIsLoadingWorkspaces(false);
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [accountSession, setStoreWorkspaceId, t]);
 
   const importLocalWorkspaceIntoAccount = async () => {
     const savedWorkspaceData = window.localStorage.getItem(LOCAL_STORAGE_KEY);
@@ -167,24 +363,13 @@ export function AppBarTop() {
 
     const result = await importLocalWorkspaceData({
       createProject: async ({ name, description }) => {
-        const response = await fetch("/api/project", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "same-origin",
-          body: JSON.stringify({
-            name,
-            description,
-          }),
-        });
-
-        const payload = await response.json().catch(() => ({}));
-        if (!response.ok) {
-          throw new Error(
-            typeof payload?.error === "string"
-              ? payload.error
-              : t("account.create.error"),
-          );
-        }
+        const payload = await accountWorkspaceRequest<{ id: number }>(
+          "/api/project",
+          {
+            method: "POST",
+            body: JSON.stringify({ name, description }),
+          },
+        );
 
         const projectId = Number(payload.id);
         if (!Number.isFinite(projectId)) {
@@ -202,10 +387,8 @@ export function AppBarTop() {
         status,
         priority,
       }) => {
-        const response = await fetch("/api/task", {
+        return accountWorkspaceRequest("/api/task", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "same-origin",
           body: JSON.stringify({
             name,
             projectId,
@@ -216,17 +399,6 @@ export function AppBarTop() {
             priority,
           }),
         });
-
-        const payload = await response.json().catch(() => ({}));
-        if (!response.ok) {
-          throw new Error(
-            typeof payload?.error === "string"
-              ? payload.error
-              : t("account.create.error"),
-          );
-        }
-
-        return payload;
       },
     });
 
@@ -269,15 +441,15 @@ export function AppBarTop() {
 
   const openCreateAccountDialog = (mode: TypeAccountDialogMode = "signUp") => {
     setAccountDialogMode(mode);
-    setDisplayName(
-      accountSession?.displayName ||
-        guestProfile.displayName ||
-        t("profile.unnamed"),
-    );
+    setDisplayName(accountSession?.displayName || guestProfile.displayName);
     setUsername("");
     setEmail("");
     setPassword("");
+    setConfirmPassword("");
+    setIsPasswordVisible(false);
+    setIsConfirmPasswordVisible(false);
     setSubmitError(null);
+    setHasAttemptedAccountSubmit(false);
     setIsCreateAccountOpen(true);
   };
 
@@ -300,11 +472,106 @@ export function AppBarTop() {
   const closeCreateAccountDialog = () => {
     setIsCreateAccountOpen(false);
     setSubmitError(null);
+    setHasAttemptedAccountSubmit(false);
     setAccountDialogMode("signUp");
   };
 
+  const { switchWorkspace, createWorkspace, deleteWorkspace, renameWorkspace } =
+    workspaceActions;
+
+  const signOut = async () => {
+    if (isSigningOutRef.current) return;
+    isSigningOutRef.current = true;
+    const resetStartedAt = Date.now();
+    setIsSigningOut(true);
+    setIsResettingWorkspace(true);
+    setWorkspaceError(null);
+    setProfileAnchor(null);
+    try {
+      const response = await fetch("/api/session/sign-out", {
+        method: "POST",
+        credentials: "same-origin",
+      });
+      if (!response.ok) {
+        throw new Error(t("account.signOutError"));
+      }
+
+      await Promise.all([
+        queryClient.cancelQueries({ queryKey: [QUERY_KEYS.PROJECTS] }),
+        queryClient.cancelQueries({ queryKey: [QUERY_KEYS.TASKS] }),
+      ]);
+      queryClient.clear();
+
+      try {
+        for (const storageKey of [
+          ACCOUNT_SESSION_STORAGE_KEY,
+          ACCOUNT_IMPORT_STORAGE_KEY,
+          GUEST_PROFILE_STORAGE_KEY,
+          SESSION_BOOTSTRAP_COMPLETED_STORAGE_KEY,
+          LOCAL_STORAGE_KEY,
+          selectedProjectStorageKey,
+          selectedTabStorageKey,
+        ]) {
+          window.localStorage.removeItem(storageKey);
+        }
+      } catch {
+        // Continue resetting the in-memory workspace when browser storage fails.
+      }
+      setAccountSession(null);
+      setAccountWorkspaces([]);
+      setActiveWorkspaceId(null);
+      setStoreWorkspaceId(null);
+      setSelectedProject(null);
+      setSelectedTab(defaultSelectedTab);
+      setGuestProfile({ displayName: "" });
+      setEditedProfileName("");
+      setDisplayName("");
+      setUsername("");
+      setEmail("");
+      setPassword("");
+      setConfirmPassword("");
+      setWorkspaceName("");
+      setNewWorkspaceName("");
+      setSubmitError(null);
+      setWorkspaceError(null);
+      setIsCreateAccountOpen(false);
+      setIsCreateWorkspaceOpen(false);
+      setWorkspaceToDelete(null);
+      setIsEditProfileOpen(false);
+
+      const guestResponse = await fetch("/api/session/guest", {
+        method: "POST",
+        credentials: "same-origin",
+      });
+      if (!guestResponse.ok) {
+        throw new Error(t("common.sessionLoadError"));
+      }
+
+      const minimumLoadingDuration =
+        MINIMUM_SESSION_LOADING_REPEAT_MS +
+        SESSION_PROGRESS_COMPLETE_DISPLAY_MS;
+      const remainingLoadingTime =
+        minimumLoadingDuration - (Date.now() - resetStartedAt);
+      if (remainingLoadingTime > 0) {
+        await new Promise((resolve) =>
+          window.setTimeout(resolve, remainingLoadingTime),
+        );
+      }
+      window.location.reload();
+    } catch (error) {
+      setWorkspaceError(
+        error instanceof Error ? error.message : t("account.signOutError"),
+      );
+    } finally {
+      isSigningOutRef.current = false;
+      setIsSigningOut(false);
+      setIsResettingWorkspace(false);
+    }
+  };
+  signOutActionRef.current = signOut;
+
   const handleCreateAccount = async () => {
-    const trimmedDisplayName = displayName.trim() || t("profile.unnamed");
+    const trimmedDisplayName = displayName.trim();
     const trimmedUsername = username.trim().toLowerCase();
     const trimmedEmail = email.trim().toLowerCase();
     const trimmedPassword = password;
@@ -312,6 +579,9 @@ export function AppBarTop() {
       workspaceName.trim() || t("account.workspaceDefault");
 
     if (accountDialogMode === "signIn") {
+      setHasAttemptedAccountSubmit(true);
+      if (!trimmedEmail || trimmedPassword.length < 6) return;
+
       setIsSubmitting(true);
       setSubmitError(null);
 
@@ -329,9 +599,11 @@ export function AppBarTop() {
         const payload = await response.json().catch(() => ({}));
         if (!response.ok) {
           throw new Error(
-            typeof payload?.error === "string"
-              ? payload.error
-              : t("account.signIn.error"),
+            response.status === 401
+              ? t("account.signIn.error")
+              : typeof payload?.error === "string"
+                ? payload.error
+                : t("account.signIn.error"),
           );
         }
 
@@ -340,12 +612,16 @@ export function AppBarTop() {
             typeof payload.user?.displayName === "string" &&
             payload.user.displayName.trim()
               ? payload.user.displayName.trim()
-              : trimmedDisplayName,
+              : trimmedDisplayName || t("profile.unnamed"),
           workspaceName:
             typeof payload.workspaceName === "string" &&
             payload.workspaceName.trim()
               ? payload.workspaceName.trim()
               : trimmedWorkspaceName,
+          workspaceId:
+            typeof payload.workspaceId === "string"
+              ? payload.workspaceId
+              : undefined,
         };
 
         try {
@@ -358,6 +634,12 @@ export function AppBarTop() {
         }
 
         setAccountSession(nextAccountSession);
+        setStoreWorkspaceId(nextAccountSession.workspaceId ?? null);
+        setSelectedProject(null);
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.PROJECTS] }),
+          queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.TASKS] }),
+        ]);
         setDisplayName("");
         setEmail("");
         setPassword("");
@@ -375,8 +657,14 @@ export function AppBarTop() {
       return;
     }
 
-    if (!trimmedUsername || !trimmedPassword || trimmedPassword.length < 6) {
-      setSubmitError(t("account.credentials.invalid"));
+    setHasAttemptedAccountSubmit(true);
+    if (
+      !trimmedDisplayName ||
+      !/^[a-z0-9._-]{3,32}$/.test(trimmedUsername) ||
+      trimmedPassword.length < 6 ||
+      confirmPassword !== trimmedPassword ||
+      (trimmedEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail))
+    ) {
       return;
     }
 
@@ -389,7 +677,7 @@ export function AppBarTop() {
         headers: { "Content-Type": "application/json" },
         credentials: "same-origin",
         body: JSON.stringify({
-          displayName: trimmedUsername,
+          displayName: trimmedDisplayName,
           username: trimmedUsername,
           ...(trimmedEmail ? { email: trimmedEmail } : {}),
           password: trimmedPassword,
@@ -399,6 +687,10 @@ export function AppBarTop() {
 
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) {
+        if (response.status === 400) {
+          setHasAttemptedAccountSubmit(true);
+          return;
+        }
         throw new Error(
           typeof payload?.error === "string"
             ? payload.error
@@ -417,6 +709,10 @@ export function AppBarTop() {
           payload.workspaceName.trim()
             ? payload.workspaceName.trim()
             : trimmedWorkspaceName,
+        workspaceId:
+          typeof payload.workspaceId === "string"
+            ? payload.workspaceId
+            : undefined,
       };
 
       try {
@@ -429,10 +725,18 @@ export function AppBarTop() {
       }
 
       setAccountSession(nextAccountSession);
+      setStoreWorkspaceId(nextAccountSession.workspaceId ?? null);
+      setSelectedProject(null);
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.PROJECTS] }),
+        queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.TASKS] }),
+      ]);
       setDisplayName("");
       setUsername("");
       setEmail("");
       setPassword("");
+      setConfirmPassword("");
+      setHasAttemptedAccountSubmit(false);
       setWorkspaceName("");
       closeCreateAccountDialog();
     } catch (error) {
@@ -458,21 +762,13 @@ export function AppBarTop() {
               <h1 className="app-brand-title truncate">{t("app.title")}</h1>
               {accountSession ? (
                 <Typography variant="caption" color="text.secondary" noWrap>
-                  {accountSession.displayName || "Usuário"} ·{" "}
-                  {accountSession.workspaceName}
+                  {t("account.workspaceLabel")} · {accountSession.workspaceName}
                 </Typography>
               ) : null}
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {accountSession ? (
-              <Chip
-                size="small"
-                label={accountSession.workspaceName}
-                color="primary"
-                variant="outlined"
-              />
-            ) : (
+            {!accountSession && (
               <Stack direction="row" spacing={1}>
                 <Button
                   size="small"
@@ -490,23 +786,6 @@ export function AppBarTop() {
                 </Button>
               </Stack>
             )}
-            <ButtonGroup size="small" aria-label={t("app.language")}>
-              <Button
-                aria-pressed={language === "pt"}
-                onClick={() => selectLanguage("pt")}
-                variant={language === "pt" ? "contained" : "outlined"}
-              >
-                PT
-              </Button>
-              <Button
-                aria-pressed={language === "en"}
-                onClick={() => selectLanguage("en")}
-                variant={language === "en" ? "contained" : "outlined"}
-              >
-                EN
-              </Button>
-            </ButtonGroup>
-            <ThemeSwitch />
             <IconButton
               aria-label={t("profile.open")}
               aria-haspopup="menu"
@@ -514,225 +793,111 @@ export function AppBarTop() {
               onClick={(event) => setProfileAnchor(event.currentTarget)}
               color="inherit"
             >
-              <AccountCircleOutlinedIcon />
+              <AccountCircleIcon />
             </IconButton>
           </div>
         </div>
       </header>
 
-      <Dialog
+      <AccountDialog
         open={isCreateAccountOpen}
+        mode={accountDialogMode}
+        displayName={displayName}
+        username={username}
+        email={email}
+        password={password}
+        confirmPassword={confirmPassword}
+        workspaceName={workspaceName}
+        isPasswordVisible={isPasswordVisible}
+        isConfirmPasswordVisible={isConfirmPasswordVisible}
+        hasAttemptedSubmit={hasAttemptedAccountSubmit}
+        isSubmitting={isSubmitting}
+        submitError={submitError}
+        onChange={(field, value) => {
+          if (field === "displayName") setDisplayName(value);
+          if (field === "username") setUsername(value);
+          if (field === "email") setEmail(value);
+          if (field === "password") setPassword(value);
+          if (field === "confirmPassword") setConfirmPassword(value);
+          if (field === "workspaceName") setWorkspaceName(value);
+        }}
+        onTogglePassword={(field) => {
+          if (field === "password") {
+            setIsPasswordVisible((visible) => !visible);
+          } else {
+            setIsConfirmPasswordVisible((visible) => !visible);
+          }
+        }}
         onClose={closeCreateAccountDialog}
-        fullWidth
-        maxWidth="sm"
-      >
-        <DialogTitle>{accountDialogContent.title}</DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} sx={{ pt: 1 }}>
-            {accountDialogMode === "signUp" ? (
-              <>
-                <TextField
-                  label={t("account.username")}
-                  value={username}
-                  onChange={(event) => setUsername(event.target.value)}
-                  placeholder={t("account.usernamePlaceholder")}
-                  autoComplete="username"
-                />
-                <TextField
-                  label={t("account.emailOptional")}
-                  type="email"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  placeholder={t("account.emailPlaceholder")}
-                  autoComplete="email"
-                />
-              </>
-            ) : null}
-            {accountDialogMode === "signIn" ? (
-              <TextField
-                label={t("account.identifier")}
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                placeholder={t("account.identifierPlaceholder")}
-                autoComplete="username"
-              />
-            ) : null}
-            <TextField
-              label={t("account.password")}
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              placeholder={t("account.passwordPlaceholder")}
-            />
-            {accountDialogMode === "signUp" ? (
-              <>
-                <TextField
-                  label={t("account.workspaceName")}
-                  value={workspaceName}
-                  onChange={(event) => setWorkspaceName(event.target.value)}
-                  placeholder={t("account.workspacePlaceholder")}
-                />
-                <Box>
-                  <Typography variant="caption" color="text.secondary">
-                    {t("account.suggestions")}
-                  </Typography>
-                  <Stack
-                    direction="row"
-                    spacing={1}
-                    useFlexGap
-                    flexWrap="wrap"
-                    sx={{ mt: 1 }}
-                  >
-                    {ACCOUNT_WORKSPACE_SUGGESTIONS.map((suggestion) => (
-                      <Chip
-                        key={suggestion}
-                        label={suggestion}
-                        variant={
-                          workspaceName === suggestion ? "filled" : "outlined"
-                        }
-                        onClick={() => setWorkspaceName(suggestion)}
-                        clickable
-                      />
-                    ))}
-                  </Stack>
-                </Box>
-              </>
-            ) : null}
-            {submitError ? (
-              <Typography color="error.main" variant="body2">
-                {submitError}
-              </Typography>
-            ) : null}
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={closeCreateAccountDialog} disabled={isSubmitting}>
-            {t("common.cancel")}
-          </Button>
-          <Button
-            variant="contained"
-            onClick={handleCreateAccount}
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? t("common.saving") : accountDialogContent.submit}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        onSubmit={() => void handleCreateAccount()}
+      />
 
-      <Dialog
-        open={isImportDialogOpen}
-        onClose={() => void closeImportDialog("dismissed")}
-        fullWidth
-        maxWidth="sm"
+      <AppBarDialogs
+        isImportDialogOpen={isImportDialogOpen}
+        onCloseImportDialog={(status) => void closeImportDialog(status)}
+        isCreateWorkspaceOpen={isCreateWorkspaceOpen}
+        isCreatingWorkspace={isCreatingWorkspace}
+        newWorkspaceName={newWorkspaceName}
+        onNewWorkspaceNameChange={setNewWorkspaceName}
+        onCreateWorkspace={() => void createWorkspace()}
+        onCloseCreateWorkspace={() => setIsCreateWorkspaceOpen(false)}
+        isRenameWorkspaceOpen={isRenameWorkspaceOpen}
+        isRenamingWorkspace={isRenamingWorkspace}
+        renamedWorkspaceName={renamedWorkspaceName}
+        onRenamedWorkspaceNameChange={setRenamedWorkspaceName}
+        onRenameWorkspace={() => void renameWorkspace()}
+        onCloseRenameWorkspace={() => setIsRenameWorkspaceOpen(false)}
+        workspaceToDelete={workspaceToDelete}
+        isDeletingWorkspace={isDeletingWorkspace}
+        onDeleteWorkspace={() => void deleteWorkspace()}
+        onCloseDeleteWorkspace={() => setWorkspaceToDelete(null)}
+        isEditProfileOpen={isEditProfileOpen}
+        editedProfileName={editedProfileName}
+        onEditedProfileNameChange={setEditedProfileName}
+        onSaveGuestProfile={saveGuestProfileName}
+        onCloseEditProfile={() => setIsEditProfileOpen(false)}
+        isResettingWorkspace={isResettingWorkspace}
       >
-        <DialogTitle>{t("account.import.title")}</DialogTitle>
-        <DialogContent>
-          <Typography variant="body1">
-            {t("account.import.description")}
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => void closeImportDialog("dismissed")}>
-            {t("common.cancel")}
-          </Button>
-          <Button
-            variant="contained"
-            onClick={() => void closeImportDialog("imported")}
-          >
-            {t("account.import.submit")}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Menu
-        anchorEl={profileAnchor}
-        open={Boolean(profileAnchor)}
-        onClose={() => setProfileAnchor(null)}
-        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-        transformOrigin={{ vertical: "top", horizontal: "right" }}
-      >
-        <Box sx={{ minWidth: 240, px: 2, py: 1 }}>
-          <Typography variant="overline" color="text.secondary">
-            {accountSession ? t("profile.account") : t("profile.guest")}
-          </Typography>
-          <Stack direction="row" alignItems="center" spacing={1}>
-            <Typography variant="body1" sx={{ flex: 1 }} noWrap>
-              {accountSession?.displayName ||
-                guestProfile.displayName ||
-                t("profile.unnamed")}
-            </Typography>
-            {!accountSession ? (
-              <IconButton
-                size="small"
-                aria-label={t("profile.editName")}
-                title={t("profile.editName")}
-                onClick={() => {
-                  setEditedProfileName(guestProfile.displayName);
-                  setProfileAnchor(null);
-                  setIsEditProfileOpen(true);
-                }}
-              >
-                <EditOutlinedIcon fontSize="small" />
-              </IconButton>
-            ) : null}
-          </Stack>
-          {accountSession ? (
-            <Typography variant="caption" color="text.secondary">
-              {accountSession.workspaceName}
-            </Typography>
-          ) : null}
-        </Box>
-        {!accountSession ? (
-          <>
-            <MenuItem
-              onClick={() => {
-                setProfileAnchor(null);
-                openCreateAccountDialog("signIn");
-              }}
-            >
-              {t("account.signIn.button")}
-            </MenuItem>
-            <MenuItem
-              onClick={() => {
-                setProfileAnchor(null);
-                openCreateAccountDialog("signUp");
-              }}
-            >
-              {t("account.create.button")}
-            </MenuItem>
-          </>
-        ) : null}
-      </Menu>
-
-      <Dialog
-        open={isEditProfileOpen}
-        onClose={() => setIsEditProfileOpen(false)}
-        fullWidth
-        maxWidth="xs"
-      >
-        <DialogTitle>{t("profile.editTitle")}</DialogTitle>
-        <DialogContent>
-          <TextField
-            autoFocus
-            fullWidth
-            margin="dense"
-            label={t("account.displayName")}
-            value={editedProfileName}
-            onChange={(event) => setEditedProfileName(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") saveGuestProfileName();
-            }}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setIsEditProfileOpen(false)}>
-            {t("common.cancel")}
-          </Button>
-          <Button variant="contained" onClick={saveGuestProfileName}>
-            {t("common.save")}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        <ProfileMenu
+          anchor={profileAnchor}
+          accountSession={accountSession}
+          accountWorkspaces={accountWorkspaces}
+          activeWorkspaceId={activeWorkspaceId}
+          guestProfile={guestProfile}
+          workspaceError={workspaceError}
+          isLoadingWorkspaces={isLoadingWorkspaces}
+          switchingWorkspaceId={switchingWorkspaceId}
+          isSigningOut={isSigningOut}
+          language={language}
+          onClose={() => setProfileAnchor(null)}
+          onEditGuestProfile={() => {
+            setEditedProfileName(guestProfile.displayName);
+            setProfileAnchor(null);
+            setIsEditProfileOpen(true);
+          }}
+          onSwitchWorkspace={(workspaceId) => void switchWorkspace(workspaceId)}
+          onCreateWorkspace={() => {
+            setNewWorkspaceName("");
+            setProfileAnchor(null);
+            setIsCreateWorkspaceOpen(true);
+          }}
+          onRenameWorkspace={() => {
+            setRenamedWorkspaceName(accountSession?.workspaceName ?? "");
+            setProfileAnchor(null);
+            setIsRenameWorkspaceOpen(true);
+          }}
+          onDeleteWorkspace={(workspace) => {
+            setProfileAnchor(null);
+            setWorkspaceToDelete(workspace);
+          }}
+          onSelectLanguage={selectLanguage}
+          onSignOut={() => void signOut()}
+          onOpenAccountDialog={(mode) => {
+            setProfileAnchor(null);
+            openCreateAccountDialog(mode);
+          }}
+        />
+      </AppBarDialogs>
     </>
   );
 }

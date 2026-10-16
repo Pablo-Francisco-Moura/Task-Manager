@@ -10,6 +10,14 @@ export type TypeSessionEnv = {
 export type TypeAccountSessionState = {
   displayName: string;
   workspaceName: string;
+  workspaceId?: string;
+};
+
+export type TypeWorkspaceMembership = {
+  id: string;
+  name: string;
+  kind: "personal" | "shared";
+  role: "owner" | "member";
 };
 
 export type TypeGuestProfileState = {

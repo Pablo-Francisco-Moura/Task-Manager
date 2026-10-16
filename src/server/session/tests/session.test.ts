@@ -903,18 +903,23 @@ describe("Guest workspace session", () => {
       data: { workspaceId, userId: memberUserId, role: "member" },
     });
 
+    const isolatedMember = await prisma.user.create({
+      data: { displayName: "Caio", username: "caio", kind: "account" },
+    });
+    await prisma.workspaceMember.create({
+      data: { workspaceId, userId: isolatedMember.id, role: "member" },
+    });
+    await prisma.projectMember.create({
+      data: { projectId: secondProjectId, userId: isolatedMember.id },
+    });
+
     const rosterResponse = await nextApiGet(
       apiRequest(`session/workspace/${workspaceId}/members`, memberCookie),
     );
     expect(rosterResponse.status).toBe(200);
     expect(await rosterResponse.json()).toMatchObject({
-      projects: expect.arrayContaining([
-        { id: firstProjectId, name: "Projeto um" },
-        { id: secondProjectId, name: "Projeto dois" },
-      ]),
-      members: expect.arrayContaining([
-        expect.objectContaining({ userId: memberUserId, projects: [] }),
-      ]),
+      projects: [],
+      members: [],
     });
 
     const assignmentResponse = await nextApiPut(
@@ -933,16 +938,55 @@ describe("Guest workspace session", () => {
       userId: memberUserId,
       projectIds: [firstProjectId],
     });
+    expect(
+      await prisma.projectActivity.findFirst({
+        where: { projectId: firstProjectId, type: "member_added" },
+      }),
+    ).toMatchObject({
+      actorName: "Ana",
+      details: { memberName: "Bia", memberId: memberUserId },
+    });
 
     const memberRosterResponse = await nextApiGet(
       apiRequest(`session/workspace/${workspaceId}/members`, memberCookie),
     );
-    expect(await memberRosterResponse.json()).toMatchObject({
+    const memberRoster = await memberRosterResponse.json();
+    expect(memberRoster).toMatchObject({
+      projects: [{ id: firstProjectId, name: "Projeto um" }],
       members: expect.arrayContaining([
         expect.objectContaining({
           userId: memberUserId,
           projects: [{ id: firstProjectId, name: "Projeto um" }],
         }),
+        expect.objectContaining({ role: "owner" }),
+      ]),
+    });
+    expect(
+      memberRoster.members.find(
+        (listedMember: { userId: string }) => listedMember.userId === memberUserId,
+      ),
+    ).toMatchObject({ isCurrentUser: true });
+    expect(memberRoster.members).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ userId: isolatedMember.id }),
+      ]),
+    );
+    expect(memberRoster.projects).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: secondProjectId }),
+      ]),
+    );
+
+    const ownerRosterResponse = await nextApiGet(
+      apiRequest(`session/workspace/${workspaceId}/members`, ownerCookie),
+    );
+    expect(await ownerRosterResponse.json()).toMatchObject({
+      projects: expect.arrayContaining([
+        { id: firstProjectId, name: "Projeto um" },
+        { id: secondProjectId, name: "Projeto dois" },
+      ]),
+      members: expect.arrayContaining([
+        expect.objectContaining({ userId: isolatedMember.id }),
       ]),
     });
 

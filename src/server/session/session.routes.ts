@@ -14,6 +14,7 @@ import { Hono } from "hono";
 import { prisma } from "@/lib/prisma";
 import { hashSessionToken } from "./session";
 import { deleteCookie, getCookie, setCookie } from "hono/cookie";
+import { createProjectActivity } from "@/server/task/taskActivity";
 
 function hashPassword(password: string): string {
   const salt = randomBytes(16).toString("hex");
@@ -484,22 +485,46 @@ sessionRoutes.get("/workspace/:workspaceId/members", async (context) => {
     }),
   ]);
 
+  const accessibleProjects =
+    membership.role === "owner"
+      ? projects
+      : projects.filter(({ projectMembers }) =>
+          projectMembers.some(({ userId }) => userId === accountSession.userId),
+        );
+  const accessibleProjectIds = new Set(
+    accessibleProjects.map(({ id }) => id),
+  );
+  const visibleMemberships =
+    membership.role === "owner"
+      ? memberships
+      : accessibleProjects.length === 0
+        ? []
+        : memberships.filter(
+            ({ role, user }) =>
+              role === "owner" ||
+              projects.some(
+                ({ id, projectMembers }) =>
+                  accessibleProjectIds.has(id) &&
+                  projectMembers.some(({ userId }) => userId === user.id),
+              ),
+          );
+
   return context.json({
-    projects: projects.map(({ id, name }) => ({ id, name })),
-    members: memberships.map(({ user, role, joinedAt }) => ({
+    projects: accessibleProjects.map(({ id, name }) => ({ id, name })),
+    members: visibleMemberships.map(({ user, role, joinedAt }) => ({
       userId: user.id,
+      isCurrentUser: user.id === accountSession.userId,
       displayName: user.displayName,
       username: user.username,
       role,
       joinedAt,
-      projects:
-        role === "owner"
-          ? projects.map(({ id, name }) => ({ id, name }))
-          : projects
-              .filter(({ projectMembers }) =>
-                projectMembers.some(({ userId }) => userId === user.id),
-              )
-              .map(({ id, name }) => ({ id, name })),
+      projects: accessibleProjects
+        .filter(
+          ({ projectMembers }) =>
+            role === "owner" ||
+            projectMembers.some(({ userId }) => userId === user.id),
+        )
+        .map(({ id, name }) => ({ id, name })),
     })),
   });
 });
@@ -559,7 +584,7 @@ sessionRoutes.put(
     const validProjects = projectIds.length
       ? await prisma.project.findMany({
           where: { id: { in: projectIds }, workspaceId },
-          select: { id: true },
+          select: { id: true, name: true },
         })
       : [];
     if (validProjects.length !== projectIds.length) {
@@ -569,7 +594,19 @@ sessionRoutes.put(
       );
     }
 
+    const targetUser = await prisma.user.findUnique({
+      where: { id: targetUserId },
+      select: { displayName: true },
+    });
     await prisma.$transaction(async (transaction) => {
+      const existingAssignments = await transaction.projectMember.findMany({
+        where: { userId: targetUserId, project: { workspaceId } },
+        select: { projectId: true, project: { select: { name: true } } },
+      });
+      const existingProjectIds = new Set(
+        existingAssignments.map(({ projectId }) => projectId),
+      );
+      const requestedProjectIds = new Set(projectIds);
       await transaction.projectMember.deleteMany({
         where: { userId: targetUserId, project: { workspaceId } },
       });
@@ -580,6 +617,30 @@ sessionRoutes.put(
             userId: targetUserId,
             role: "member" as const,
           })),
+        });
+      }
+      for (const project of validProjects) {
+        if (existingProjectIds.has(project.id)) continue;
+        await createProjectActivity(transaction, {
+          projectId: project.id,
+          actorId: accountSession.userId,
+          type: "member_added",
+          details: {
+            memberName: targetUser?.displayName ?? targetUserId,
+            memberId: targetUserId,
+          },
+        });
+      }
+      for (const assignment of existingAssignments) {
+        if (requestedProjectIds.has(assignment.projectId)) continue;
+        await createProjectActivity(transaction, {
+          projectId: assignment.projectId,
+          actorId: accountSession.userId,
+          type: "member_removed",
+          details: {
+            memberName: targetUser?.displayName ?? targetUserId,
+            memberId: targetUserId,
+          },
         });
       }
     });
@@ -629,6 +690,7 @@ sessionRoutes.delete(
 
     const targetMembership = await prisma.workspaceMember.findUnique({
       where: { workspaceId_userId: { workspaceId, userId: targetUserId } },
+      include: { user: { select: { displayName: true } } },
     });
     if (!targetMembership) {
       return context.json({ error: "Workspace member not found" }, 404);
@@ -638,6 +700,21 @@ sessionRoutes.delete(
     }
 
     await prisma.$transaction(async (transaction) => {
+      const projectAssignments = await transaction.projectMember.findMany({
+        where: { userId: targetUserId, project: { workspaceId } },
+        select: { projectId: true },
+      });
+      for (const assignment of projectAssignments) {
+        await createProjectActivity(transaction, {
+          projectId: assignment.projectId,
+          actorId: accountSession.userId,
+          type: "member_removed",
+          details: {
+            memberName: targetMembership.user.displayName,
+            memberId: targetUserId,
+          },
+        });
+      }
       await transaction.projectMember.deleteMany({
         where: { userId: targetUserId, project: { workspaceId } },
       });
@@ -997,7 +1074,7 @@ sessionRoutes.post("/workspace/invites/:inviteId/accept", async (context) => {
           id: { in: invite.projectIds },
           workspaceId: invite.workspaceId,
         },
-        select: { id: true },
+        select: { id: true, name: true },
       })
     : [];
   const validProjectIds = validProjects.map(({ id }) => id);
@@ -1032,6 +1109,18 @@ sessionRoutes.post("/workspace/invites/:inviteId/accept", async (context) => {
         update: {},
         create: { projectId, userId: accountSession.userId, role: "member" },
       });
+      const project = validProjects.find(({ id }) => id === projectId);
+      if (project) {
+        await createProjectActivity(transaction, {
+          projectId,
+          actorId: invite.createdById,
+          type: "member_added",
+          details: {
+            memberName: accountSession.user.displayName,
+            memberId: accountSession.userId,
+          },
+        });
+      }
     }
 
     await transaction.workspaceInvite.update({

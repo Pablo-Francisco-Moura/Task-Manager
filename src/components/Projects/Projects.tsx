@@ -102,6 +102,7 @@ export function Projects({
                 <Project
                   key={project.id}
                   project={project}
+                  canManageProjects={canManageProjects}
                   setOpenDialog={setOpenDialog}
                   setProjectToDelete={setProjectToDelete}
                 />

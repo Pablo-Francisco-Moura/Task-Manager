@@ -111,7 +111,7 @@ describe("local data repository", () => {
       name: "Personal",
       description: "Initial project",
     });
-    const task = createLocalTask({
+    createLocalTask({
       name: "Review plan",
       projectId: project.id,
       description: "Important follow-up",
@@ -120,7 +120,11 @@ describe("local data repository", () => {
       dueDate: new Date("2026-11-24T00:00:00.000Z"),
     });
 
-    const createdProjects: Array<{ id: number; name: string; description: string | null }> = [];
+    const createdProjects: Array<{
+      id: number;
+      name: string;
+      description: string | null;
+    }> = [];
     const createdTasks: Array<{
       name: string;
       projectId: number;
@@ -141,7 +145,15 @@ describe("local data repository", () => {
         createdProjects.push(created);
         return created;
       },
-      createTask: async ({ name, projectId, description, dueDate, status, priority, position }) => {
+      createTask: async ({
+        name,
+        projectId,
+        description,
+        dueDate,
+        status,
+        priority,
+        position,
+      }) => {
         const created = {
           name,
           projectId,

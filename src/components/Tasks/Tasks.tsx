@@ -1,29 +1,17 @@
-import {
-  toTaskDueAtISOString,
-  toTaskDueDateInputValue,
-  toTaskDueTimeInputValue,
-} from "@/utils/taskDueDate";
 import { Task } from "../Task/Task";
-import { Form } from "../Form";
 import { Dialog } from "@mui/material";
-import { useForm } from "react-hook-form";
 import { TaskForm } from "@/components/TaskForm";
 import { useState } from "react";
 import { TaskBoard } from "./TaskBoard";
-import { deleteTask } from "@/hooks/useTasks/useCase/deleteTask.api";
-import { QUERY_KEYS } from "@/constants/queryKeys";
-import { updateTask } from "@/hooks/useTasks/useCase/updateTask.api";
-import { reorderTasks } from "@/hooks/useTasks/useCase/reorderTasks.api";
 import { AlertMessage } from "@/components/AlertMessage";
 import { useMainStore } from "@/store/mainStore";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useTranslation } from "react-i18next";
 import { useProjectStore } from "@/store/projectStore";
-import { useFeedbackStore } from "@/store/feedbackStore";
+import { useTaskMutations } from "./useTaskMutations";
+import { toTaskDueAtISOString } from "@/utils/taskDueDate";
 import { useProjects, useTasks } from "@/hooks";
-import { normalizeTaskPriority } from "@/utils/taskPriority";
-import { MAX_DESCRIPTION_LENGTH } from "@/constants";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { TaskEditDialog, type TypeTaskEditFormValues } from "./TaskEditDialog";
 import type { TypeReorderTasksInput } from "@/types";
 import type { TypeLocalTask, TypeLocalTaskStatus } from "@/types/localData";
 import ChecklistOutlinedIcon from "@mui/icons-material/ChecklistOutlined";
@@ -37,6 +25,7 @@ interface IProps {
 export function Tasks({ openAddTask, onCloseAddTask }: IProps) {
   const setSelectedTab = useMainStore((s) => s.setSelectedTab);
   const selectedProject = useProjectStore((s) => s.selectedProject);
+  const activeWorkspaceId = useProjectStore((s) => s.activeWorkspaceId);
 
   const [editTask, setEditTask] = useState<TypeLocalTask | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
@@ -44,152 +33,21 @@ export function Tasks({ openAddTask, onCloseAddTask }: IProps) {
   const [openEditDialog, setOpenEditDialog] = useState(false);
 
   const { t } = useTranslation();
-  const queryClient = useQueryClient();
-  const showFeedback = useFeedbackStore((state) => state.showFeedback);
-
-  // Mutation to delete task.
-  const deleteMutation = useMutation({
-    mutationFn: async (id: number) => deleteTask(id),
-    onSuccess: async () => {
-      if (selectedProject?.id) {
-        await queryClient.invalidateQueries({
-          queryKey: [QUERY_KEYS.PROJECTS, selectedProject?.id],
-        });
-        await queryClient.refetchQueries({
-          queryKey: [QUERY_KEYS.PROJECTS, selectedProject?.id],
-        });
-
-        await queryClient.invalidateQueries({
-          queryKey: [QUERY_KEYS.TASKS, selectedProject.id],
-        });
-        await queryClient.refetchQueries({
-          queryKey: [QUERY_KEYS.TASKS, selectedProject.id],
-        });
-      }
+  const {
+    deleteMutation,
+    updateMutation,
+    updateStatusMutation,
+    reorderTasksMutation,
+  } = useTaskMutations({
+    projectId: selectedProject?.id,
+    activeWorkspaceId,
+    onDeleteSuccess: () => {
       setTaskToDelete(null);
       setOpenDialog(false);
-      showFeedback(t("task.delete.success"));
     },
-    onError: () => showFeedback(t("task.delete.error"), "error"),
-  });
-
-  // Mutation to edit task.
-  const updateMutation = useMutation({
-    mutationFn: updateTask,
-    onSuccess: async (updatedTask) => {
-      if (selectedProject?.id) {
-        queryClient.setQueryData<TypeLocalTask[]>(
-          [QUERY_KEYS.TASKS, selectedProject.id],
-          (currentTasks) =>
-            currentTasks?.map((task) =>
-              task.id === updatedTask.id ? updatedTask : task,
-            ),
-        );
-        await queryClient.invalidateQueries({
-          queryKey: [QUERY_KEYS.TASKS, selectedProject.id],
-        });
-        await queryClient.refetchQueries({
-          queryKey: [QUERY_KEYS.TASKS, selectedProject.id],
-        });
-      }
-
+    onUpdateSuccess: () => {
       setEditTask(null);
       setOpenEditDialog(false);
-      showFeedback(t("task.update.success"));
-    },
-  });
-
-  const updateStatusMutation = useMutation({
-    mutationFn: updateTask,
-    onSuccess: async (updatedTask) => {
-      if (selectedProject?.id) {
-        queryClient.setQueryData<TypeLocalTask[]>(
-          [QUERY_KEYS.TASKS, selectedProject.id],
-          (currentTasks) =>
-            currentTasks?.map((task) =>
-              task.id === updatedTask.id ? updatedTask : task,
-            ),
-        );
-        await queryClient.invalidateQueries({
-          queryKey: [QUERY_KEYS.TASKS, selectedProject.id],
-        });
-      }
-      showFeedback(t("task.status.updated"));
-    },
-    onError: () => showFeedback(t("task.update.error"), "error"),
-  });
-
-  const reorderTasksMutation = useMutation({
-    mutationFn: reorderTasks,
-    onMutate: async ({ projectId, orderedTaskIdsByStatus }) => {
-      const queryKey = [QUERY_KEYS.TASKS, projectId] as const;
-      await queryClient.cancelQueries({ queryKey });
-      const previousTasks = queryClient.getQueryData<TypeLocalTask[]>(queryKey);
-
-      if (previousTasks) {
-        const positions = new Map<
-          number,
-          { status: TypeLocalTaskStatus; position: number }
-        >();
-        for (const status of ["todo", "in_progress", "done"] as const) {
-          orderedTaskIdsByStatus[status].forEach((id, position) => {
-            positions.set(id, { status, position });
-          });
-        }
-        queryClient.setQueryData<TypeLocalTask[]>(
-          queryKey,
-          previousTasks.map((task) => {
-            const placement = positions.get(task.id);
-            return placement ? { ...task, ...placement } : task;
-          }),
-        );
-      }
-
-      return { queryKey, previousTasks };
-    },
-    onError: (_error, _variables, context) => {
-      if (context?.previousTasks) {
-        queryClient.setQueryData(context.queryKey, context.previousTasks);
-      }
-      showFeedback(t("task.reorder.error"), "error");
-    },
-    onSuccess: (orderedTasks, variables) => {
-      queryClient.setQueryData(
-        [QUERY_KEYS.TASKS, variables.projectId],
-        orderedTasks,
-      );
-    },
-    onSettled: async (_data, _error, variables) => {
-      await queryClient.invalidateQueries({
-        queryKey: [QUERY_KEYS.TASKS, variables.projectId],
-      });
-    },
-  });
-
-  // Edit form.
-  const {
-    watch,
-    reset,
-    trigger,
-    register,
-    handleSubmit,
-    formState: { isSubmitting, isValid, errors },
-  } = useForm<{
-    name: string;
-    status: TypeLocalTaskStatus;
-    dueDate: string;
-    dueTime: string;
-    priority: TypeLocalTask["priority"];
-    description: string;
-  }>({
-    mode: "onChange",
-    defaultValues: {
-      name: "",
-      status: "todo",
-      dueDate: "",
-      dueTime: "",
-      priority: "normal",
-      description: "",
     },
   });
 
@@ -212,18 +70,6 @@ export function Tasks({ openAddTask, onCloseAddTask }: IProps) {
 
   const handleEditClick = (task: TypeLocalTask) => {
     setEditTask(task);
-    reset({
-      name: task.name,
-      status: task.status,
-      dueDate: toTaskDueDateInputValue(
-        task.dueAt ?? task.dueDate,
-        task.dueAt !== null,
-      ),
-      dueTime: toTaskDueTimeInputValue(task.dueAt),
-      priority: normalizeTaskPriority(task.priority),
-      description: task.description ?? "",
-    });
-    void trigger(["dueDate", "dueTime"]);
     setOpenEditDialog(true);
   };
 
@@ -232,14 +78,7 @@ export function Tasks({ openAddTask, onCloseAddTask }: IProps) {
     setEditTask(null);
   };
 
-  const onEditSubmit = async (data: {
-    name: string;
-    status: TypeLocalTaskStatus;
-    dueDate: string;
-    dueTime: string;
-    priority: TypeLocalTask["priority"];
-    description: string;
-  }) => {
+  const onEditSubmit = async (data: TypeTaskEditFormValues) => {
     if (editTask) {
       const dueAt = toTaskDueAtISOString(data.dueDate, data.dueTime);
       await updateMutation.mutateAsync({
@@ -396,63 +235,14 @@ export function Tasks({ openAddTask, onCloseAddTask }: IProps) {
         </div>
       )}
 
-      <Dialog open={openEditDialog} onClose={handleEditClose}>
-        <Form
-          title={t("task.update.label")}
-          error={updateMutation.isError ? t("task.update.error") : undefined}
-          nameError={errors.name?.message}
-          submitDisabled={!isValid}
-          inputId={`task-edit-name-${editTask?.id ?? "pending"}`}
-          onClose={handleEditClose}
-          register={register}
-          onSubmit={handleSubmit(onEditSubmit)}
-          placeholder={t("task.name")}
-          submitLabel={t("common.save")}
-          descriptionField={{
-            inputId: `task-edit-description-${editTask?.id ?? "pending"}`,
-            label: t("task.description"),
-            placeholder: t("task.enterDescription"),
-            maxLength: MAX_DESCRIPTION_LENGTH,
-          }}
-          statusField={{
-            label: t("task.status.label"),
-            inputId: `task-edit-status-${editTask?.id ?? "pending"}`,
-            defaultValue: editTask?.status ?? "todo",
-            value: watch("status"),
-            options: [
-              { value: "todo", label: t("task.status.todo") },
-              { value: "in_progress", label: t("task.status.inProgress") },
-              { value: "done", label: t("task.status.done") },
-            ],
-          }}
-          priorityField={{
-            inputId: `task-edit-priority-${editTask?.id ?? "pending"}`,
-            label: t("task.priority.label"),
-            defaultValue: editTask?.priority ?? "normal",
-            value: watch("priority"),
-            options: [
-              { value: "low", label: t("task.priority.low") },
-              { value: "normal", label: t("task.priority.normal") },
-              { value: "high", label: t("task.priority.high") },
-            ],
-          }}
-          dueDateField={{
-            label: t("task.dueDate.label"),
-            dateLabel: t("task.dueDate.dateLabel"),
-            inputId: `task-edit-due-date-${editTask?.id ?? "pending"}`,
-            defaultValue: toTaskDueDateInputValue(
-              editTask?.dueAt ?? editTask?.dueDate ?? null,
-              editTask?.dueAt !== null && editTask?.dueAt !== undefined,
-            ),
-            timeLabel: t("task.dueDate.timeLabel"),
-            timeInputId: `task-edit-due-time-${editTask?.id ?? "pending"}`,
-            defaultTime: toTaskDueTimeInputValue(editTask?.dueAt ?? null),
-            dateRequiredMessage: t("task.dueDate.dateRequired"),
-            dateError: errors.dueDate?.message ?? errors.dueTime?.message,
-          }}
-          isSubmitting={isSubmitting || updateMutation.isPending}
-        />
-      </Dialog>
+      <TaskEditDialog
+        task={editTask}
+        open={openEditDialog}
+        isSubmitting={updateMutation.isPending}
+        hasError={updateMutation.isError}
+        onClose={handleEditClose}
+        onSubmit={onEditSubmit}
+      />
 
       <ConfirmDialog
         open={openDialog}

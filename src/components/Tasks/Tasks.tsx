@@ -1,7 +1,17 @@
 import { Task } from "../Task/Task";
-import { Button, Dialog } from "@mui/material";
+import {
+  Button,
+  Dialog,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+  Stack,
+  TablePagination,
+  TextField,
+} from "@mui/material";
 import { TaskForm } from "@/components/TaskForm";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { TaskBoard } from "./TaskBoard";
 import { AlertMessage } from "@/components/AlertMessage";
 import { useMainStore } from "@/store/mainStore";
@@ -13,7 +23,11 @@ import { toTaskDueAtISOString } from "@/utils/taskDueDate";
 import { useProjects, useTasks } from "@/hooks";
 import { TaskEditDialog, type TypeTaskEditFormValues } from "./TaskEditDialog";
 import type { TypeReorderTasksInput } from "@/types";
-import type { TypeLocalTask, TypeLocalTaskStatus } from "@/types/localData";
+import type {
+  TypeLocalTask,
+  TypeLocalTaskPriority,
+  TypeLocalTaskStatus,
+} from "@/types/localData";
 import ChecklistOutlinedIcon from "@mui/icons-material/ChecklistOutlined";
 import FolderOpenOutlinedIcon from "@mui/icons-material/FolderOpenOutlined";
 import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
@@ -34,6 +48,12 @@ export function Tasks({ openAddTask, onCloseAddTask }: IProps) {
   const [taskToDelete, setTaskToDelete] = useState<TypeLocalTask | null>(null);
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const [isActivityOpen, setIsActivityOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<TypeLocalTaskStatus | "all">("all");
+  const [priorityFilter, setPriorityFilter] = useState<TypeLocalTaskPriority | "all">("all");
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(25);
+  const workspaceRole = useProjectStore((state) => state.workspaceRole);
 
   const { t } = useTranslation();
   const {
@@ -116,6 +136,36 @@ export function Tasks({ openAddTask, onCloseAddTask }: IProps) {
     isLoading: isTasksLoading,
     refetch: refetchTasks,
   } = useTasks(selectedProject?.id);
+  const allTasks = tasks ?? [];
+  const normalizedSearch = search.trim().toLowerCase();
+  const filteredTasks = allTasks.filter((task) =>
+    (!normalizedSearch || `${task.name} ${task.description ?? ""}`.toLowerCase().includes(normalizedSearch)) &&
+    (statusFilter === "all" || task.status === statusFilter) &&
+    (priorityFilter === "all" || task.priority === priorityFilter),
+  );
+  const pagedTasks =
+    rowsPerPage === -1
+      ? filteredTasks
+      : filteredTasks.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  const canReorder =
+    !normalizedSearch &&
+    statusFilter === "all" &&
+    priorityFilter === "all" &&
+    page === 0 &&
+    pagedTasks.length === allTasks.length;
+  const canManageProjects = activeWorkspaceId === null || workspaceRole === "owner";
+
+  useEffect(() => {
+    setPage(0);
+  }, [selectedProject?.id]);
+
+  useEffect(() => {
+    const maxPage =
+      rowsPerPage === -1
+        ? 0
+        : Math.max(0, Math.ceil(filteredTasks.length / rowsPerPage) - 1);
+    setPage((currentPage) => Math.min(currentPage, maxPage));
+  }, [filteredTasks.length, rowsPerPage]);
 
   if (isProjectsLoading && projects === undefined) {
     return (
@@ -144,14 +194,16 @@ export function Tasks({ openAddTask, onCloseAddTask }: IProps) {
         <span className="empty-state-mark" aria-hidden="true">
           <FolderOpenOutlinedIcon />
         </span>
-        <h3>{t("project.empty")}</h3>
-        <button
-          type="button"
-          className="text-action"
-          onClick={() => setSelectedTab("project")}
-        >
-          {t("project.add")}
-        </button>
+        <h3>{canManageProjects ? t("project.empty") : t("project.noneAvailable")}</h3>
+        {canManageProjects ? (
+          <button
+            type="button"
+            className="text-action"
+            onClick={() => setSelectedTab("project")}
+          >
+            {t("project.add")}
+          </button>
+        ) : null}
       </div>
     );
   }
@@ -197,6 +249,56 @@ export function Tasks({ openAddTask, onCloseAddTask }: IProps) {
           {t("activity.title")}
         </Button>
       </div>
+      <Stack
+        direction={{ xs: "column", sm: "row" }}
+        spacing={1}
+        sx={{ mb: 2 }}
+      >
+        <TextField
+          size="small"
+          label={t("task.search")}
+          value={search}
+          onChange={(event) => {
+            setSearch(event.target.value);
+            setPage(0);
+          }}
+          sx={{ flex: 1 }}
+        />
+        <FormControl size="small" sx={{ minWidth: 160 }}>
+          <InputLabel id="task-status-filter-label">{t("task.filterStatus")}</InputLabel>
+          <Select
+            labelId="task-status-filter-label"
+            label={t("task.filterStatus")}
+            value={statusFilter}
+            onChange={(event) => {
+              setStatusFilter(event.target.value as TypeLocalTaskStatus | "all");
+              setPage(0);
+            }}
+          >
+            <MenuItem value="all">{t("task.allStatuses")}</MenuItem>
+            <MenuItem value="todo">{t("task.status.todo")}</MenuItem>
+            <MenuItem value="in_progress">{t("task.status.inProgress")}</MenuItem>
+            <MenuItem value="done">{t("task.status.done")}</MenuItem>
+          </Select>
+        </FormControl>
+        <FormControl size="small" sx={{ minWidth: 160 }}>
+          <InputLabel id="task-priority-filter-label">{t("task.filterPriority")}</InputLabel>
+          <Select
+            labelId="task-priority-filter-label"
+            label={t("task.filterPriority")}
+            value={priorityFilter}
+            onChange={(event) => {
+              setPriorityFilter(event.target.value as TypeLocalTaskPriority | "all");
+              setPage(0);
+            }}
+          >
+            <MenuItem value="all">{t("task.allPriorities")}</MenuItem>
+            <MenuItem value="low">{t("task.priority.low")}</MenuItem>
+            <MenuItem value="normal">{t("task.priority.normal")}</MenuItem>
+            <MenuItem value="high">{t("task.priority.high")}</MenuItem>
+          </Select>
+        </FormControl>
+      </Stack>
       <ProjectActivityDrawer
         open={isActivityOpen}
         projectId={selectedProject?.id ?? null}
@@ -211,11 +313,11 @@ export function Tasks({ openAddTask, onCloseAddTask }: IProps) {
         )}
       </Dialog>
 
-      {tasks && tasks.length > 0 ? (
+      {allTasks.length > 0 && filteredTasks.length > 0 ? (
         <>
           <div className="task-mobile-list">
             <ul className="task-list">
-              {[...tasks]
+              {[...pagedTasks]
                 .sort((a, b) => a.name.localeCompare(b.name))
                 .map((task: TypeLocalTask, index: number) => (
                   <Task
@@ -230,12 +332,12 @@ export function Tasks({ openAddTask, onCloseAddTask }: IProps) {
             </ul>
           </div>
           <TaskBoard
-            tasks={tasks}
-            isSaving={reorderTasksMutation.isPending}
+            tasks={pagedTasks}
+            isSaving={reorderTasksMutation.isPending || !canReorder}
             onEditClick={handleEditClick}
             onDeleteClick={handleDeleteClick}
             onReorder={(orderedTaskIdsByStatus) => {
-              if (selectedProject) {
+              if (selectedProject && canReorder) {
                 reorderTasksMutation.mutate({
                   projectId: selectedProject.id,
                   orderedTaskIdsByStatus,
@@ -243,7 +345,30 @@ export function Tasks({ openAddTask, onCloseAddTask }: IProps) {
               }
             }}
           />
+          <TablePagination
+            component="div"
+            count={filteredTasks.length}
+            page={page}
+            onPageChange={(_event, nextPage) => setPage(nextPage)}
+            rowsPerPage={rowsPerPage}
+            onRowsPerPageChange={(event) => {
+              setRowsPerPage(Number(event.target.value));
+              setPage(0);
+            }}
+            rowsPerPageOptions={[
+              10,
+              25,
+              50,
+              { value: -1, label: t("common.all") },
+            ]}
+            labelRowsPerPage={t("common.rowsPerPage")}
+            labelDisplayedRows={({ from, to, count }) =>
+              t("common.pagination", { from, to, count })
+            }
+          />
         </>
+      ) : allTasks.length > 0 ? (
+        <div className="empty-state"><h3>{t("task.noMatches")}</h3></div>
       ) : (
         <div className="empty-state task-empty-state">
           <span className="empty-state-mark" aria-hidden="true">

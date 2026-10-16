@@ -13,7 +13,10 @@
     "sessionLoading": "Starting your workspace...",
     "sessionLoadingDetail": "Preparing your private workspace",
     "nameRequired": "Name is required",
-    "nameTooLong": "Name must be 200 characters or fewer"
+    "nameTooLong": "Name must be 200 characters or fewer",
+    "rowsPerPage": "Rows per page",
+    "pagination": "{{from}}–{{to}} of {{count}}",
+    "all": "All"
   },
   "navigation": {
     "mainLabel": "Main navigation",
@@ -189,7 +192,9 @@
     "hideTasks": "Hide tasks",
     "tasksDeletedWithProject": "Deleting this project will also delete these tasks:",
     "taskWillBeDeleted": "Task to delete: {{name}}",
-    "select": "Select a project"
+    "select": "Select a project",
+    "search": "Search projects",
+    "noMatches": "No projects match this search"
   },
   "task": {
     "count": {
@@ -220,6 +225,12 @@
     "loadError": "Error loading tasks!",
     "loading": "Loading tasks...",
     "empty": "No tasks associated with this project!",
+    "search": "Search tasks",
+    "filterStatus": "Filter by status",
+    "allStatuses": "All statuses",
+    "filterPriority": "Filter by priority",
+    "allPriorities": "All priorities",
+    "noMatches": "No tasks match these filters",
     "status": {
       "label": "Task status",
       "todo": "To do",

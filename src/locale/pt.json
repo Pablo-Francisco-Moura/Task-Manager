@@ -13,7 +13,10 @@
     "sessionLoading": "Iniciando seu espaço...",
     "sessionLoadingDetail": "Preparando seu espaço privado",
     "nameRequired": "Nome é obrigatório",
-    "nameTooLong": "O nome deve ter no máximo 200 caracteres"
+    "nameTooLong": "O nome deve ter no máximo 200 caracteres",
+    "rowsPerPage": "Linhas por página",
+    "pagination": "{{from}}–{{to}} de {{count}}",
+    "all": "Todos"
   },
   "navigation": {
     "mainLabel": "Navegação principal",
@@ -189,7 +192,9 @@
     "hideTasks": "Ocultar tarefas",
     "tasksDeletedWithProject": "Ao excluir o projeto, estas tarefas também serão excluídas:",
     "taskWillBeDeleted": "Tarefa a excluir: {{name}}",
-    "select": "Selecione um projeto"
+    "select": "Selecione um projeto",
+    "search": "Buscar projetos",
+    "noMatches": "Nenhum projeto corresponde à busca"
   },
   "task": {
     "count": {
@@ -220,6 +225,12 @@
     "loadError": "Erro ao carregar tarefas!",
     "loading": "Carregando tarefas...",
     "empty": "Nenhuma tarefa associada a este projeto!",
+    "search": "Buscar tarefas",
+    "filterStatus": "Filtrar por status",
+    "allStatuses": "Todos os status",
+    "filterPriority": "Filtrar por prioridade",
+    "allPriorities": "Todas as prioridades",
+    "noMatches": "Nenhuma tarefa corresponde aos filtros",
     "status": {
       "label": "Status da tarefa",
       "todo": "A fazer",

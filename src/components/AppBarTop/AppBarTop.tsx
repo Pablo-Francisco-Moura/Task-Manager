@@ -81,6 +81,9 @@ export function AppBarTop() {
   const setStoreWorkspaceId = useProjectStore(
     (state) => state.setActiveWorkspaceId,
   );
+  const setStoreWorkspaceRole = useProjectStore(
+    (state) => state.setWorkspaceRole,
+  );
   const setSelectedTab = useMainStore((state) => state.setSelectedTab);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [profileAnchor, setProfileAnchor] = useState<HTMLElement | null>(null);
@@ -357,6 +360,13 @@ export function AppBarTop() {
       isCurrent = false;
     };
   }, [accountSession, setStoreWorkspaceId, t]);
+
+  useEffect(() => {
+    const activeWorkspace = accountWorkspaces.find(
+      (workspace) => workspace.id === activeWorkspaceId,
+    );
+    setStoreWorkspaceRole(activeWorkspace?.role ?? null);
+  }, [accountWorkspaces, activeWorkspaceId, setStoreWorkspaceRole]);
 
   const importLocalWorkspaceIntoAccount = async () => {
     const savedWorkspaceData = window.localStorage.getItem(LOCAL_STORAGE_KEY);

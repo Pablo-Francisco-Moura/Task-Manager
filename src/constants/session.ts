@@ -16,7 +16,7 @@ export const ACCOUNT_WORKSPACE_SUGGESTIONS = [
   "Pessoal",
   "Estudos",
   "Comércio",
-  "Investimentos",
+  "Trabalho",
 ];
 
 export const MINIMUM_SESSION_LOADING_REPEAT_MS = 1000;

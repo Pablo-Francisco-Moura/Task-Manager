@@ -1,49 +1,31 @@
 "use client";
 
+import {
+  Box,
+  Chip,
+  Alert,
+  Stack,
+  Button,
+  Tooltip,
+  TextField,
+  IconButton,
+  Typography,
+  CircularProgress,
+} from "@mui/material";
 import { api } from "@/lib/axios";
+import { useState } from "react";
 import { QUERY_KEYS } from "@/constants/queryKeys";
+import { useTranslation } from "react-i18next";
 import { useProjectStore } from "@/store/projectStore";
 import { useFeedbackStore } from "@/store/feedbackStore";
+import { WorkspaceInviteDialog } from "@/components/Notifications/WorkspaceInviteDialog";
+import { MemberManagementDialogs } from "./MemberManagementDialogs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  Alert,
-  Box,
-  Button,
-  Checkbox,
-  Chip,
-  CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  FormControlLabel,
-  FormGroup,
-  IconButton,
-  Stack,
-  TextField,
-  Tooltip,
-  Typography,
-} from "@mui/material";
-import { useState } from "react";
-import { useTranslation } from "react-i18next";
+import type { TypeWorkspaceMember, TypeWorkspaceRoster } from "@/types";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import GroupOutlinedIcon from "@mui/icons-material/GroupOutlined";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
-import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
-
-type TypeMemberProject = { id: number; name: string };
-type TypeWorkspaceMember = {
-  userId: string;
-  isCurrentUser: boolean;
-  displayName: string;
-  username: string | null;
-  role: "owner" | "member";
-  joinedAt: string;
-  projects: TypeMemberProject[];
-};
-type TypeWorkspaceRoster = {
-  projects: TypeMemberProject[];
-  members: TypeWorkspaceMember[];
-};
+import GroupAddOutlinedIcon from "@mui/icons-material/GroupAddOutlined";
 
 export function MembersScreen() {
   const { t, i18n } = useTranslation();
@@ -58,6 +40,7 @@ export function MembersScreen() {
   const [selectedProjectIds, setSelectedProjectIds] = useState<number[]>([]);
   const [memberToRemove, setMemberToRemove] =
     useState<TypeWorkspaceMember | null>(null);
+  const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [mutationError, setMutationError] = useState<string | null>(null);
   const canManage = workspaceRole === "owner";
   const queryKey = [QUERY_KEYS.MEMBERS, activeWorkspaceId];
@@ -134,17 +117,38 @@ export function MembersScreen() {
           <p className="screen-eyebrow">{t("account.workspaceLabel")}</p>
           <h2 className="screen-title">{t("members.title")}</h2>
         </div>
-        {data ? (
-          <Typography variant="body2" color="text.secondary">
-            {t(
-              data.members.length === 1
-                ? "members.countSingular"
-                : "members.countPlural",
-              { count: data.members.length },
-            )}
-          </Typography>
-        ) : null}
+        <Stack
+          direction={{ xs: "column-reverse", sm: "row" }}
+          spacing={1.5}
+          alignItems={{ xs: "flex-start", sm: "center" }}
+        >
+          {data ? (
+            <Typography variant="body2" color="text.secondary">
+              {t(
+                data.members.length === 1
+                  ? "members.countSingular"
+                  : "members.countPlural",
+                { count: data.members.length },
+              )}
+            </Typography>
+          ) : null}
+          {canManage && activeWorkspaceId ? (
+            <Button
+              variant="contained"
+              startIcon={<GroupAddOutlinedIcon />}
+              onClick={() => setIsInviteDialogOpen(true)}
+            >
+              {t("notifications.manageInvites")}
+            </Button>
+          ) : null}
+        </Stack>
       </div>
+
+      <WorkspaceInviteDialog
+        open={isInviteDialogOpen}
+        workspaceId={activeWorkspaceId}
+        onClose={() => setIsInviteDialogOpen(false)}
+      />
 
       <TextField
         size="small"
@@ -273,101 +277,20 @@ export function MembersScreen() {
         </Typography>
       )}
 
-      <Dialog
-        open={memberToEdit !== null}
-        onClose={() => setMemberToEdit(null)}
-        fullWidth
-        maxWidth="sm"
-      >
-        <DialogTitle>
-          {t("members.manageTitle", { name: memberToEdit?.displayName ?? "" })}
-        </DialogTitle>
-        <DialogContent dividers>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-            {t("members.manageDescription")}
-          </Typography>
-          {mutationError ? (
-            <Alert severity="error" sx={{ mb: 1.5 }}>
-              {mutationError}
-            </Alert>
-          ) : null}
-          <FormGroup>
-            {(data?.projects ?? []).map((project) => (
-              <FormControlLabel
-                key={project.id}
-                label={project.name}
-                control={
-                  <Checkbox
-                    checked={selectedProjectIds.includes(project.id)}
-                    onChange={(event) => {
-                      setSelectedProjectIds((current) =>
-                        event.target.checked
-                          ? [...current, project.id]
-                          : current.filter((id) => id !== project.id),
-                      );
-                    }}
-                  />
-                }
-              />
-            ))}
-            {!data?.projects.length ? (
-              <Typography variant="body2" color="text.secondary">
-                {t("members.noProjects")}
-              </Typography>
-            ) : null}
-          </FormGroup>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setMemberToEdit(null)}>
-            {t("common.cancel")}
-          </Button>
-          <Button
-            variant="contained"
-            disabled={saveProjectsMutation.isPending}
-            onClick={() => saveProjectsMutation.mutate()}
-          >
-            {saveProjectsMutation.isPending
-              ? t("common.saving")
-              : t("common.save")}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Dialog
-        open={memberToRemove !== null}
-        onClose={() => setMemberToRemove(null)}
-        fullWidth
-        maxWidth="xs"
-      >
-        <DialogTitle>{t("members.removeTitle")}</DialogTitle>
-        <DialogContent>
-          {mutationError ? (
-            <Alert severity="error" sx={{ mb: 1.5 }}>
-              {mutationError}
-            </Alert>
-          ) : null}
-          <Typography variant="body2">
-            {t("members.removeConfirm", {
-              name: memberToRemove?.displayName ?? "",
-            })}
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setMemberToRemove(null)}>
-            {t("common.cancel")}
-          </Button>
-          <Button
-            color="error"
-            variant="contained"
-            disabled={removeMemberMutation.isPending}
-            onClick={() => removeMemberMutation.mutate()}
-          >
-            {removeMemberMutation.isPending
-              ? t("common.saving")
-              : t("members.remove")}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <MemberManagementDialogs
+        projects={data?.projects ?? []}
+        memberToEdit={memberToEdit}
+        memberToRemove={memberToRemove}
+        selectedProjectIds={selectedProjectIds}
+        mutationError={mutationError}
+        isSavingProjects={saveProjectsMutation.isPending}
+        isRemovingMember={removeMemberMutation.isPending}
+        onCloseEdit={() => setMemberToEdit(null)}
+        onCloseRemove={() => setMemberToRemove(null)}
+        onSaveProjects={() => saveProjectsMutation.mutate()}
+        onRemoveMember={() => removeMemberMutation.mutate()}
+        onSelectedProjectIdsChange={setSelectedProjectIds}
+      />
     </section>
   );
 }

@@ -18,9 +18,11 @@ import {
   isAccountSessionExpired,
   ACCOUNT_SESSION_EXPIRED_EVENT,
 } from "@/lib/accountWorkspaceApi";
+import { useRouter } from "next/navigation";
 import { QUERY_KEYS } from "@/constants/queryKeys";
 import { ProfileMenu } from "./ProfileMenu";
 import { useMainStore } from "@/store/mainStore";
+import { workspaceUrl } from "@/utils/workspaceUrl";
 import { AppBarDialogs } from "./AppBarDialogs";
 import { AccountDialog } from "./AccountDialog";
 import { useQueryClient } from "@tanstack/react-query";
@@ -57,6 +59,7 @@ export function resolveAccountDialogContent(
 
 export function AppBarTop() {
   const { t, i18n } = useTranslation();
+  const router = useRouter();
   const language = i18n.language.startsWith("en") ? "en" : "pt";
   const [displayName, setDisplayName] = useState("");
   const [username, setUsername] = useState("");
@@ -323,6 +326,9 @@ export function AppBarTop() {
         const activeWorkspace = payload.workspaces.find(
           (workspace) => workspace.id === payload.activeWorkspaceId,
         );
+        if (activeWorkspace && window.location.pathname === "/") {
+          router.replace(workspaceUrl(activeWorkspace));
+        }
         if (
           activeWorkspace &&
           (accountSession.workspaceId !== activeWorkspace.id ||
@@ -360,7 +366,7 @@ export function AppBarTop() {
     return () => {
       isCurrent = false;
     };
-  }, [accountSession, setStoreWorkspaceId, t, workspaceListRefreshKey]);
+  }, [accountSession, router, setStoreWorkspaceId, t, workspaceListRefreshKey]);
 
   useEffect(() => {
     const activeWorkspace = accountWorkspaces.find(
@@ -650,6 +656,14 @@ export function AppBarTop() {
         setAccountSession(nextAccountSession);
         setStoreWorkspaceId(nextAccountSession.workspaceId ?? null);
         setSelectedProject(null);
+        if (nextAccountSession.workspaceId) {
+          router.push(
+            workspaceUrl({
+              id: nextAccountSession.workspaceId,
+              name: nextAccountSession.workspaceName,
+            }),
+          );
+        }
         await Promise.all([
           queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.PROJECTS] }),
           queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.TASKS] }),
@@ -741,6 +755,14 @@ export function AppBarTop() {
       setAccountSession(nextAccountSession);
       setStoreWorkspaceId(nextAccountSession.workspaceId ?? null);
       setSelectedProject(null);
+      if (nextAccountSession.workspaceId) {
+        router.push(
+          workspaceUrl({
+            id: nextAccountSession.workspaceId,
+            name: nextAccountSession.workspaceName,
+          }),
+        );
+      }
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.PROJECTS] }),
         queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.TASKS] }),

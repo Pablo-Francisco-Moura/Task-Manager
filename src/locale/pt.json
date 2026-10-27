@@ -13,6 +13,7 @@
     "sessionLoading": "Iniciando seu espaço...",
     "sessionLoadingDetail": "Preparando seu espaço privado",
     "databaseStarting": "O banco de dados ainda está iniciando. A aplicação continuará tentando conectar.",
+    "workspaceNotFound": "Workspace não encontrado.",
     "nameRequired": "Nome é obrigatório",
     "nameTooLong": "O nome deve ter no máximo 200 caracteres",
     "rowsPerPage": "Linhas por página",

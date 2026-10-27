@@ -10,5 +10,6 @@ export * from "./localData";
 export * from "./validation";
 export * from "./taskPriority";
 export * from "./serializedApi";
+export * from "./workspaceRoute";
 export * from "./projectActivity";
 export * from "./workspaceMembers";

@@ -135,6 +135,16 @@ projectRoutes.delete(
       return c.json({ error: "Workspace membership required" }, 403);
     }
     if (role !== "owner") {
+      const visibleProject = await prisma.project.findFirst({
+        where: {
+          id,
+          ...projectAccessWhere(workspaceId, userId, role),
+        },
+        select: { id: true },
+      });
+      if (!visibleProject) {
+        return c.json({ error: "Project not found" }, 404);
+      }
       return c.json({ error: "Workspace owner required to delete projects" }, 403);
     }
 
@@ -193,6 +203,16 @@ projectRoutes.patch(
       return c.json({ error: "Workspace membership required" }, 403);
     }
     if (role !== "owner") {
+      const visibleProject = await prisma.project.findFirst({
+        where: {
+          id,
+          ...projectAccessWhere(workspaceId, userId, role),
+        },
+        select: { id: true },
+      });
+      if (!visibleProject) {
+        return c.json({ error: "Project not found" }, 404);
+      }
       return c.json({ error: "Workspace owner required to update projects" }, 403);
     }
     const body = await readJsonObject(c.req);

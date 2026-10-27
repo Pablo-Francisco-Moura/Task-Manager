@@ -1,7 +1,7 @@
 services:
   db:
     image: postgres:16
-    container_name: desafio-tecnico-one-db
+    container_name: db
     restart: always
     ports:
       - "5432:5432"
@@ -23,7 +23,7 @@ services:
       args:
         LOCAL_UID: ${LOCAL_UID:-1000}
         LOCAL_GID: ${LOCAL_GID:-1000}
-    container_name: desafio-tecnico-one-app
+    container_name: app
     restart: always
     user: "${LOCAL_UID:-1000}:${LOCAL_GID:-1000}"
     ports:
@@ -34,6 +34,9 @@ services:
       - ./:/app
       - /app/node_modules
       - /app/.next
+    depends_on:
+      db:
+        condition: service_healthy
 
 volumes:
   pg-data:

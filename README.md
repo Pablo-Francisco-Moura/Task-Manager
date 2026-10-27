@@ -183,17 +183,22 @@ Desenvolver um sistema full stack de gerenciamento de projetos e tarefas utiliza
    cd desafio-tecnico-one-fullstack
    ```
 3. **Certifique-se de que o Docker e o Docker Compose estão instalados em seu sistema.**
-4. Configure `DATABASE_URL` no `.env`. Para desenvolvimento local, use a URL
-   de `dev_db` do `.env.example`; não deixe a URL de produção nesse arquivo se
-   não quiser que a aplicação local leia e altere dados de produção.
-5. Inicie a aplicação e o banco de dados:
+4. Na primeira execução, crie o `.env` a partir do exemplo. Se já existir um
+   `.env`, mantenha-o e confirme que `DATABASE_URL` aponta para o banco desejado.
+   ```sh
+   cp .env.example .env
+   ```
+   O exemplo usa o banco local `dev_db`. Não use uma URL de produção se não
+   quiser que a aplicação local leia e altere dados de produção.
+5. Construa e inicie a aplicação e o banco de dados:
    ```sh
    docker compose up --build -d
    ```
-   O Compose passa `DATABASE_URL` do `.env` ao container. Ele inicia o PostgreSQL
-   local como serviço auxiliar, mas a aplicação se conecta ao banco especificado
-   nessa variável. Migrations não são aplicadas automaticamente na inicialização.
-   Acesse http://localhost:3000.
+   Esse comando constrói a imagem e inicia os contêineres. O Compose passa
+   `DATABASE_URL` do `.env` à aplicação. No contêiner, `localhost` é ajustado
+   para o serviço PostgreSQL `db`; URLs de bancos externos permanecem inalteradas.
+   O app aguarda o banco ficar saudável, aplica as migrations pendentes e então
+   inicia. Acesse http://localhost:3000.
    Se precisar reiniciar a aplicação limpando o cache do Next.js, sem apagar os
    dados do banco, use:
    ```sh

@@ -1,34 +1,28 @@
 import { Task } from "../Task/Task";
-import {
-  Stack,
-  Dialog,
-  Select,
-  MenuItem,
-  TextField,
-  InputLabel,
-  FormControl,
-} from "@mui/material";
+import { Dialog } from "@mui/material";
 import { TaskForm } from "@/components/TaskForm";
 import { useState } from "react";
 import { TaskBoard } from "./TaskBoard";
+import { TaskFilters } from "./TaskFilters";
+import { filterTasks } from "./filterTasks";
 import { AlertMessage } from "@/components/AlertMessage";
 import { useMainStore } from "@/store/mainStore";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useTranslation } from "react-i18next";
+import { TaskEmptyState } from "./TaskEmptyState";
 import { useProjectStore } from "@/store/projectStore";
 import { useTaskMutations } from "./useTaskMutations";
 import { toTaskDueAtISOString } from "@/utils/taskDueDate";
 import { useProjects, useTasks } from "@/hooks";
+import { ProjectActivityDrawer } from "./ProjectActivityDrawer";
 import { TaskEditDialog, type TypeTaskEditFormValues } from "./TaskEditDialog";
-import type { TypeReorderTasksInput } from "@/types";
 import type {
   TypeLocalTask,
-  TypeLocalTaskPriority,
   TypeLocalTaskStatus,
+  TypeLocalTaskPriority,
 } from "@/types/localData";
-import ChecklistOutlinedIcon from "@mui/icons-material/ChecklistOutlined";
+import type { TypeReorderTasksInput } from "@/types";
 import FolderOpenOutlinedIcon from "@mui/icons-material/FolderOpenOutlined";
-import { ProjectActivityDrawer } from "./ProjectActivityDrawer";
 
 interface IProps {
   openAddTask: boolean;
@@ -79,7 +73,6 @@ export function Tasks({
     },
   });
 
-  // Handlers
   const handleDeleteClick = (task: TypeLocalTask) => {
     setTaskToDelete(task);
     setOpenDialog(true);
@@ -142,18 +135,14 @@ export function Tasks({
     refetch: refetchTasks,
   } = useTasks(selectedProject?.id);
   const allTasks = tasks ?? [];
-  const normalizedSearch = search.trim().toLowerCase();
-  const filteredTasks = allTasks.filter(
-    (task) =>
-      (!normalizedSearch ||
-        `${task.name} ${task.description ?? ""}`
-          .toLowerCase()
-          .includes(normalizedSearch)) &&
-      (statusFilter === "all" || task.status === statusFilter) &&
-      (priorityFilter === "all" || task.priority === priorityFilter),
+  const filteredTasks = filterTasks(
+    allTasks,
+    search,
+    statusFilter,
+    priorityFilter,
   );
   const canReorder =
-    !normalizedSearch && statusFilter === "all" && priorityFilter === "all";
+    !search.trim() && statusFilter === "all" && priorityFilter === "all";
   const canManageProjects =
     activeWorkspaceId === null || workspaceRole === "owner";
 
@@ -231,57 +220,14 @@ export function Tasks({
 
   return (
     <div className="task-workspace">
-      <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ mb: 2 }}>
-        <TextField
-          size="small"
-          label={t("task.search")}
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          sx={{ flex: 1 }}
-        />
-        <FormControl size="small" sx={{ minWidth: 160 }}>
-          <InputLabel id="task-status-filter-label">
-            {t("task.filterStatus")}
-          </InputLabel>
-          <Select
-            labelId="task-status-filter-label"
-            label={t("task.filterStatus")}
-            value={statusFilter}
-            onChange={(event) => {
-              setStatusFilter(
-                event.target.value as TypeLocalTaskStatus | "all",
-              );
-            }}
-          >
-            <MenuItem value="all">{t("task.allStatuses")}</MenuItem>
-            <MenuItem value="todo">{t("task.status.todo")}</MenuItem>
-            <MenuItem value="in_progress">
-              {t("task.status.inProgress")}
-            </MenuItem>
-            <MenuItem value="done">{t("task.status.done")}</MenuItem>
-          </Select>
-        </FormControl>
-        <FormControl size="small" sx={{ minWidth: 160 }}>
-          <InputLabel id="task-priority-filter-label">
-            {t("task.filterPriority")}
-          </InputLabel>
-          <Select
-            labelId="task-priority-filter-label"
-            label={t("task.filterPriority")}
-            value={priorityFilter}
-            onChange={(event) => {
-              setPriorityFilter(
-                event.target.value as TypeLocalTaskPriority | "all",
-              );
-            }}
-          >
-            <MenuItem value="all">{t("task.allPriorities")}</MenuItem>
-            <MenuItem value="low">{t("task.priority.low")}</MenuItem>
-            <MenuItem value="normal">{t("task.priority.normal")}</MenuItem>
-            <MenuItem value="high">{t("task.priority.high")}</MenuItem>
-          </Select>
-        </FormControl>
-      </Stack>
+      <TaskFilters
+        search={search}
+        statusFilter={statusFilter}
+        priorityFilter={priorityFilter}
+        onSearchChange={setSearch}
+        onStatusFilterChange={setStatusFilter}
+        onPriorityFilterChange={setPriorityFilter}
+      />
       <ProjectActivityDrawer
         open={isChatOpen}
         projectId={selectedProject?.id ?? null}
@@ -329,17 +275,8 @@ export function Tasks({
             }}
           />
         </>
-      ) : allTasks.length > 0 ? (
-        <div className="empty-state">
-          <h3>{t("task.noMatches")}</h3>
-        </div>
       ) : (
-        <div className="empty-state task-empty-state">
-          <span className="empty-state-mark" aria-hidden="true">
-            <ChecklistOutlinedIcon />
-          </span>
-          <h3>{t("task.empty")}</h3>
-        </div>
+        <TaskEmptyState hasTasks={allTasks.length > 0} />
       )}
 
       <TaskEditDialog

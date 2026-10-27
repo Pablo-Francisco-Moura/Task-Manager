@@ -1,11 +1,12 @@
 {
-  "name": "desafio-tecnico-one",
+  "name": "task-manager",
   "version": "0.1.0",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "dotenv -e .env next dev --turbopack",
-    "dev:docker": "prisma generate && next dev --hostname 0.0.0.0",
+    "dev:docker": "node scripts/dev-docker.js",
+    "dev:docker:server": "prisma generate && prisma migrate deploy && next dev --hostname 0.0.0.0",
     "dev:docker:clean": "docker compose exec -T app sh -c 'find /app/.next -mindepth 1 -delete' && docker compose restart app",
     "build": "prisma generate && next build",
     "start": "next start",

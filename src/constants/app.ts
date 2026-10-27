@@ -1,11 +1,10 @@
-export const metadataTitle = "Desafio Técnico - One Investimentos";
+export const metadataTitle = "Task Manager";
 
 export const defaultSelectedTab = "project";
 
-export const selectedTabStorageKey = "desafio-tecnico-one:selected-tab";
+export const selectedTabStorageKey = "task-manager:selected-tab";
 
-export const selectedProjectStorageKey =
-  "desafio-tecnico-one:selected-project-id";
+export const selectedProjectStorageKey = "task-manager:selected-project-id";
 
 export const themeStorageKey = "theme";
 

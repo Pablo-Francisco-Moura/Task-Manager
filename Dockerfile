@@ -5,24 +5,26 @@ WORKDIR /app
 ARG LOCAL_UID=1000
 ARG LOCAL_GID=1000
 
+ENV HOME=/home/app
+
+RUN mkdir -p /app/.next /home/app \
+	&& chown ${LOCAL_UID}:${LOCAL_GID} /app /app/.next /home/app
+
+USER ${LOCAL_UID}:${LOCAL_GID}
+
 COPY package.json package-lock.json ./
 
-RUN npm ci
+RUN echo "Installing npm dependencies..." \
+	&& npm ci --no-audit --no-fund \
+	&& echo "npm dependencies installed."
 
 COPY prisma ./prisma
 
-RUN npx prisma generate
-
-RUN mkdir -p /app/.next /home/app \
-	&& chown -R ${LOCAL_UID}:${LOCAL_GID} /app/node_modules /app/.next /home/app
+RUN echo "Generating Prisma Client..." \
+	&& npx prisma generate \
+	&& echo "Prisma Client generated."
 
 COPY . .
-
-RUN chown ${LOCAL_UID}:${LOCAL_GID} /app/next-env.d.ts
-
-ENV HOME=/home/app
-
-USER ${LOCAL_UID}:${LOCAL_GID}
 
 EXPOSE 3000
 

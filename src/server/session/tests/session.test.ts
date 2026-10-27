@@ -1250,6 +1250,11 @@ describe("Guest workspace session", () => {
     expect(activityResponse.status).toBe(200);
     expect(await activityResponse.json()).toEqual([
       expect.objectContaining({
+        type: "project_created",
+        actorName: "Ana",
+        details: { projectName: "Account project" },
+      }),
+      expect.objectContaining({
         type: "task_created",
         taskName: "Account task",
         actorName: "Ana",

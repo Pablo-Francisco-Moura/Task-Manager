@@ -145,7 +145,10 @@ projectRoutes.delete(
       if (!visibleProject) {
         return c.json({ error: "Project not found" }, 404);
       }
-      return c.json({ error: "Workspace owner required to delete projects" }, 403);
+      return c.json(
+        { error: "Workspace owner required to delete projects" },
+        403,
+      );
     }
 
     try {
@@ -213,7 +216,10 @@ projectRoutes.patch(
       if (!visibleProject) {
         return c.json({ error: "Project not found" }, 404);
       }
-      return c.json({ error: "Workspace owner required to update projects" }, 403);
+      return c.json(
+        { error: "Workspace owner required to update projects" },
+        403,
+      );
     }
     const body = await readJsonObject(c.req);
     if (!body) {
@@ -255,7 +261,10 @@ projectRoutes.patch(
           where: { id },
           data: updateData,
         });
-        const changes: Record<string, { from: string | null; to: string | null }> = {};
+        const changes: Record<
+          string,
+          { from: string | null; to: string | null }
+        > = {};
         if (name !== undefined && updated.name !== currentProject.name) {
           changes.name = { from: currentProject.name, to: updated.name };
         }

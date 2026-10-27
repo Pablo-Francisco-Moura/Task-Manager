@@ -963,7 +963,8 @@ describe("Guest workspace session", () => {
     });
     expect(
       memberRoster.members.find(
-        (listedMember: { userId: string }) => listedMember.userId === memberUserId,
+        (listedMember: { userId: string }) =>
+          listedMember.userId === memberUserId,
       ),
     ).toMatchObject({ isCurrentUser: true });
     expect(memberRoster.members).not.toEqual(

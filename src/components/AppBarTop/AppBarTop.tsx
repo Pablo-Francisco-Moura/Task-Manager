@@ -30,6 +30,8 @@ import { useTranslation } from "react-i18next";
 import { useProjectStore } from "@/store/projectStore";
 import { LOCAL_STORAGE_KEY } from "@/constants/localData";
 import { useWorkspaceActions } from "./useWorkspaceActions";
+import { WorkspaceInviteBell } from "../Notifications/WorkspaceInviteBell";
+import { WorkspaceInviteDialog } from "../Notifications/WorkspaceInviteDialog";
 import { importLocalWorkspaceData } from "@/lib/localDataRepository";
 import { useEffect, useRef, useState } from "react";
 import { Stack, Button, IconButton, Typography } from "@mui/material";
@@ -42,8 +44,6 @@ import type {
 import styles from "./AppBarTop.module.css";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import WorkspacesOutlinedIcon from "@mui/icons-material/WorkspacesOutlined";
-import { WorkspaceInviteBell } from "../Notifications/WorkspaceInviteBell";
-import { WorkspaceInviteDialog } from "../Notifications/WorkspaceInviteDialog";
 
 export function resolveAccountDialogContent(
   mode: TypeAccountDialogMode,

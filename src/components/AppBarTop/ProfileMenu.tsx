@@ -45,7 +45,7 @@ interface IProps {
   onCreateWorkspace: () => void;
   onRenameWorkspace: () => void;
   onDeleteWorkspace: (workspace: TypeWorkspaceMembership) => void;
-  onEditGuestProfile: () => void;
+  onEditProfile: () => void;
   onOpenAccountDialog: (mode: TypeAccountDialogMode) => void;
   onInviteMember: () => void;
 }
@@ -62,7 +62,7 @@ export function ProfileMenu({
   isSigningOut,
   language,
   onClose,
-  onEditGuestProfile,
+  onEditProfile,
   onSwitchWorkspace,
   onCreateWorkspace,
   onRenameWorkspace,
@@ -95,16 +95,14 @@ export function ProfileMenu({
               guestProfile.displayName ||
               t("profile.unnamed")}
           </Typography>
-          {!accountSession ? (
-            <IconButton
-              size="small"
-              aria-label={t("profile.editName")}
-              title={t("profile.editName")}
-              onClick={onEditGuestProfile}
-            >
-              <EditOutlinedIcon fontSize="small" />
-            </IconButton>
-          ) : null}
+          <IconButton
+            size="small"
+            aria-label={t("profile.editName")}
+            title={t("profile.editName")}
+            onClick={onEditProfile}
+          >
+            <EditOutlinedIcon fontSize="small" />
+          </IconButton>
         </Stack>
       </Box>
       {accountSession ? (

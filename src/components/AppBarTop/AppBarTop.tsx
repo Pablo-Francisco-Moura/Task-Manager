@@ -473,8 +473,53 @@ export function AppBarTop() {
     setIsCreateAccountOpen(true);
   };
 
-  const saveGuestProfileName = () => {
-    const nextProfile = { displayName: editedProfileName.trim() };
+  const saveProfileName = async () => {
+    const trimmedProfileName = editedProfileName.trim();
+    if (!trimmedProfileName) {
+      return;
+    }
+
+    if (accountSession) {
+      try {
+        const response = await fetch("/api/session/account", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          credentials: "same-origin",
+          body: JSON.stringify({ displayName: trimmedProfileName }),
+        });
+
+        if (!response.ok) {
+          throw new Error(t("account.updateError"));
+        }
+
+        const payload = (await response.json().catch(() => ({}))) as {
+          displayName?: string;
+        };
+
+        const nextSession = {
+          ...accountSession,
+          displayName: payload.displayName ?? trimmedProfileName,
+        };
+
+        setAccountSession(nextSession);
+        try {
+          window.localStorage.setItem(
+            ACCOUNT_SESSION_STORAGE_KEY,
+            JSON.stringify(nextSession),
+          );
+        } catch {
+          // Keep the active account state in memory even when storage is unavailable.
+        }
+      } catch {
+        setWorkspaceError(t("account.updateError"));
+      }
+
+      setIsEditProfileOpen(false);
+      setEditedProfileName("");
+      return;
+    }
+
+    const nextProfile = { displayName: trimmedProfileName };
 
     try {
       window.localStorage.setItem(
@@ -487,6 +532,7 @@ export function AppBarTop() {
 
     setGuestProfile(nextProfile);
     setIsEditProfileOpen(false);
+    setEditedProfileName("");
   };
 
   const closeCreateAccountDialog = () => {
@@ -897,8 +943,11 @@ export function AppBarTop() {
         isEditProfileOpen={isEditProfileOpen}
         editedProfileName={editedProfileName}
         onEditedProfileNameChange={setEditedProfileName}
-        onSaveGuestProfile={saveGuestProfileName}
-        onCloseEditProfile={() => setIsEditProfileOpen(false)}
+        onSaveGuestProfile={saveProfileName}
+        onCloseEditProfile={() => {
+          setEditedProfileName("");
+          setIsEditProfileOpen(false);
+        }}
         isResettingWorkspace={isResettingWorkspace}
       >
         <ProfileMenu
@@ -913,8 +962,10 @@ export function AppBarTop() {
           isSigningOut={isSigningOut}
           language={language}
           onClose={() => setProfileAnchor(null)}
-          onEditGuestProfile={() => {
-            setEditedProfileName(guestProfile.displayName);
+          onEditProfile={() => {
+            setEditedProfileName(
+              accountSession?.displayName ?? guestProfile.displayName,
+            );
             setProfileAnchor(null);
             setIsEditProfileOpen(true);
           }}

@@ -190,6 +190,7 @@
     },
     "workspaceLoading": "Carregando workspaces...",
     "workspaceSwitching": "Trocando workspace...",
+    "updateError": "Não foi possível atualizar o nome do perfil.",
     "workspaceLoadError": "Não foi possível carregar os workspaces.",
     "workspaceSwitchError": "Não foi possível trocar de workspace.",
     "workspaceCreate": "Criar workspace",

@@ -180,6 +180,36 @@ sessionRoutes.get("/workspace", async (context) => {
   });
 });
 
+sessionRoutes.patch("/account", async (context) => {
+  const providedToken = getCookie(context, ACCOUNT_SESSION_COOKIE_NAME);
+  if (!providedToken) {
+    return context.json({ error: "Account session required" }, 401);
+  }
+
+  const accountSession = await getAccountSessionByToken(providedToken);
+  if (!accountSession || accountSession.user.kind !== "account") {
+    return context.json({ error: "Account session expired" }, 401);
+  }
+
+  const body = await context.req.json().catch(() => ({}));
+  const displayName =
+    typeof body.displayName === "string" && body.displayName.trim()
+      ? body.displayName.trim()
+      : null;
+
+  if (!displayName) {
+    return context.json({ error: "Display name is required" }, 400);
+  }
+
+  const nextUser = await prisma.user.update({
+    where: { id: accountSession.userId },
+    data: { displayName },
+    select: { displayName: true },
+  });
+
+  return context.json({ displayName: nextUser.displayName });
+});
+
 sessionRoutes.patch("/workspace", async (context) => {
   const providedToken = getCookie(context, ACCOUNT_SESSION_COOKIE_NAME);
   if (!providedToken) {

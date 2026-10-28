@@ -1,8 +1,7 @@
 import { TextField, type TextFieldProps } from "@mui/material";
 import type { ChangeEvent } from "react";
 
-interface IProps
-  extends Omit<TextFieldProps, "value" | "onChange" | "size"> {
+interface IProps extends Omit<TextFieldProps, "value" | "onChange" | "size"> {
   value: string;
   onChange: (value: string) => void;
   size?: TextFieldProps["size"];

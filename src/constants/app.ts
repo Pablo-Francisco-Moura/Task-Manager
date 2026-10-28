@@ -8,4 +8,6 @@ export const selectedProjectStorageKey = "task-manager:selected-project-id";
 
 export const themeStorageKey = "theme";
 
+export const colorSettingsStorageKey = "task-manager:color-settings";
+
 export const languageStorageKey = "language";

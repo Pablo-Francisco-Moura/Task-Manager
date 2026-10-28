@@ -6,3 +6,4 @@ export * from "./taskBoard";
 export * from "./workspace";
 export * from "./api.routes";
 export * from "./validation";
+export * from "./colors";

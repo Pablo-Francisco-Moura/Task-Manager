@@ -491,9 +491,7 @@ sessionRoutes.get("/workspace/:workspaceId/members", async (context) => {
       : projects.filter(({ projectMembers }) =>
           projectMembers.some(({ userId }) => userId === accountSession.userId),
         );
-  const accessibleProjectIds = new Set(
-    accessibleProjects.map(({ id }) => id),
-  );
+  const accessibleProjectIds = new Set(accessibleProjects.map(({ id }) => id));
   const visibleMemberships =
     membership.role === "owner"
       ? memberships

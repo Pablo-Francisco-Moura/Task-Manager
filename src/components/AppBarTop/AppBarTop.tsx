@@ -880,7 +880,7 @@ export function AppBarTop() {
               aria-haspopup="menu"
               aria-expanded={Boolean(profileAnchor)}
               onClick={(event) => setProfileAnchor(event.currentTarget)}
-              color="inherit"
+              color={profileAnchor ? "secondary" : "inherit"}
             >
               <AccountCircleIcon />
             </IconButton>

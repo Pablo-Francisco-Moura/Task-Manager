@@ -12,6 +12,7 @@ import { useTranslation } from "react-i18next";
 import { TaskEmptyState } from "./TaskEmptyState";
 import { useProjectStore } from "@/store/projectStore";
 import { useTaskMutations } from "./useTaskMutations";
+import { ProjectEmptyState } from "./ProjectEmptyState";
 import { toTaskDueAtISOString } from "@/utils/taskDueDate";
 import { useProjects, useTasks } from "@/hooks";
 import { ProjectActivityDrawer } from "./ProjectActivityDrawer";
@@ -22,7 +23,6 @@ import type {
   TypeLocalTaskPriority,
 } from "@/types/localData";
 import type { TypeReorderTasksInput } from "@/types";
-import FolderOpenOutlinedIcon from "@mui/icons-material/FolderOpenOutlined";
 
 interface IProps {
   openAddTask: boolean;
@@ -169,23 +169,10 @@ export function Tasks({
 
   if (projects && projects.length === 0) {
     return (
-      <div className="empty-state">
-        <span className="empty-state-mark" aria-hidden="true">
-          <FolderOpenOutlinedIcon />
-        </span>
-        <h3>
-          {canManageProjects ? t("project.empty") : t("project.noneAvailable")}
-        </h3>
-        {canManageProjects ? (
-          <button
-            type="button"
-            className="text-action"
-            onClick={() => setSelectedTab("project")}
-          >
-            {t("project.add")}
-          </button>
-        ) : null}
-      </div>
+      <ProjectEmptyState
+        canManageProjects={canManageProjects}
+        onAddProject={() => setSelectedTab("project")}
+      />
     );
   }
 

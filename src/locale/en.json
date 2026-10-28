@@ -112,10 +112,9 @@
     "confirmDelete": "Delete this comment?",
     "commentDeleted": "Comment removed",
     "emptyValue": "empty",
-    "change": "{{field}}: {{from}} → {{to}}",
-    "movedProject": "Project: {{from}} → {{to}}",
-    "movedStatus": "Column: {{from}} → {{to}}",
-    "movedPosition": "Position: {{from}} → {{to}}",
+    "descriptionUpdated": "Description updated",
+    "column": "Column",
+    "position": "Position",
     "fields": {
       "name": "Name",
       "description": "Description",

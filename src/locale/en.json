@@ -112,9 +112,24 @@
     "confirmDelete": "Delete this comment?",
     "commentDeleted": "Comment removed",
     "emptyValue": "empty",
-    "descriptionUpdated": "Description updated",
     "column": "Column",
     "position": "Position",
+    "previousValue": "Before",
+    "afterValue": "After",
+    "memberAddedSuffix": "to the project",
+    "memberRemovedSuffix": "from the project",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "showDetails": "Show details",
+    "hideDetails": "Hide details",
+    "project_createdVerb": "created project",
+    "project_updatedVerb": "edited project",
+    "member_addedVerb": "added",
+    "member_removedVerb": "removed",
+    "task_createdVerb": "created task",
+    "task_updatedVerb": "edited task",
+    "task_movedVerb": "moved task",
+    "task_deletedVerb": "deleted task",
     "fields": {
       "name": "Name",
       "description": "Description",
@@ -124,15 +139,7 @@
       "priority": "Priority",
       "project": "Project",
       "position": "Position"
-    },
-    "project_created": "{{actor}} created project {{project}}",
-    "project_updated": "{{actor}} edited project {{project}}",
-    "member_added": "{{actor}} added {{member}} to the project",
-    "member_removed": "{{actor}} removed {{member}} from the project",
-    "task_created": "{{actor}} created task {{task}}",
-    "task_updated": "{{actor}} edited task {{task}}",
-    "task_moved": "{{actor}} moved task {{task}}",
-    "task_deleted": "{{actor}} deleted task {{task}}"
+    }
   },
   "account": {
     "signIn": {

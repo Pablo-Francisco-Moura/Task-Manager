@@ -112,9 +112,24 @@
     "confirmDelete": "Excluir este comentário?",
     "commentDeleted": "Comentário removido",
     "emptyValue": "vazio",
-    "descriptionUpdated": "Descrição atualizada",
     "column": "Coluna",
     "position": "Posição",
+    "previousValue": "Antes",
+    "afterValue": "Depois",
+    "memberAddedSuffix": "ao projeto",
+    "memberRemovedSuffix": "do projeto",
+    "today": "Hoje",
+    "yesterday": "Ontem",
+    "showDetails": "Ver detalhes",
+    "hideDetails": "Ocultar detalhes",
+    "project_createdVerb": "criou o projeto",
+    "project_updatedVerb": "editou o projeto",
+    "member_addedVerb": "adicionou",
+    "member_removedVerb": "removeu",
+    "task_createdVerb": "criou a tarefa",
+    "task_updatedVerb": "editou a tarefa",
+    "task_movedVerb": "moveu a tarefa",
+    "task_deletedVerb": "excluiu a tarefa",
     "fields": {
       "name": "Nome",
       "description": "Descrição",
@@ -124,15 +139,7 @@
       "priority": "Prioridade",
       "project": "Projeto",
       "position": "Posição"
-    },
-    "project_created": "{{actor}} criou o projeto {{project}}",
-    "project_updated": "{{actor}} editou o projeto {{project}}",
-    "member_added": "{{actor}} adicionou {{member}} ao projeto",
-    "member_removed": "{{actor}} removeu {{member}} do projeto",
-    "task_created": "{{actor}} criou a tarefa {{task}}",
-    "task_updated": "{{actor}} editou a tarefa {{task}}",
-    "task_moved": "{{actor}} moveu a tarefa {{task}}",
-    "task_deleted": "{{actor}} excluiu a tarefa {{task}}"
+    }
   },
   "account": {
     "signIn": {

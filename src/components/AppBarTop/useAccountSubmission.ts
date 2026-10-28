@@ -16,13 +16,19 @@ interface IProps {
   password: string;
   displayName: string;
   workspaceName: string;
-  setSubmitError: Dispatch<SetStateAction<string | null>>;
-  setIsSubmitting: Dispatch<SetStateAction<boolean>>;
   confirmPassword: string;
   accountDialogMode: TypeAccountDialogMode;
+  setEmail: Dispatch<SetStateAction<string>>;
+  setUsername: Dispatch<SetStateAction<string>>;
+  setPassword: Dispatch<SetStateAction<string>>;
+  setSubmitError: Dispatch<SetStateAction<string | null>>;
+  setDisplayName: Dispatch<SetStateAction<string>>;
+  setIsSubmitting: Dispatch<SetStateAction<boolean>>;
+  setWorkspaceName: Dispatch<SetStateAction<string>>;
   setAccountSession: Dispatch<SetStateAction<TypeAccountSessionState | null>>;
-  setHasAttemptedAccountSubmit: Dispatch<SetStateAction<boolean>>;
+  setConfirmPassword: Dispatch<SetStateAction<string>>;
   closeCreateAccountDialog: () => void;
+  setHasAttemptedAccountSubmit: Dispatch<SetStateAction<boolean>>;
 }
 
 export function useAccountSubmission({
@@ -31,13 +37,19 @@ export function useAccountSubmission({
   password,
   displayName,
   workspaceName,
-  setSubmitError,
   confirmPassword,
-  setIsSubmitting,
   accountDialogMode,
+  setEmail,
+  setPassword,
+  setUsername,
+  setDisplayName,
+  setSubmitError,
+  setIsSubmitting,
+  setWorkspaceName,
   setAccountSession,
-  setHasAttemptedAccountSubmit,
+  setConfirmPassword,
   closeCreateAccountDialog,
+  setHasAttemptedAccountSubmit,
 }: IProps) {
   const { t } = useTranslation();
   const router = useRouter();

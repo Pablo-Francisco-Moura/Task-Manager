@@ -97,18 +97,24 @@ export function useAccountDialogController({
   };
 
   const handleCreateAccount = useAccountSubmission({
-    accountDialogMode,
-    displayName,
-    username,
     email,
     password,
-    confirmPassword,
+    username,
+    displayName,
     workspaceName,
-    setAccountSession,
-    setHasAttemptedAccountSubmit,
-    setIsSubmitting,
+    confirmPassword,
+    accountDialogMode,
+    setEmail,
+    setUsername,
+    setPassword,
+    setDisplayName,
     setSubmitError,
+    setIsSubmitting,
+    setWorkspaceName,
+    setAccountSession,
+    setConfirmPassword,
     closeCreateAccountDialog,
+    setHasAttemptedAccountSubmit,
   });
 
   return {

@@ -74,7 +74,7 @@
     "readError": "Could not mark the invitation as read."
   },
   "members": {
-    "title": "Workspace members",
+    "title": "Members",
     "you": "You",
     "countSingular": "{{count}} member",
     "countPlural": "{{count}} members",

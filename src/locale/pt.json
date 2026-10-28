@@ -74,7 +74,7 @@
     "readError": "Não foi possível marcar o convite como lido."
   },
   "members": {
-    "title": "Membros do workspace",
+    "title": "Membros",
     "you": "Você",
     "countSingular": "{{count}} membro",
     "countPlural": "{{count}} membros",

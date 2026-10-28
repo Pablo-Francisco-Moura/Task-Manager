@@ -114,7 +114,6 @@ export function MembersScreen() {
     <section className="screen-content">
       <div className="screen-heading">
         <div>
-          <p className="screen-eyebrow">{t("account.workspaceLabel")}</p>
           <h2 className="screen-title">{t("members.title")}</h2>
         </div>
         <Stack

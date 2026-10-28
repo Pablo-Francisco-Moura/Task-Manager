@@ -77,6 +77,13 @@ export function createMuiTheme(mode: TypeTheme) {
           },
         },
       },
+      MuiDivider: {
+        styleOverrides: {
+          root: {
+            borderColor: "var(--line)",
+          },
+        },
+      },
       MuiInputLabel: {
         styleOverrides: {
           root: {

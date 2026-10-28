@@ -10,6 +10,7 @@ import { useAppBarSession } from "./useAppBarSession";
 import { useSignOutAction } from "./useSignOutAction";
 import { useRef, useState } from "react";
 import { useProfileActions } from "./useProfileActions";
+import { ColorSettingsDialog } from "./ColorSettingsDialog";
 import { useWorkspaceActions } from "./useWorkspaceActions";
 import { WorkspaceInviteDialog } from "../Notifications/WorkspaceInviteDialog";
 import { useWorkspaceImportActions } from "./useWorkspaceImportActions";
@@ -31,6 +32,7 @@ export function AppBarTop() {
   const language = i18n.language.startsWith("en") ? "en" : "pt";
   const setSelectedTab = useMainStore((state) => state.setSelectedTab);
   const [profileAnchor, setProfileAnchor] = useState<HTMLElement | null>(null);
+  const [isColorSettingsOpen, setIsColorSettingsOpen] = useState(false);
   const [guestProfile, setGuestProfile] = useState<TypeGuestProfileState>({
     displayName: "",
   });
@@ -275,6 +277,11 @@ export function AppBarTop() {
             setProfileAnchor(null);
             setIsInviteDialogOpen(true);
           }}
+          onOpenColorSettings={() => setIsColorSettingsOpen(true)}
+        />
+        <ColorSettingsDialog
+          open={isColorSettingsOpen}
+          onClose={() => setIsColorSettingsOpen(false)}
         />
       </AppBarDialogs>
       <WorkspaceInviteDialog

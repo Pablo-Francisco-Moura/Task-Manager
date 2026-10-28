@@ -16,6 +16,7 @@ import type { TypeAccountSessionState, TypeWorkspaceMembership } from "@/types";
 import AddOutlinedIcon from "@mui/icons-material/AddOutlined";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import PaletteOutlinedIcon from "@mui/icons-material/PaletteOutlined";
 import GroupAddOutlinedIcon from "@mui/icons-material/GroupAddOutlined";
 
 interface IWorkspaceSectionProps {
@@ -160,11 +161,13 @@ export function ProfileWorkspaceSection({
 interface IPreferencesSectionProps {
   language: "pt" | "en";
   onSelectLanguage: (language: "pt" | "en") => void;
+  onOpenColorSettings: () => void;
 }
 
 export function ProfilePreferencesSection({
   language,
   onSelectLanguage,
+  onOpenColorSettings,
 }: IPreferencesSectionProps) {
   const { t } = useTranslation();
 
@@ -209,6 +212,22 @@ export function ProfilePreferencesSection({
         >
           <Typography variant="body2">{t("theme.label")}</Typography>
           <ThemeSwitch />
+        </Stack>
+        <Stack
+          direction="row"
+          alignItems="center"
+          justifyContent="space-between"
+          spacing={1}
+          sx={{ mt: 1 }}
+        >
+          <Typography variant="body2">{t("colors.label")}</Typography>
+          <Button
+            size="small"
+            startIcon={<PaletteOutlinedIcon />}
+            onClick={onOpenColorSettings}
+          >
+            {t("colors.customize")}
+          </Button>
         </Stack>
       </Box>
     </>

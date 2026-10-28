@@ -74,5 +74,21 @@
     "toggle": "Toggle theme",
     "switchToLight": "Switch to light mode",
     "switchToDark": "Switch to dark mode"
+  },
+  "colors": {
+    "label": "Colors",
+    "customize": "Customize",
+    "title": "System colors",
+    "description": "Choose the main colors used across the interface.",
+    "brand": "Primary color",
+    "accent": "Accent color",
+    "brandPreview": "Primary text contrast",
+    "accentPreview": "Accent button contrast",
+    "contrastInfo": "Colors are adjusted when needed to meet WCAG AA contrast (at least 4.5:1). Combinations below the limit cannot be saved.",
+    "contrastError": "These colors cannot be applied because they do not meet the minimum accessible contrast.",
+    "adjustmentInfo": "Task status and warning colors stay distinct so their meaning remains clear.",
+    "reset": "Reset",
+    "cancel": "Cancel",
+    "apply": "Apply"
   }
 }

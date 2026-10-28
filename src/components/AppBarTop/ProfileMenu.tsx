@@ -43,6 +43,7 @@ interface IProps {
   onEditProfile: () => void;
   onOpenAccountDialog: (mode: TypeAccountDialogMode) => void;
   onInviteMember: () => void;
+  onOpenColorSettings: () => void;
 }
 
 export function ProfileMenu({
@@ -66,6 +67,7 @@ export function ProfileMenu({
   onSignOut,
   onOpenAccountDialog,
   onInviteMember,
+  onOpenColorSettings,
 }: IProps) {
   const { t } = useTranslation();
 
@@ -142,6 +144,10 @@ export function ProfileMenu({
       <ProfilePreferencesSection
         language={language}
         onSelectLanguage={onSelectLanguage}
+        onOpenColorSettings={() => {
+          onClose();
+          onOpenColorSettings();
+        }}
       />
       {accountSession ? (
         <MenuItem onClick={onSignOut} disabled={isSigningOut}>

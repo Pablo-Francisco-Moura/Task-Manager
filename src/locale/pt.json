@@ -74,5 +74,21 @@
     "toggle": "Alternar tema",
     "switchToLight": "Mudar para o modo claro",
     "switchToDark": "Mudar para o modo escuro"
+  },
+  "colors": {
+    "label": "Cores",
+    "customize": "Personalizar",
+    "title": "Cores do sistema",
+    "description": "Escolha as cores principais usadas na interface.",
+    "brand": "Cor principal",
+    "accent": "Cor de destaque",
+    "brandPreview": "Contraste do texto principal",
+    "accentPreview": "Contraste do botão de destaque",
+    "contrastInfo": "As cores são ajustadas quando necessário para atender ao contraste WCAG AA (no mínimo 4,5:1). Combinações abaixo do limite não podem ser salvas.",
+    "contrastError": "Não é possível aplicar esta combinação: o contraste mínimo de acessibilidade não foi atingido.",
+    "adjustmentInfo": "As cores de status das tarefas e de alertas permanecem distintas para preservar seus significados.",
+    "reset": "Restaurar padrão",
+    "cancel": "Cancelar",
+    "apply": "Aplicar"
   }
 }

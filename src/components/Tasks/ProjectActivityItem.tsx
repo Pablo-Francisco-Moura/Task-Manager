@@ -195,7 +195,7 @@ export function ProjectActivityItem({
   return (
     <Box
       sx={{
-        position: isComment ? "static" : "relative",
+        position: "relative",
         display: "flex",
         flexDirection: "column",
         alignItems: isComment
@@ -204,10 +204,24 @@ export function ProjectActivityItem({
             : "flex-start"
           : "center",
         pt: isComment ? 0.75 : 1,
-        pb: isComment ? 0.75 : hasMoreDetails ? 2.5 : 1,
+        pb:
+          isComment &&
+          (activity.canEdit || activity.canDelete) &&
+          !activity.isDeleted
+            ? 2
+            : isComment
+              ? 0.75
+              : hasMoreDetails
+                ? 2.5
+                : 1,
         "&:hover .activity-details-toggle, &:focus-within .activity-details-toggle":
           {
             opacity: 1,
+          },
+        "&:hover .activity-comment-actions, &:focus-within .activity-comment-actions":
+          {
+            opacity: 1,
+            pointerEvents: "auto",
           },
       }}
     >
@@ -443,13 +457,29 @@ export function ProjectActivityItem({
           )}
         </Button>
       ) : null}
-      {isComment && !activity.isDeleted ? (
+      {isComment &&
+        (activity.canEdit || activity.canDelete) &&
+        !activity.isDeleted &&
+        !isEditing ? (
         <Stack
+          className="activity-comment-actions"
           direction="row"
           spacing={0.25}
-          sx={{ alignSelf: isOwnComment ? "flex-end" : "flex-start" }}
+          sx={{
+            position: "absolute",
+            bottom: 0,
+            right: 0,
+            opacity: 0,
+            pointerEvents: "none",
+            zIndex: 2,
+            transition: "opacity 120ms ease",
+            "@media (hover: none)": {
+              opacity: 1,
+              pointerEvents: "auto",
+            },
+          }}
         >
-          {activity.canEdit && !isEditing ? (
+          {activity.canEdit ? (
             <Tooltip title={t("activity.edit")}>
               <IconButton
                 size="small"

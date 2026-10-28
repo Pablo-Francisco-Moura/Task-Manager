@@ -25,7 +25,9 @@ import type { TypeWorkspaceMember, TypeWorkspaceRoster } from "@/types";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import GroupOutlinedIcon from "@mui/icons-material/GroupOutlined";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import AlternateEmailIcon from "@mui/icons-material/AlternateEmail";
 import GroupAddOutlinedIcon from "@mui/icons-material/GroupAddOutlined";
+import FolderOpenOutlinedIcon from "@mui/icons-material/FolderOpenOutlined";
 
 export function MembersScreen() {
   const { t, i18n } = useTranslation();
@@ -227,25 +229,32 @@ export function MembersScreen() {
                       label={t(`account.role.${member.role}`)}
                     />
                   </Stack>
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    sx={{ ml: 3.5 }}
-                  >
-                    {member.username ? `@${member.username} · ` : ""}
-                    {t("members.joined", {
-                      date: new Intl.DateTimeFormat(i18n.language, {
-                        dateStyle: "medium",
-                      }).format(new Date(member.joinedAt)),
-                    })}
-                  </Typography>
                   <Stack
+                    sx={{ mt: 0.5, ml: 3.5 }}
+                    spacing={0.5}
                     direction="row"
-                    spacing={0.75}
-                    useFlexGap
-                    flexWrap="wrap"
-                    sx={{ mt: 1, ml: 3.5 }}
+                    alignItems="center"
                   >
+                    <AlternateEmailIcon fontSize="small" color="action" />
+                    <Typography variant="caption" color="text.secondary">
+                      {member.username ? `@${member.username}` : ""}
+                      {member.username ? " · " : ""}
+                      {t("members.joined", {
+                        date: new Intl.DateTimeFormat(i18n.language, {
+                          dateStyle: "medium",
+                        }).format(new Date(member.joinedAt)),
+                      })}
+                    </Typography>
+                  </Stack>
+                  <Stack
+                    sx={{ mt: 1, ml: 3.5 }}
+                    spacing={0.75}
+                    flexWrap="wrap"
+                    direction="row"
+                    useFlexGap
+                    alignItems="center"
+                  >
+                    <FolderOpenOutlinedIcon fontSize="small" color="action" />
                     {member.role === "owner" ? (
                       <Typography variant="caption" color="text.secondary">
                         {t("members.allProjects")}

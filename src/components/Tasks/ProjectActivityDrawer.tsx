@@ -12,12 +12,12 @@ import {
   CircularProgress,
 } from "@mui/material";
 import { api } from "@/lib/axios";
-import { useState } from "react";
 import { QUERY_KEYS } from "@/constants/queryKeys";
 import { useTranslation } from "react-i18next";
 import { ProjectActivityItem } from "./ProjectActivityItem";
 import { useActivityFormatters } from "./useActivityFormatters";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useRef, useState } from "react";
 import type { TypeProjectActivity } from "@/types";
 import CloseOutlinedIcon from "@mui/icons-material/CloseOutlined";
 
@@ -37,6 +37,8 @@ export function ProjectActivityDrawer({ open, projectId, onClose }: IProps) {
   const [editingContent, setEditingContent] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const activityListRef = useRef<HTMLDivElement>(null);
+  const wasOpenRef = useRef(false);
   const queryKey = [QUERY_KEYS.ACTIVITY, projectId];
 
   const {
@@ -57,6 +59,25 @@ export function ProjectActivityDrawer({ open, projectId, onClose }: IProps) {
     refetchInterval: open ? 10_000 : false,
     refetchOnWindowFocus: true,
   });
+
+  useEffect(() => {
+    if (!open) {
+      wasOpenRef.current = false;
+      return;
+    }
+    if (isLoading) return;
+
+    const list = activityListRef.current;
+    if (!list) return;
+
+    const isOpening = !wasOpenRef.current;
+    const distanceFromBottom =
+      list.scrollHeight - list.scrollTop - list.clientHeight;
+    if (isOpening || distanceFromBottom < 80) {
+      list.scrollTop = list.scrollHeight;
+    }
+    wasOpenRef.current = true;
+  }, [activities.length, isLoading, open]);
 
   const refreshActivity = async () => {
     await queryClient.invalidateQueries({ queryKey });
@@ -138,7 +159,10 @@ export function ProjectActivityDrawer({ open, projectId, onClose }: IProps) {
             {error ?? t("activity.loadError")}
           </Alert>
         ) : null}
-        <Stack sx={{ flex: 1, overflowY: "auto", px: 2, py: 1 }}>
+        <Stack
+          ref={activityListRef}
+          sx={{ flex: 1, overflowY: "auto", px: 2, py: 1 }}
+        >
           {isLoading ? (
             <Stack alignItems="center" sx={{ py: 4 }}>
               <CircularProgress size={24} />

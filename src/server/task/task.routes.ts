@@ -519,11 +519,7 @@ taskRoutes.patch(
           task.projectId !== currentTask.projectId ||
           task.status !== currentTask.status;
         const changes: Record<string, { from: unknown; to: unknown }> = {};
-        const compare = (
-          field: string,
-          from: unknown,
-          to: unknown,
-        ) => {
+        const compare = (field: string, from: unknown, to: unknown) => {
           if (from !== to) changes[field] = { from, to };
         };
         compare("name", currentTask.name, task.name);

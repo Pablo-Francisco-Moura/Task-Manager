@@ -2,7 +2,6 @@
 
 import { ProfileMenu } from "./ProfileMenu";
 import { AppBarHeader } from "./AppBarHeader";
-import { useMainStore } from "@/store/mainStore";
 import { AppBarDialogs } from "./AppBarDialogs";
 import { AccountDialog } from "./AccountDialog";
 import { useTranslation } from "react-i18next";
@@ -30,7 +29,6 @@ export function AppBarTop() {
     closeImportDialog,
   } = useWorkspaceImportActions();
   const language = i18n.language.startsWith("en") ? "en" : "pt";
-  const setSelectedTab = useMainStore((state) => state.setSelectedTab);
   const [profileAnchor, setProfileAnchor] = useState<HTMLElement | null>(null);
   const [isColorSettingsOpen, setIsColorSettingsOpen] = useState(false);
   const [guestProfile, setGuestProfile] = useState<TypeGuestProfileState>({

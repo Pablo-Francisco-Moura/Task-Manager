@@ -18,6 +18,8 @@ Não copie o exemplo por cima de um `.env` existente. A aplicação recebe `DATA
 
 O serviço da aplicação espera o healthcheck do PostgreSQL, gera o Prisma Client e aplica migrations pendentes antes de iniciar o Next.js. Consulte os logs e o estado dos serviços com:
 
+No Compose local, o PostgreSQL encerra conexões ociosas após 5 minutos. Isso libera sessões antigas do servidor de desenvolvimento; conexões em uso não são encerradas por esse limite.
+
 ```sh
 docker compose ps
 docker compose logs -f app

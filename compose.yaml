@@ -3,6 +3,7 @@ services:
     image: postgres:16
     container_name: db
     restart: always
+    command: ["postgres", "-c", "idle_session_timeout=300000"]
     ports:
       - "5432:5432"
     environment:

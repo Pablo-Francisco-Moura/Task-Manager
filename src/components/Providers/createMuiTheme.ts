@@ -1,36 +1,12 @@
 import { createTheme } from "@mui/material/styles";
-import type { TypeTheme } from "@/types";
+import { getThemeColors } from "./colorTokens";
+import { DEFAULT_COLOR_SETTINGS } from "@/constants";
+import type { TypeTheme, TypeThemeColors } from "@/types";
 
-export function createMuiTheme(mode: TypeTheme) {
-  const colors =
-    mode === "dark"
-      ? {
-          brand: "#a8c6b4",
-          brandSoft: "#2a3930",
-          accent: "#f08b72",
-          accentDark: "#ff9d84",
-          accentContrast: "#202925",
-          danger: "#ff9388",
-          background: "#171e1b",
-          surface: "#202925",
-          foreground: "#edf2ee",
-          muted: "#a6b2aa",
-          line: "#708176",
-        }
-      : {
-          brand: "#254b3d",
-          brandSoft: "#e8f0eb",
-          accent: "#a6432e",
-          accentDark: "#843321",
-          accentContrast: "#ffffff",
-          danger: "#b53d35",
-          background: "#f4f6f3",
-          surface: "#ffffff",
-          foreground: "#202925",
-          muted: "#626d66",
-          line: "#dce3dd",
-        };
-
+export function createMuiTheme(
+  mode: TypeTheme,
+  colors: TypeThemeColors = getThemeColors(mode, DEFAULT_COLOR_SETTINGS),
+) {
   return createTheme({
     palette: {
       mode,
@@ -38,7 +14,7 @@ export function createMuiTheme(mode: TypeTheme) {
         main: colors.brand,
         light: colors.brandSoft,
         dark: colors.brand,
-        contrastText: mode === "dark" ? "#171e1b" : "#ffffff",
+        contrastText: colors.brandContrast,
       },
       secondary: {
         main: colors.accent,

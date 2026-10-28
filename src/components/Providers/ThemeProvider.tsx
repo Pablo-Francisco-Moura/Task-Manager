@@ -1,6 +1,6 @@
 "use client";
 
-import React, {
+import {
   useMemo,
   useState,
   useEffect,
@@ -9,9 +9,21 @@ import React, {
   useLayoutEffect,
 } from "react";
 import { createMuiTheme } from "./createMuiTheme";
-import { themeStorageKey } from "@/constants/app";
 import { ThemeProvider as MuiThemeProvider } from "@mui/material/styles";
-import type { TypeTheme } from "@/types";
+import { colorSettingsStorageKey, themeStorageKey } from "@/constants/app";
+import { DEFAULT_COLOR_SETTINGS } from "@/constants";
+import {
+  getThemeColors,
+  applyThemeColors,
+  normalizeColorSettings,
+} from "./colorTokens";
+import { hasAccessibleColorSettings } from "./colorContrastValidation";
+import type {
+  TypeColorSettings,
+  TypeTheme,
+  TypeThemeContextProps,
+  TypeThemeProviderProps,
+} from "@/types";
 
 const useIsomorphicLayoutEffect =
   typeof window === "undefined" ? useEffect : useLayoutEffect;
@@ -37,6 +49,30 @@ function readStoredTheme(): TypeTheme {
   return getSystemTheme();
 }
 
+function readStoredColorSettings(): TypeColorSettings {
+  try {
+    const savedSettings = window.localStorage.getItem(colorSettingsStorageKey);
+    if (!savedSettings) return DEFAULT_COLOR_SETTINGS;
+
+    const settings = normalizeColorSettings(JSON.parse(savedSettings));
+    const migratedSettings = {
+      brand:
+        settings.brand === "#254b3d"
+          ? DEFAULT_COLOR_SETTINGS.brand
+          : settings.brand,
+      accent:
+        settings.accent === "#a6432e"
+          ? DEFAULT_COLOR_SETTINGS.accent
+          : settings.accent,
+    };
+    return hasAccessibleColorSettings(migratedSettings)
+      ? migratedSettings
+      : DEFAULT_COLOR_SETTINGS;
+  } catch {
+    return DEFAULT_COLOR_SETTINGS;
+  }
+}
+
 function applyThemeClass(theme: TypeTheme) {
   const root = document.documentElement;
   root.classList.remove("light", "dark");
@@ -44,25 +80,35 @@ function applyThemeClass(theme: TypeTheme) {
   root.style.colorScheme = theme;
 }
 
-interface IThemeContextProps {
-  theme: TypeTheme;
-  toggleTheme: () => void;
-}
-interface IThemeProviderProps {
-  children: React.ReactNode;
-}
+const ThemeContext = createContext<TypeThemeContextProps | undefined>(undefined);
 
-const ThemeContext = createContext<IThemeContextProps | undefined>(undefined);
-
-export const ThemeProvider = ({ children }: IThemeProviderProps) => {
+export const ThemeProvider = ({ children }: TypeThemeProviderProps) => {
   const [theme, setTheme] = useState<TypeTheme>("light");
+  const [colorSettings, setStoredColorSettings] =
+    useState<TypeColorSettings>(DEFAULT_COLOR_SETTINGS);
   const [isInitialized, setIsInitialized] = useState(false);
-  const muiTheme = useMemo(() => createMuiTheme(theme), [theme]);
+  const effectiveColors = useMemo(
+    () => getThemeColors(theme, colorSettings),
+    [theme, colorSettings],
+  );
+  const muiTheme = useMemo(
+    () => createMuiTheme(theme, effectiveColors),
+    [theme, effectiveColors],
+  );
+  const updateColorSettings = (settings: TypeColorSettings) => {
+    const normalizedSettings = normalizeColorSettings(settings);
+    if (hasAccessibleColorSettings(normalizedSettings)) {
+      setStoredColorSettings(normalizedSettings);
+    }
+  };
 
   useIsomorphicLayoutEffect(() => {
     const initialTheme = readStoredTheme();
+    const initialColorSettings = readStoredColorSettings();
     setTheme(initialTheme);
+    setStoredColorSettings(initialColorSettings);
     applyThemeClass(initialTheme);
+    applyThemeColors(getThemeColors(initialTheme, initialColorSettings));
     setIsInitialized(true);
   }, []);
 
@@ -70,18 +116,30 @@ export const ThemeProvider = ({ children }: IThemeProviderProps) => {
     if (!isInitialized) return;
 
     applyThemeClass(theme);
+    applyThemeColors(effectiveColors);
     try {
       window.localStorage.setItem(themeStorageKey, theme);
+      window.localStorage.setItem(
+        colorSettingsStorageKey,
+        JSON.stringify(colorSettings),
+      );
     } catch {
       // Keep the in-memory theme usable when storage is unavailable.
     }
-  }, [isInitialized, theme]);
+  }, [colorSettings, effectiveColors, isInitialized, theme]);
 
   const toggleTheme = () =>
     setTheme((prev) => (prev === "light" ? "dark" : "light"));
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+    <ThemeContext.Provider
+      value={{
+        theme,
+        toggleTheme,
+        colorSettings,
+        setColorSettings: updateColorSettings,
+      }}
+    >
       <MuiThemeProvider theme={muiTheme}>{children}</MuiThemeProvider>
     </ThemeContext.Provider>
   );

@@ -81,7 +81,7 @@ export function useAppBarSession({
         handleExpiredAccountSession,
       );
     };
-  }, []);
+  }, [signOutActionRef]);
 
   useEffect(() => {
     try {
@@ -102,7 +102,7 @@ export function useAppBarSession({
     } catch {
       setGuestProfile({ displayName: "" });
     }
-  }, []);
+  }, [setGuestProfile]);
 
   useEffect(() => {
     if (!accountSession) {
@@ -141,7 +141,7 @@ export function useAppBarSession({
     } catch {
       setIsImportDialogOpen(false);
     }
-  }, [accountSession]);
+  }, [accountSession, setIsImportDialogOpen]);
 
   useEffect(() => {
     let isCurrent = true;
@@ -220,7 +220,7 @@ export function useAppBarSession({
     return () => {
       isCurrent = false;
     };
-  }, [setStoreWorkspaceId]);
+  }, [setAccountSession, setStoreWorkspaceId]);
 
   useEffect(() => {
     if (!accountSession) {
@@ -287,7 +287,18 @@ export function useAppBarSession({
     return () => {
       isCurrent = false;
     };
-  }, [accountSession, router, setStoreWorkspaceId, t, workspaceListRefreshKey]);
+  }, [
+    accountSession,
+    router,
+    setAccountSession,
+    setAccountWorkspaces,
+    setActiveWorkspaceId,
+    setIsLoadingWorkspaces,
+    setStoreWorkspaceId,
+    setWorkspaceError,
+    t,
+    workspaceListRefreshKey,
+  ]);
 
   useEffect(() => {
     const activeWorkspace = accountWorkspaces.find(

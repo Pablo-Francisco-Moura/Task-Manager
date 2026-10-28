@@ -34,5 +34,4 @@ export type TypeProjectActivityDetail = {
   field: string;
   from: string;
   to: string;
-  isSummary: boolean;
 };

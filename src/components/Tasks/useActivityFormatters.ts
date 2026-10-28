@@ -15,11 +15,27 @@ function asRecord(value: unknown): Record<string, unknown> | null {
 export function useActivityFormatters() {
   const { t, i18n } = useTranslation();
 
-  const formatDate = (value: string) =>
-    new Intl.DateTimeFormat(i18n.language, {
+  const formatDate = (value: string) => {
+    const date = new Date(value);
+    const now = new Date();
+    const yesterday = new Date(now);
+    yesterday.setDate(now.getDate() - 1);
+    const time = new Intl.DateTimeFormat(i18n.language, {
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(date);
+
+    if (date.toDateString() === now.toDateString()) {
+      return `${t("activity.today")}, ${time}`;
+    }
+    if (date.toDateString() === yesterday.toDateString()) {
+      return `${t("activity.yesterday")}, ${time}`;
+    }
+    return new Intl.DateTimeFormat(i18n.language, {
       dateStyle: "short",
       timeStyle: "short",
-    }).format(new Date(value));
+    }).format(date);
+  };
 
   const formatDetailValue = (field: string, value: unknown) => {
     if (value === null || value === undefined || value === "") {
@@ -59,9 +75,6 @@ export function useActivityFormatters() {
       }
       const change = asRecord(value);
       if (!change || !("from" in change) || !("to" in change)) return [];
-      if (field === "description") {
-        return [{ field, from: "", to: "", isSummary: true }];
-      }
       const from =
         field === "position" && typeof change.from === "number"
           ? change.from + 1
@@ -75,7 +88,6 @@ export function useActivityFormatters() {
           field,
           from: formatDetailValue(field, from),
           to: formatDetailValue(field, to),
-          isSummary: false,
         },
       ];
     });
@@ -90,7 +102,6 @@ export function useActivityFormatters() {
           field: "project",
           from: details.fromProjectName,
           to: details.toProjectName,
-          isSummary: false,
         });
       }
     }

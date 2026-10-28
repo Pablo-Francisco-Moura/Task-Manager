@@ -16,6 +16,7 @@ import { Hono } from "hono";
 import { prisma } from "@/lib/prisma";
 import { getCookie } from "hono/cookie";
 import { randomBytes } from "node:crypto";
+import { hashSessionToken } from "./session";
 import type { TypeSessionEnv } from "@/types/session";
 
 const routes = new Hono<TypeSessionEnv>();

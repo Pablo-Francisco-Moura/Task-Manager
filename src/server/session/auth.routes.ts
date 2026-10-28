@@ -12,6 +12,7 @@ import {
 import { Hono } from "hono";
 import { prisma } from "@/lib/prisma";
 import { randomBytes } from "node:crypto";
+import { hashSessionToken } from "./session";
 import { getCookie, deleteCookie } from "hono/cookie";
 import type { TypeSessionEnv } from "@/types/session";
 

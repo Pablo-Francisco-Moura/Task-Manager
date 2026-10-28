@@ -7,7 +7,7 @@ import {
   FormControl,
   InputAdornment,
 } from "@mui/material";
-import type { FieldPath, FieldValues, UseFormRegister } from "react-hook-form";
+import type { FieldPath, FieldValues } from "react-hook-form";
 import type { ReactNode } from "react";
 import type {
   TypeFormSelectFieldProps,

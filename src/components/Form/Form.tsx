@@ -6,7 +6,7 @@ import {
   FormSelectField,
   FormDueDateFields,
 } from "./FormFields";
-import type { FieldPath, FieldValues, UseFormRegister } from "react-hook-form";
+import type { FieldPath, FieldValues } from "react-hook-form";
 import type { TypeFormProps } from "@/types";
 import styles from "./Form.module.css";
 import CloseIcon from "@mui/icons-material/Close";

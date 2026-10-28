@@ -1,5 +1,3 @@
-import type { TypeTheme } from "./theme";
-
 export interface TypeColorSettings {
   brand: string;
   accent: string;

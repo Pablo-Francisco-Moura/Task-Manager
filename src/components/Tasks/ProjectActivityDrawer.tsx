@@ -137,7 +137,15 @@ export function ProjectActivityDrawer({ open, projectId, onClose }: IProps) {
       anchor="right"
       open={open}
       onClose={onClose}
-      slotProps={{ paper: { sx: { width: "min(440px, 100vw)" } } }}
+      slotProps={{
+        paper: { sx: { width: "min(440px, 100vw)" } },
+        transition: {
+          onEntered: () => {
+            const list = activityListRef.current;
+            if (list) list.scrollTop = list.scrollHeight;
+          },
+        },
+      }}
     >
       <Stack sx={{ height: "100%" }}>
         <Stack

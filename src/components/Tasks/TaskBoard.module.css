@@ -18,39 +18,21 @@
 }
 
 .column[data-status="todo"] {
-  --column-accent: #73449c;
-  --column-tint: #f2ebfc;
-  --column-line: #c4a9e8;
+  --column-accent: var(--task-status-todo-foreground);
+  --column-tint: var(--task-status-todo-background);
+  --column-line: var(--task-status-todo-border);
 }
 
 .column[data-status="in_progress"] {
-  --column-accent: #2c44ae;
-  --column-tint: #eaf4fa;
-  --column-line: #a6ccdf;
+  --column-accent: var(--task-status-in-progress-foreground);
+  --column-tint: var(--task-status-in-progress-background);
+  --column-line: var(--task-status-in-progress-border);
 }
 
 .column[data-status="done"] {
-  --column-accent: #25862a;
-  --column-tint: #eaf4ed;
-  --column-line: #a8d0b2;
-}
-
-:global(html.dark) .column[data-status="todo"] {
-  --column-accent: #c6a6ff;
-  --column-tint: #332747;
-  --column-line: #70558e;
-}
-
-:global(html.dark) .column[data-status="in_progress"] {
-  --column-accent: #82c4e7;
-  --column-tint: #1d3039;
-  --column-line: #3e6579;
-}
-
-:global(html.dark) .column[data-status="done"] {
-  --column-accent: #88d09a;
-  --column-tint: #20362a;
-  --column-line: #426c4e;
+  --column-accent: var(--task-status-done-foreground);
+  --column-tint: var(--task-status-done-background);
+  --column-line: var(--task-status-done-border);
 }
 
 .columnHeader {

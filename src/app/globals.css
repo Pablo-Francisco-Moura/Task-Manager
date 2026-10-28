@@ -18,6 +18,15 @@
   --danger-text: #b53d35;
   --scrollbar-thumb: #aab6ad;
   --scrollbar-thumb-hover: #849389;
+  --task-status-todo-foreground: #68449c;
+  --task-status-todo-background: #f2ebfc;
+  --task-status-todo-border: #c4a9e8;
+  --task-status-in-progress-foreground: #28688c;
+  --task-status-in-progress-background: #eaf4fa;
+  --task-status-in-progress-border: #a6ccdf;
+  --task-status-done-foreground: #287342;
+  --task-status-done-background: #eaf4ed;
+  --task-status-done-border: #a8d0b2;
 }
 
 html.dark {
@@ -36,6 +45,15 @@ html.dark {
   --danger-text: #ff9388;
   --scrollbar-thumb: #526158;
   --scrollbar-thumb-hover: #708176;
+  --task-status-todo-foreground: #c6a6ff;
+  --task-status-todo-background: #332747;
+  --task-status-todo-border: #70558e;
+  --task-status-in-progress-foreground: #88c7e7;
+  --task-status-in-progress-background: #1d3039;
+  --task-status-in-progress-border: #3e6579;
+  --task-status-done-foreground: #88d09a;
+  --task-status-done-background: #20362a;
+  --task-status-done-border: #426c4e;
 }
 
 * {

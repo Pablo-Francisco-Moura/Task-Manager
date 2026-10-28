@@ -70,21 +70,21 @@
 }
 
 .statusSelect[data-status="todo"] {
-  --field-ink: #68449c;
-  --field-tint: #f2ebfc;
-  --field-line: #c4a9e8;
+  --field-ink: var(--task-status-todo-foreground);
+  --field-tint: var(--task-status-todo-background);
+  --field-line: var(--task-status-todo-border);
 }
 
 .statusSelect[data-status="in_progress"] {
-  --field-ink: #28688c;
-  --field-tint: #eaf4fa;
-  --field-line: #a6ccdf;
+  --field-ink: var(--task-status-in-progress-foreground);
+  --field-tint: var(--task-status-in-progress-background);
+  --field-line: var(--task-status-in-progress-border);
 }
 
 .statusSelect[data-status="done"] {
-  --field-ink: #287342;
-  --field-tint: #eaf4ed;
-  --field-line: #a8d0b2;
+  --field-ink: var(--task-status-done-foreground);
+  --field-tint: var(--task-status-done-background);
+  --field-line: var(--task-status-done-border);
 }
 
 .prioritySelect[data-priority="low"] {
@@ -110,24 +110,6 @@
   border-color: var(--field-line);
   background-color: var(--field-tint);
   color: var(--field-ink);
-}
-
-:global(html.dark) .statusSelect[data-status="todo"] {
-  --field-ink: #c6a6ff;
-  --field-tint: #332747;
-  --field-line: #70558e;
-}
-
-:global(html.dark) .statusSelect[data-status="in_progress"] {
-  --field-ink: #88c7e7;
-  --field-tint: #1d3039;
-  --field-line: #3e6579;
-}
-
-:global(html.dark) .statusSelect[data-status="done"] {
-  --field-ink: #88d09a;
-  --field-tint: #20362a;
-  --field-line: #426c4e;
 }
 
 :global(html.dark) .prioritySelect[data-priority="low"] {

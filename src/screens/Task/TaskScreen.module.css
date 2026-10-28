@@ -131,21 +131,21 @@
 }
 
 .taskScreen :global(.task-status-control[data-status="todo"]) {
-  --task-status-label: #68449c;
-  --task-status-tint: #f2ebfc;
-  --task-status-line: #c4a9e8;
+  --task-status-label: var(--task-status-todo-foreground);
+  --task-status-tint: var(--task-status-todo-background);
+  --task-status-line: var(--task-status-todo-border);
 }
 
 .taskScreen :global(.task-status-control[data-status="in_progress"]) {
-  --task-status-label: #28688c;
-  --task-status-tint: #eaf4fa;
-  --task-status-line: #a6ccdf;
+  --task-status-label: var(--task-status-in-progress-foreground);
+  --task-status-tint: var(--task-status-in-progress-background);
+  --task-status-line: var(--task-status-in-progress-border);
 }
 
 .taskScreen :global(.task-status-control[data-status="done"]) {
-  --task-status-label: #287342;
-  --task-status-tint: #eaf4ed;
-  --task-status-line: #a8d0b2;
+  --task-status-label: var(--task-status-done-foreground);
+  --task-status-tint: var(--task-status-done-background);
+  --task-status-line: var(--task-status-done-border);
 }
 
 .taskScreen :global(.task-status-control .MuiInputBase-root) {
@@ -241,28 +241,4 @@
   .taskScreen :global(.task-row) {
     gap: 0.65rem;
   }
-}
-
-:global(html.dark)
-  .taskScreen
-  :global(.task-status-control[data-status="todo"]) {
-  --task-status-label: #c6a6ff;
-  --task-status-tint: #332747;
-  --task-status-line: #70558e;
-}
-
-:global(html.dark)
-  .taskScreen
-  :global(.task-status-control[data-status="in_progress"]) {
-  --task-status-label: #88c7e7;
-  --task-status-tint: #1d3039;
-  --task-status-line: #3e6579;
-}
-
-:global(html.dark)
-  .taskScreen
-  :global(.task-status-control[data-status="done"]) {
-  --task-status-label: #88d09a;
-  --task-status-tint: #20362a;
-  --task-status-line: #426c4e;
 }

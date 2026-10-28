@@ -124,7 +124,7 @@ export function MembersScreen() {
             <Box
               component="span"
               sx={{
-                color: "var(--brand)",
+                color: "var(--brand-text)",
                 height: "1.6rem",
                 display: "inline-grid",
                 minWidth: "1.6rem",

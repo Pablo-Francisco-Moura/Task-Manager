@@ -3,7 +3,7 @@
 }
 
 .column {
-  --column-accent: var(--brand);
+  --column-accent: var(--brand-text);
   --column-tint: var(--brand-soft);
   --column-line: var(--line);
 

@@ -12,7 +12,7 @@
 
 .navigation :global(.app-nav-button:hover),
 .navigation :global(.app-nav-button-selected) {
-  color: var(--brand);
+  color: var(--brand-text);
 }
 
 .navigation :global(.app-nav-button-selected::after) {

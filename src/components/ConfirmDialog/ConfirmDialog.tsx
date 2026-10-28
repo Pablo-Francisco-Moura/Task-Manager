@@ -60,7 +60,7 @@ export function ConfirmDialog({
                 size="small"
                 sx={{
                   mt: 1,
-                  color: "var(--brand)",
+                  color: "var(--brand-text)",
                   backgroundColor: "var(--brand-soft)",
                   borderColor: "var(--brand)",
                   borderRadius: 1.5,
@@ -115,7 +115,7 @@ export function ConfirmDialog({
         </DialogContent>
         <DialogActions>
           <Button
-            sx={{ color: "var(--brand)" }}
+            sx={{ color: "var(--brand-text)" }}
             ref={cancelButtonRef}
             color="primary"
             onClick={onClose}

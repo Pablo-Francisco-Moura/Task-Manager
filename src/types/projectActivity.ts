@@ -1,3 +1,5 @@
+import type { TypeLocalTaskStatus } from "./localData";
+
 export type TypeProjectActivity = {
   id: number;
   actorId: string;
@@ -19,4 +21,17 @@ export type TypeProjectActivity = {
     | "task_moved"
     | "task_deleted"
     | "comment";
+};
+
+export type TypeTaskMovementDetails = {
+  fromStatus: TypeLocalTaskStatus | null;
+  toStatus: TypeLocalTaskStatus | null;
+  fromPosition: number | null;
+  toPosition: number | null;
+};
+
+export type TypeProjectActivityDetail = {
+  field: string;
+  from: string;
+  to: string;
 };

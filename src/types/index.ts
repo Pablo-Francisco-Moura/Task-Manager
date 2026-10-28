@@ -1,6 +1,8 @@
 export * from "./Main";
 export * from "./task";
+export * from "./form";
 export * from "./theme";
+export * from "./color";
 export * from "./locale";
 export * from "./project";
 export * from "./session";
@@ -9,6 +11,8 @@ export * from "./taskBoard";
 export * from "./localData";
 export * from "./validation";
 export * from "./taskPriority";
+export * from "./confirmDialog";
 export * from "./serializedApi";
+export * from "./workspaceRoute";
 export * from "./projectActivity";
 export * from "./workspaceMembers";

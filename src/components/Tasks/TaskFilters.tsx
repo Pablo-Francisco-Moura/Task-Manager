@@ -2,14 +2,14 @@ import {
   Stack,
   Select,
   MenuItem,
-  TextField,
   InputLabel,
   FormControl,
 } from "@mui/material";
+import { SearchField } from "@/components/SearchField";
 import { useTranslation } from "react-i18next";
 import type {
-  TypeLocalTaskPriority,
   TypeLocalTaskStatus,
+  TypeLocalTaskPriority,
 } from "@/types/localData";
 
 interface IProps {
@@ -33,11 +33,10 @@ export function TaskFilters({
 
   return (
     <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ mb: 2 }}>
-      <TextField
-        size="small"
+      <SearchField
         label={t("task.search")}
         value={search}
-        onChange={(event) => onSearchChange(event.target.value)}
+        onChange={onSearchChange}
         sx={{ flex: 1 }}
       />
       <FormControl size="small" sx={{ minWidth: 160 }}>

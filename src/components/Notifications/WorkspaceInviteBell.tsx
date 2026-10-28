@@ -149,7 +149,7 @@ export function WorkspaceInviteBell({
         aria-haspopup="dialog"
         aria-expanded={Boolean(anchor)}
         onClick={(event) => setAnchor(event.currentTarget)}
-        color="inherit"
+        color={anchor ? "secondary" : "inherit"}
       >
         <Badge badgeContent={unreadCount} color="error" max={99}>
           <NotificationsNoneOutlinedIcon />

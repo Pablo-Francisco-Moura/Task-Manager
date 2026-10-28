@@ -12,6 +12,7 @@ import type {
 
 export async function reorderTasks({
   projectId,
+  movedTaskId,
   orderedTaskIdsByStatus,
 }: TypeReorderTasksInput): Promise<TypeReorderTasksResponse> {
   if (hasStoredAccountSession()) {
@@ -19,7 +20,11 @@ export async function reorderTasks({
       "/api/task/reorder",
       {
         method: "PATCH",
-        body: JSON.stringify({ projectId, orderedTaskIdsByStatus }),
+        body: JSON.stringify({
+          projectId,
+          movedTaskId,
+          orderedTaskIdsByStatus,
+        }),
       },
     );
     return tasks.map(mapAccountTask);

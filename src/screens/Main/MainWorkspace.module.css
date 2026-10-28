@@ -89,7 +89,7 @@
   place-items: center;
   border-radius: 8px;
   background: var(--brand-soft);
-  color: var(--brand);
+  color: var(--brand-text);
   font-family: Georgia, "Times New Roman", serif;
   font-size: 1.25rem;
   font-weight: 700;

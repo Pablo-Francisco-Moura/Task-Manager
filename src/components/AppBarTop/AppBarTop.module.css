@@ -6,11 +6,7 @@
 
 .header :global(.app-brand-mark) {
   background: var(--brand);
-  color: #fff;
-}
-
-:global(html.dark) .header :global(.app-brand-mark) {
-  color: #17221b;
+  color: var(--brand-contrast);
 }
 
 .header :global(.app-brand-kicker) {

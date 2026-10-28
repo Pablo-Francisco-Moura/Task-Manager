@@ -43,6 +43,7 @@ export const taskUpdateSchema = z.strictObject({
 });
 export const taskReorderSchema = z.strictObject({
   projectId: projectIdSchema,
+  movedTaskId: projectIdSchema,
   orderedTaskIdsByStatus: z.strictObject({
     todo: z.array(projectIdSchema),
     in_progress: z.array(projectIdSchema),

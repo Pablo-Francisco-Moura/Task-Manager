@@ -12,26 +12,18 @@ import ListItemText from "@mui/material/ListItemText";
 import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContentText from "@mui/material/DialogContentText";
-
-interface IProps {
-  open: boolean;
-  description: string;
-  onClose: () => void;
-  onConfirm: () => void;
-  isLoading?: boolean;
-  relatedItems?: string[];
-  relatedItemsLabel?: string;
-}
+import type { TypeConfirmDialogProps } from "@/types";
 
 export function ConfirmDialog({
   open,
   isLoading = false,
   description,
+  title,
   relatedItems = [],
   relatedItemsLabel,
   onClose,
   onConfirm,
-}: IProps) {
+}: TypeConfirmDialogProps) {
   const { t } = useTranslation();
   const [showRelatedItems, setShowRelatedItems] = useState(false);
   const cancelButtonRef = useRef<HTMLButtonElement>(null);
@@ -52,7 +44,7 @@ export function ConfirmDialog({
     >
       <div>
         <DialogTitle sx={{ color: "var(--foreground)" }}>
-          {t("common.confirm")}
+          {title ?? t("common.confirm")}
         </DialogTitle>
         <DialogContent>
           <DialogContentText sx={{ color: "var(--muted)" }}>
@@ -68,7 +60,7 @@ export function ConfirmDialog({
                 size="small"
                 sx={{
                   mt: 1,
-                  color: "var(--brand)",
+                  color: "var(--brand-text)",
                   backgroundColor: "var(--brand-soft)",
                   borderColor: "var(--brand)",
                   borderRadius: 1.5,
@@ -123,7 +115,7 @@ export function ConfirmDialog({
         </DialogContent>
         <DialogActions>
           <Button
-            sx={{ color: "var(--brand)" }}
+            sx={{ color: "var(--brand-text)" }}
             ref={cancelButtonRef}
             color="primary"
             onClick={onClose}

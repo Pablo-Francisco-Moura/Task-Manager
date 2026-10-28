@@ -2,7 +2,9 @@ import {
   accountWorkspaceRequest,
   isAccountSessionExpired,
 } from "@/lib/accountWorkspaceApi";
+import { useRouter } from "next/navigation";
 import { QUERY_KEYS } from "@/constants/queryKeys";
+import { workspaceUrl } from "@/utils/workspaceUrl";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { useProjectStore } from "@/store/projectStore";
@@ -57,6 +59,7 @@ export function useWorkspaceActions({
   setIsRenameWorkspaceOpen,
 }: IProps) {
   const { t } = useTranslation();
+  const router = useRouter();
   const queryClient = useQueryClient();
   const setSelectedProject = useProjectStore(
     (state) => state.setSelectedProject,
@@ -101,6 +104,7 @@ export function useWorkspaceActions({
       setStoreWorkspaceId(payload.activeWorkspaceId);
       setSelectedProject(null);
       setProfileAnchor(null);
+      router.push(workspaceUrl(payload.workspace));
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.PROJECTS] }),
         queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.TASKS] }),
@@ -143,6 +147,7 @@ export function useWorkspaceActions({
       setActiveWorkspaceId(payload.activeWorkspaceId);
       setStoreWorkspaceId(payload.activeWorkspaceId);
       setSelectedProject(null);
+      router.push(workspaceUrl(payload.workspace));
       setIsCreateWorkspaceOpen(false);
       setNewWorkspaceName("");
       setProfileAnchor(null);
@@ -187,6 +192,14 @@ export function useWorkspaceActions({
       );
       setActiveWorkspaceId(payload.activeWorkspaceId);
       setStoreWorkspaceId(payload.activeWorkspaceId);
+      if (payload.deletedWorkspaceId === activeWorkspaceId) {
+        router.push(
+          workspaceUrl({
+            id: payload.activeWorkspaceId,
+            name: payload.workspaceName,
+          }),
+        );
+      }
       if (payload.deletedWorkspaceId === activeWorkspaceId) {
         setSelectedProject(null);
       }
@@ -233,6 +246,7 @@ export function useWorkspaceActions({
           workspace.id === payload.workspace.id ? payload.workspace : workspace,
         ),
       );
+      router.replace(workspaceUrl(payload.workspace));
       setIsRenameWorkspaceOpen(false);
       setRenamedWorkspaceName("");
     } catch (error) {

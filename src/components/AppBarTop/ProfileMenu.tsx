@@ -105,84 +105,87 @@ export function ProfileMenu({
           </IconButton>
         </Stack>
       </Box>
-      {accountSession ? (
-        [
-          <Divider key="workspace-divider" sx={{ my: 1 }} />,
-          <Box key="workspace-content" sx={{ minWidth: 240, px: 2, pb: 1 }}>
-            <Typography
-              id="active-workspace-label"
-              variant="overline"
-              color="text.secondary"
-            >
-              {t("account.workspaceLabel")}
-            </Typography>
-            <Stack direction="row" spacing={0.5} alignItems="center">
-              {accountWorkspaces.length > 1 ? (
-                <FormControl size="small" fullWidth>
-                  <Select
-                    value={activeWorkspaceId ?? ""}
-                    aria-labelledby="active-workspace-label"
-                    onChange={(event) => onSwitchWorkspace(event.target.value)}
-                    disabled={
-                      isLoadingWorkspaces || switchingWorkspaceId !== null
-                    }
+      {accountSession
+        ? [
+            <Divider key="workspace-divider" sx={{ my: 1 }} />,
+            <Box key="workspace-content" sx={{ minWidth: 240, px: 2, pb: 1 }}>
+              <Typography
+                id="active-workspace-label"
+                variant="overline"
+                color="text.secondary"
+              >
+                {t("account.workspaceLabel")}
+              </Typography>
+              <Stack direction="row" spacing={0.5} alignItems="center">
+                {accountWorkspaces.length > 1 ? (
+                  <FormControl size="small" fullWidth>
+                    <Select
+                      value={activeWorkspaceId ?? ""}
+                      aria-labelledby="active-workspace-label"
+                      onChange={(event) =>
+                        onSwitchWorkspace(event.target.value)
+                      }
+                      disabled={
+                        isLoadingWorkspaces || switchingWorkspaceId !== null
+                      }
+                    >
+                      {accountWorkspaces.map((workspace) => (
+                        <MenuItem key={workspace.id} value={workspace.id}>
+                          {workspace.name} ·{" "}
+                          {t(`account.role.${workspace.role}`)}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                ) : (
+                  <Typography variant="body2" sx={{ flex: 1 }} noWrap>
+                    {accountSession.workspaceName}
+                  </Typography>
+                )}
+                <IconButton
+                  size="small"
+                  aria-label={t("account.workspaceCreate")}
+                  title={t("account.workspaceCreate")}
+                  onClick={onCreateWorkspace}
+                >
+                  <AddOutlinedIcon fontSize="small" />
+                </IconButton>
+                {activeWorkspace?.role === "owner" ? (
+                  <IconButton
+                    size="small"
+                    aria-label={t("account.workspaceRename")}
+                    title={t("account.workspaceRename")}
+                    onClick={onRenameWorkspace}
                   >
-                    {accountWorkspaces.map((workspace) => (
-                      <MenuItem key={workspace.id} value={workspace.id}>
-                        {workspace.name} · {t(`account.role.${workspace.role}`)}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              ) : (
-                <Typography variant="body2" sx={{ flex: 1 }} noWrap>
-                  {accountSession.workspaceName}
-                </Typography>
-              )}
-              <IconButton
-                size="small"
-                aria-label={t("account.workspaceCreate")}
-                title={t("account.workspaceCreate")}
-                onClick={onCreateWorkspace}
-              >
-                <AddOutlinedIcon fontSize="small" />
-              </IconButton>
+                    <EditOutlinedIcon fontSize="small" />
+                  </IconButton>
+                ) : null}
+                {accountWorkspaces.length > 1 &&
+                activeWorkspace?.role === "owner" ? (
+                  <IconButton
+                    size="small"
+                    color="error"
+                    aria-label={t("account.workspaceDelete")}
+                    title={t("account.workspaceDelete")}
+                    onClick={() => onDeleteWorkspace(activeWorkspace)}
+                  >
+                    <DeleteOutlineIcon fontSize="small" />
+                  </IconButton>
+                ) : null}
+              </Stack>
               {activeWorkspace?.role === "owner" ? (
-                <IconButton
+                <Button
                   size="small"
-                  aria-label={t("account.workspaceRename")}
-                  title={t("account.workspaceRename")}
-                  onClick={onRenameWorkspace}
+                  startIcon={<GroupAddOutlinedIcon />}
+                  onClick={onInviteMember}
+                  sx={{ mt: 1 }}
                 >
-                  <EditOutlinedIcon fontSize="small" />
-                </IconButton>
+                  {t("notifications.manageInvites")}
+                </Button>
               ) : null}
-              {accountWorkspaces.length > 1 &&
-              activeWorkspace?.role === "owner" ? (
-                <IconButton
-                  size="small"
-                  color="error"
-                  aria-label={t("account.workspaceDelete")}
-                  title={t("account.workspaceDelete")}
-                  onClick={() => onDeleteWorkspace(activeWorkspace)}
-                >
-                  <DeleteOutlineIcon fontSize="small" />
-                </IconButton>
-              ) : null}
-            </Stack>
-            {activeWorkspace?.role === "owner" ? (
-              <Button
-                size="small"
-                startIcon={<GroupAddOutlinedIcon />}
-                onClick={onInviteMember}
-                sx={{ mt: 1 }}
-              >
-                {t("notifications.manageInvites")}
-              </Button>
-            ) : null}
-          </Box>,
-        ]
-      ) : null}
+            </Box>,
+          ]
+        : null}
       {workspaceError ? (
         <Box sx={{ maxWidth: 280, px: 2, py: 1 }}>
           <Typography variant="caption" color="error.main">

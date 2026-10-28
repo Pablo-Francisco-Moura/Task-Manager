@@ -29,7 +29,8 @@ interface IProps {
 
 export function ProjectActivityDrawer({ open, projectId, onClose }: IProps) {
   const { t } = useTranslation();
-  const { formatDate, getActivityDetails } = useActivityFormatters();
+  const { formatDate, getActivityDetails, getTaskMovementDetails } =
+    useActivityFormatters();
   const queryClient = useQueryClient();
   const [comment, setComment] = useState("");
   const [editingActivity, setEditingActivity] = useState<number | null>(null);
@@ -137,10 +138,7 @@ export function ProjectActivityDrawer({ open, projectId, onClose }: IProps) {
             {error ?? t("activity.loadError")}
           </Alert>
         ) : null}
-        <Stack
-          divider={<Divider flexItem />}
-          sx={{ flex: 1, overflowY: "auto", px: 2 }}
-        >
+        <Stack sx={{ flex: 1, overflowY: "auto", px: 2, py: 1 }}>
           {isLoading ? (
             <Stack alignItems="center" sx={{ py: 4 }}>
               <CircularProgress size={24} />
@@ -173,6 +171,7 @@ export function ProjectActivityDrawer({ open, projectId, onClose }: IProps) {
                 isSaving={isSaving}
                 formatDate={formatDate}
                 getActivityDetails={getActivityDetails}
+                getTaskMovementDetails={getTaskMovementDetails}
                 onEditStart={(item) => {
                   setEditingActivity(item.id);
                   setEditingContent(item.content ?? "");

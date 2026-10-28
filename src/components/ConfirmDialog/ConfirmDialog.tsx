@@ -12,17 +12,7 @@ import ListItemText from "@mui/material/ListItemText";
 import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContentText from "@mui/material/DialogContentText";
-
-interface IProps {
-  open: boolean;
-  description: string;
-  onClose: () => void;
-  onConfirm: () => void;
-  title?: string;
-  isLoading?: boolean;
-  relatedItems?: string[];
-  relatedItemsLabel?: string;
-}
+import type { TypeConfirmDialogProps } from "@/types";
 
 export function ConfirmDialog({
   open,
@@ -33,7 +23,7 @@ export function ConfirmDialog({
   relatedItemsLabel,
   onClose,
   onConfirm,
-}: IProps) {
+}: TypeConfirmDialogProps) {
   const { t } = useTranslation();
   const [showRelatedItems, setShowRelatedItems] = useState(false);
   const cancelButtonRef = useRef<HTMLButtonElement>(null);

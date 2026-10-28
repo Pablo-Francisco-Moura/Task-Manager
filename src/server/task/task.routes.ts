@@ -209,7 +209,7 @@ taskRoutes.patch(
       return c.json({ error: "Invalid task order payload" }, 400);
     }
 
-    const { projectId, orderedTaskIdsByStatus } = parsedBody.data;
+    const { projectId, movedTaskId, orderedTaskIdsByStatus } = parsedBody.data;
     const workspaceId = c.get("workspaceId");
     const userId = c.get("userId");
     const submittedIds = [
@@ -246,6 +246,10 @@ taskRoutes.patch(
       ) {
         return { kind: "task-list-changed" as const };
       }
+      const movedTask = existingTasks.find((task) => task.id === movedTaskId);
+      if (!movedTask) {
+        return { kind: "task-list-changed" as const };
+      }
 
       for (const status of ["todo", "in_progress", "done"] as const) {
         await Promise.all(
@@ -270,25 +274,22 @@ taskRoutes.patch(
           nextPositions.set(id, { status, position });
         });
       }
-      for (const task of existingTasks) {
-        const nextPosition = nextPositions.get(task.id);
-        if (
-          !nextPosition ||
-          (task.status === nextPosition.status &&
-            task.position === nextPosition.position)
-        ) {
-          continue;
-        }
+      const nextPosition = nextPositions.get(movedTaskId);
+      if (
+        nextPosition &&
+        (movedTask.status !== nextPosition.status ||
+          movedTask.position !== nextPosition.position)
+      ) {
         await createProjectActivity(transaction, {
           projectId,
-          taskId: task.id,
-          taskName: task.name,
+          taskId: movedTask.id,
+          taskName: movedTask.name,
           actorId: userId,
           type: "task_moved",
           details: {
-            fromStatus: task.status,
+            fromStatus: movedTask.status,
             toStatus: nextPosition.status,
-            fromPosition: task.position,
+            fromPosition: movedTask.position,
             toPosition: nextPosition.position,
           },
         });

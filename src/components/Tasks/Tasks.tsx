@@ -265,11 +265,12 @@ export function Tasks({
             isSaving={reorderTasksMutation.isPending || !canReorder}
             onEditClick={handleEditClick}
             onDeleteClick={handleDeleteClick}
-            onReorder={(orderedTaskIdsByStatus) => {
+            onReorder={(orderedTaskIdsByStatus, movedTaskId) => {
               if (selectedProject && canReorder) {
                 reorderTasksMutation.mutate({
                   projectId: selectedProject.id,
                   orderedTaskIdsByStatus,
+                  movedTaskId,
                 } satisfies TypeReorderTasksInput);
               }
             }}

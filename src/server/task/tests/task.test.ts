@@ -425,6 +425,7 @@ describe("Task API", () => {
       method: "PATCH",
       body: JSON.stringify({
         projectId: project.id,
+        movedTaskId: firstTodo.id,
         orderedTaskIdsByStatus: {
           todo: [secondTodo.id, done.id],
           in_progress: [firstTodo.id],
@@ -456,6 +457,20 @@ describe("Task API", () => {
       status: "done",
       position: 0,
     });
+    const movementActivities = await prisma.projectActivity.findMany({
+      where: { projectId: project.id, type: "task_moved" },
+    });
+    expect(movementActivities).toHaveLength(1);
+    expect(movementActivities[0]).toMatchObject({
+      taskId: firstTodo.id,
+      taskName: "First todo",
+      details: {
+        fromStatus: "todo",
+        toStatus: "in_progress",
+        fromPosition: 0,
+        toPosition: 0,
+      },
+    });
   });
 
   test("should reject duplicate task IDs in a board order", async () => {
@@ -468,6 +483,7 @@ describe("Task API", () => {
       method: "PATCH",
       body: JSON.stringify({
         projectId: project.id,
+        movedTaskId: task.id,
         orderedTaskIdsByStatus: {
           todo: [task.id],
           in_progress: [task.id],
@@ -490,6 +506,7 @@ describe("Task API", () => {
       method: "PATCH",
       body: JSON.stringify({
         projectId: project.id,
+        movedTaskId: task.id,
         orderedTaskIdsByStatus: { todo: [], in_progress: [], done: [] },
       }),
       headers: { "Content-Type": "application/json" },
@@ -688,6 +705,7 @@ describe("Task API", () => {
       method: "PATCH",
       body: JSON.stringify({
         projectId: hiddenProject.id,
+        movedTaskId: hiddenTask.id,
         orderedTaskIdsByStatus: {
           todo: [hiddenTask.id],
           in_progress: [],
@@ -720,6 +738,7 @@ describe("Task API", () => {
       method: "PATCH",
       body: JSON.stringify({
         projectId: allowedProject.id,
+        movedTaskId: allowedTask.id,
         orderedTaskIdsByStatus: {
           todo: [allowedTask.id, createdTaskId],
           in_progress: [],

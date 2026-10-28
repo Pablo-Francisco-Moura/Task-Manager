@@ -20,6 +20,7 @@ interface IProps {
   isSaving: boolean;
   onReorder: (
     orderedTaskIdsByStatus: Record<TypeLocalTaskStatus, number[]>,
+    movedTaskId: number,
   ) => void;
   onEditClick: (task: TypeLocalTask) => void;
   onDeleteClick: (task: TypeLocalTask) => void;
@@ -90,7 +91,7 @@ export function TaskBoard({
       destinationIds.splice(destinationIndex, 0, taskId);
     }
 
-    onReorder(nextIdsByStatus);
+    onReorder(nextIdsByStatus, taskId);
   };
 
   return (

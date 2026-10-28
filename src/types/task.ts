@@ -32,6 +32,7 @@ export type TypeUpdateTaskResponse = TypeLocalTask;
 
 export type TypeReorderTasksInput = {
   projectId: number;
+  movedTaskId: number;
   orderedTaskIdsByStatus: Record<TypeLocalTaskStatus, number[]>;
 };
 

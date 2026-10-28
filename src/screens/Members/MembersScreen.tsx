@@ -230,7 +230,7 @@ export function MembersScreen() {
                     />
                   </Stack>
                   <Stack
-                    sx={{ mt: 0.5, ml: 3.5 }}
+                    sx={{ mt: 0.5 }}
                     spacing={0.5}
                     direction="row"
                     alignItems="center"
@@ -247,7 +247,7 @@ export function MembersScreen() {
                     </Typography>
                   </Stack>
                   <Stack
-                    sx={{ mt: 1, ml: 3.5 }}
+                    sx={{ mt: 1 }}
                     spacing={0.75}
                     flexWrap="wrap"
                     direction="row"

@@ -15,7 +15,7 @@ export function createMuiTheme(mode: TypeTheme) {
           surface: "#202925",
           foreground: "#edf2ee",
           muted: "#a6b2aa",
-          line: "#35433b",
+          line: "#708176",
         }
       : {
           brand: "#254b3d",

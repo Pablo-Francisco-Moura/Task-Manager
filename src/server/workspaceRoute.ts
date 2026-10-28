@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { hashSessionToken } from "@/server/session/session";
 import { WORKSPACE_UUID_PATTERN } from "@/constants";
 import type { TypeWorkspaceRouteResult } from "@/types";
+import { decodeWorkspacePublicId } from "@/utils/workspaceUrl";
 
 export async function resolveWorkspaceRoute(
   workspaceId: string,
@@ -15,7 +16,10 @@ export async function resolveWorkspaceRoute(
   const guestToken = cookies.get(GUEST_SESSION_COOKIE_NAME);
   const token = accountToken ?? guestToken;
   if (!token) return { kind: "unauthenticated" };
-  if (!WORKSPACE_UUID_PATTERN.test(workspaceId)) {
+
+  const resolvedWorkspaceId =
+    decodeWorkspacePublicId(workspaceId) ?? workspaceId;
+  if (!WORKSPACE_UUID_PATTERN.test(resolvedWorkspaceId)) {
     return { kind: "notFound" };
   }
 
@@ -41,13 +45,16 @@ export async function resolveWorkspaceRoute(
     return { kind: "unauthenticated" };
   }
 
-  if (!isAccountSession && session.workspaceId !== workspaceId) {
+  if (!isAccountSession && session.workspaceId !== resolvedWorkspaceId) {
     return { kind: "notFound" };
   }
 
   const membership = await prisma.workspaceMember.findUnique({
     where: {
-      workspaceId_userId: { workspaceId, userId: session.userId },
+      workspaceId_userId: {
+        workspaceId: resolvedWorkspaceId,
+        userId: session.userId,
+      },
     },
     select: {
       role: true,

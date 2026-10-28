@@ -5,6 +5,7 @@ import {
 import { prisma } from "@/lib/prisma";
 import { randomUUID } from "node:crypto";
 import { hashSessionToken } from "@/server/session/session";
+import { workspacePublicId } from "@/utils/workspaceUrl";
 import { resolveWorkspaceRoute } from "./workspaceRoute";
 import { afterEach, describe, expect, test } from "vitest";
 
@@ -108,5 +109,20 @@ describe("workspace URL access", () => {
     await expect(resolveWorkspaceRoute(randomUUID(), cookies)).resolves.toEqual(
       { kind: "notFound" },
     );
+  });
+
+  test("accepts a compact workspace public identifier in the URL", async () => {
+    const { workspace, cookies } = await createWorkspaceSession("account");
+    const publicId = workspacePublicId(workspace.id);
+
+    await expect(
+      resolveWorkspaceRoute(publicId, cookies),
+    ).resolves.toMatchObject({
+      kind: "authorized",
+      activeWorkspaceId: workspace.id,
+      isAccountSession: true,
+      role: "owner",
+      workspace: { id: workspace.id, name: workspace.name },
+    });
   });
 });

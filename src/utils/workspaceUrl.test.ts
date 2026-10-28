@@ -1,5 +1,10 @@
+import {
+  workspaceUrl,
+  workspacePublicId,
+  slugifyWorkspaceName,
+  decodeWorkspacePublicId,
+} from "./workspaceUrl";
 import { describe, expect, test } from "vitest";
-import { slugifyWorkspaceName, workspaceUrl } from "./workspaceUrl";
 
 describe("workspace URLs", () => {
   test("creates readable slugs from workspace names", () => {
@@ -7,10 +12,16 @@ describe("workspace URLs", () => {
     expect(slugifyWorkspaceName("  São Paulo  ")).toBe("sao-paulo");
   });
 
-  test("uses the stable workspace ID in its URL", () => {
-    expect(
-      workspaceUrl({ id: "workspace-id", name: "Equipe de Produto" }),
-    ).toBe("/workspace/workspace-id/equipe-de-produto");
+  test("uses a short public workspace identifier in its URL", () => {
+    const id = "815fba39-5ce7-441b-92af-77405cc60d06";
+    const publicId = workspacePublicId(id);
+
+    expect(publicId).not.toBe(id);
+    expect(publicId).toMatch(/^[0-9A-Za-z]+$/);
+    expect(decodeWorkspacePublicId(publicId)).toBe(id);
+    expect(workspaceUrl({ id, name: "Equipe de Produto" })).toBe(
+      `/workspace/${publicId}/equipe-de-produto`,
+    );
   });
 
   test("uses a fallback slug for names without ASCII letters", () => {

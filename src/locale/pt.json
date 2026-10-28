@@ -76,8 +76,10 @@
   "members": {
     "title": "Membros",
     "you": "Você",
-    "countSingular": "{{count}} membro",
-    "countPlural": "{{count}} membros",
+    "count": {
+      "singular": "Membro",
+      "plural": "Membros"
+    },
     "search": "Buscar membros ou projetos",
     "loading": "Carregando membros...",
     "loadError": "Não foi possível carregar os membros do workspace.",
@@ -212,8 +214,8 @@
     "label": "Projeto",
     "name": "Nome do Projeto",
     "count": {
-      "singular": "projeto",
-      "plural": "projetos"
+      "singular": "Projeto",
+      "plural": "Projetos"
     },
     "description": "Descrição do projeto (opcional)",
     "enterDescription": "Adicione contexto para este projeto",
@@ -250,8 +252,8 @@
   },
   "task": {
     "count": {
-      "singular": "tarefa",
-      "plural": "tarefas"
+      "singular": "Tarefa",
+      "plural": "Tarefas"
     },
     "name": "Nome da Tarefa",
     "description": "Descrição (opcional)",

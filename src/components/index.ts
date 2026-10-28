@@ -13,6 +13,7 @@ export * from "./Providers";
 export * from "./AppBarTop";
 export * from "./ProjectForm";
 export * from "./ThemeSwitch";
+export * from "./SearchField";
 export * from "./AlertMessage";
 export * from "./ConfirmDialog";
 export * from "./FeedbackSnackbar";

@@ -1,7 +1,7 @@
 import { Project } from "../Project/Project";
 import { useState } from "react";
-import { TextField } from "@mui/material";
 import { QUERY_KEYS } from "@/constants/queryKeys";
+import { SearchField } from "@/components/SearchField";
 import { useProjects } from "@/hooks";
 import { AlertMessage } from "../AlertMessage";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -89,11 +89,10 @@ export function Projects({
       )}
       {projects && projects.length > 0 && (
         <>
-          <TextField
-            size="small"
+          <SearchField
             label={t("project.search")}
             value={search}
-            onChange={(event) => setSearch(event.target.value)}
+            onChange={setSearch}
             sx={{ mb: 2, width: { xs: "100%", sm: 320 } }}
           />
           {sortedProjects.length > 0 ? (

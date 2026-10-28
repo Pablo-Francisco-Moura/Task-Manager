@@ -7,7 +7,6 @@ import {
   Stack,
   Button,
   Tooltip,
-  TextField,
   IconButton,
   Typography,
   CircularProgress,
@@ -15,6 +14,7 @@ import {
 import { api } from "@/lib/axios";
 import { useState } from "react";
 import { QUERY_KEYS } from "@/constants/queryKeys";
+import { SearchField } from "@/components/SearchField";
 import { useTranslation } from "react-i18next";
 import { useProjectStore } from "@/store/projectStore";
 import { useFeedbackStore } from "@/store/feedbackStore";
@@ -113,34 +113,50 @@ export function MembersScreen() {
   return (
     <section className="screen-content">
       <div className="screen-heading">
-        <div>
-          <h2 className="screen-title">{t("members.title")}</h2>
-        </div>
-        <Stack
-          direction={{ xs: "column-reverse", sm: "row" }}
-          spacing={1.5}
-          alignItems={{ xs: "flex-start", sm: "center" }}
-        >
-          {data ? (
-            <Typography variant="body2" color="text.secondary">
-              {t(
-                data.members.length === 1
-                  ? "members.countSingular"
-                  : "members.countPlural",
-                { count: data.members.length },
-              )}
-            </Typography>
-          ) : null}
-          {canManage && activeWorkspaceId ? (
-            <Button
-              variant="contained"
-              startIcon={<GroupAddOutlinedIcon />}
-              onClick={() => setIsInviteDialogOpen(true)}
+        {data ? (
+          <Typography
+            component="p"
+            aria-live="polite"
+            sx={{
+              m: 0,
+              gap: 1,
+              color: "text.secondary",
+              display: "flex",
+              fontSize: "0.85rem",
+              alignItems: "center",
+            }}
+          >
+            <Box
+              component="span"
+              sx={{
+                color: "var(--brand)",
+                height: "1.6rem",
+                display: "inline-grid",
+                minWidth: "1.6rem",
+                placeItems: "center",
+                background: "var(--brand-soft)",
+                fontWeight: 800,
+                borderRadius: "5px",
+              }}
             >
-              {t("notifications.manageInvites")}
-            </Button>
-          ) : null}
-        </Stack>
+              {data.members.length}
+            </Box>
+            {t(
+              data.members.length === 1
+                ? "members.count.singular"
+                : "members.count.plural",
+            )}
+          </Typography>
+        ) : null}
+        {canManage && activeWorkspaceId ? (
+          <Button
+            variant="contained"
+            startIcon={<GroupAddOutlinedIcon />}
+            onClick={() => setIsInviteDialogOpen(true)}
+          >
+            {t("notifications.manageInvites")}
+          </Button>
+        ) : null}
       </div>
 
       <WorkspaceInviteDialog
@@ -149,11 +165,10 @@ export function MembersScreen() {
         onClose={() => setIsInviteDialogOpen(false)}
       />
 
-      <TextField
-        size="small"
+      <SearchField
         label={t("members.search")}
         value={search}
-        onChange={(event) => setSearch(event.target.value)}
+        onChange={setSearch}
         sx={{ mb: 2, width: { xs: "100%", sm: 360 } }}
       />
 

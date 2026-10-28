@@ -76,8 +76,10 @@
   "members": {
     "title": "Members",
     "you": "You",
-    "countSingular": "{{count}} member",
-    "countPlural": "{{count}} members",
+    "count": {
+      "singular": "Member",
+      "plural": "Members"
+    },
     "search": "Search members or projects",
     "loading": "Loading members...",
     "loadError": "Could not load workspace members.",
@@ -212,8 +214,8 @@
     "label": "Project",
     "name": "Project Name",
     "count": {
-      "singular": "project",
-      "plural": "projects"
+      "singular": "Project",
+      "plural": "Projects"
     },
     "description": "Project description (optional)",
     "enterDescription": "Add context for this project",
@@ -250,8 +252,8 @@
   },
   "task": {
     "count": {
-      "singular": "task",
-      "plural": "tasks"
+      "singular": "Task",
+      "plural": "Tasks"
     },
     "name": "Task Name",
     "description": "Description (optional)",

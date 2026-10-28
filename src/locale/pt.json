@@ -101,6 +101,8 @@
   },
   "activity": {
     "title": "Chat",
+    "confirmDelete": "Excluir este comentário? Esta ação não pode ser desfeita.",
+    "confirmDeleteTitle": "Tem certeza?",
     "empty": "Nenhuma atividade neste projeto.",
     "loadError": "Não foi possível carregar a atividade.",
     "commentPlaceholder": "Escreva um comentário...",

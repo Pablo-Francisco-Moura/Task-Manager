@@ -18,6 +18,7 @@ interface IProps {
   description: string;
   onClose: () => void;
   onConfirm: () => void;
+  title?: string;
   isLoading?: boolean;
   relatedItems?: string[];
   relatedItemsLabel?: string;
@@ -27,6 +28,7 @@ export function ConfirmDialog({
   open,
   isLoading = false,
   description,
+  title,
   relatedItems = [],
   relatedItemsLabel,
   onClose,
@@ -52,7 +54,7 @@ export function ConfirmDialog({
     >
       <div>
         <DialogTitle sx={{ color: "var(--foreground)" }}>
-          {t("common.confirm")}
+          {title ?? t("common.confirm")}
         </DialogTitle>
         <DialogContent>
           <DialogContentText sx={{ color: "var(--muted)" }}>

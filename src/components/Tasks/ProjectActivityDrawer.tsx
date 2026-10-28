@@ -13,6 +13,7 @@ import {
 } from "@mui/material";
 import { api } from "@/lib/axios";
 import { QUERY_KEYS } from "@/constants/queryKeys";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useTranslation } from "react-i18next";
 import { ProjectActivityItem } from "./ProjectActivityItem";
 import { useActivityFormatters } from "./useActivityFormatters";
@@ -37,6 +38,7 @@ export function ProjectActivityDrawer({ open, projectId, onClose }: IProps) {
   const [editingContent, setEditingContent] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [commentToDelete, setCommentToDelete] = useState<number | null>(null);
   const activityListRef = useRef<HTMLDivElement>(null);
   const wasOpenRef = useRef(false);
   const queryKey = [QUERY_KEYS.ACTIVITY, projectId];
@@ -119,11 +121,12 @@ export function ProjectActivityDrawer({ open, projectId, onClose }: IProps) {
   };
 
   const deleteComment = async (activityId: number) => {
-    if (!projectId || !window.confirm(t("activity.confirmDelete"))) return;
+    if (!projectId) return;
     setIsSaving(true);
     setError(null);
     try {
       await api.delete(`/project/${projectId}/activity/${activityId}`);
+      setCommentToDelete(null);
       await refreshActivity();
     } catch {
       setError(t("activity.loadError"));
@@ -148,6 +151,18 @@ export function ProjectActivityDrawer({ open, projectId, onClose }: IProps) {
       }}
     >
       <Stack sx={{ height: "100%" }}>
+        <ConfirmDialog
+          open={commentToDelete !== null}
+          title={t("activity.confirmDeleteTitle")}
+          description={t("activity.confirmDelete")}
+          isLoading={isSaving}
+          onClose={() => setCommentToDelete(null)}
+          onConfirm={() => {
+            if (commentToDelete !== null) {
+              void deleteComment(commentToDelete);
+            }
+          }}
+        />
         <Stack
           direction="row"
           alignItems="center"
@@ -211,7 +226,7 @@ export function ProjectActivityDrawer({ open, projectId, onClose }: IProps) {
                 onEditContentChange={setEditingContent}
                 onEditSave={(id) => void saveEdit(id)}
                 onEditCancel={() => setEditingActivity(null)}
-                onDelete={(id) => void deleteComment(id)}
+                onDelete={setCommentToDelete}
               />
             ))
           ) : (

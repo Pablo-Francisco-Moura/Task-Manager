@@ -101,6 +101,8 @@
   },
   "activity": {
     "title": "Chat",
+    "confirmDelete": "Delete this comment? This action cannot be undone.",
+    "confirmDeleteTitle": "Are you sure?",
     "empty": "No activity in this project.",
     "loadError": "Could not load project activity.",
     "commentPlaceholder": "Write a comment...",

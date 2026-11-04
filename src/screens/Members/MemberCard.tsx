@@ -7,6 +7,7 @@ import {
   Typography,
 } from "@mui/material";
 import { useTranslation } from "react-i18next";
+import { getWorkspaceMemberColor } from "@/utils/workspaceMemberColors";
 import type { TypeWorkspaceMember } from "@/types";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import GroupOutlinedIcon from "@mui/icons-material/GroupOutlined";
@@ -48,6 +49,29 @@ export function MemberCard({
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <Stack direction="row" spacing={1} alignItems="center">
             <GroupOutlinedIcon fontSize="small" color="action" />
+            <Box
+              component="span"
+              role="img"
+              aria-label={t("members.chatColor", {
+                color:
+                  member.colorIndex === 0
+                    ? t("members.ownerChatColor")
+                    : member.colorIndex,
+              })}
+              title={t("members.chatColor", {
+                color:
+                  member.colorIndex === 0
+                    ? t("members.ownerChatColor")
+                    : member.colorIndex,
+              })}
+              sx={{
+                width: 12,
+                height: 12,
+                flex: "0 0 auto",
+                borderRadius: "50%",
+                bgcolor: getWorkspaceMemberColor(member.colorIndex),
+              }}
+            />
             <Typography variant="subtitle2" fontWeight={700}>
               {member.displayName}
             </Typography>

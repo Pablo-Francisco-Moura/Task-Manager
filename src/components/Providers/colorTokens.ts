@@ -163,6 +163,18 @@ function getAccessibleBrandSoft(brand: string, surface: string) {
   return surface;
 }
 
+const WORKSPACE_MEMBER_BASE_COLORS = [
+  "#b42318",
+  "#b54708",
+  "#7a5a00",
+  "#3f6212",
+  "#027a7a",
+  "#175cd3",
+  "#6941c6",
+  "#a11574",
+  "#475467",
+];
+
 function chooseContrastText(backgrounds: string[]) {
   const blackContrast = minimumContrast("#000000", backgrounds);
   const whiteContrast = minimumContrast("#ffffff", backgrounds);
@@ -218,6 +230,13 @@ export function getThemeColors(
     theme,
   );
   const brandSoft = getAccessibleBrandSoft(brandText, base.surface);
+  const workspaceMemberColors = WORKSPACE_MEMBER_BASE_COLORS.map((color) =>
+    ensureTextContrast(
+      color,
+      [base.background, base.surface, brandSoft],
+      theme,
+    ),
+  );
   const accent = ensureTextContrast(
     settings.accent,
     [base.background, base.surface, brandSoft],
@@ -234,6 +253,7 @@ export function getThemeColors(
     accent,
     accentDark,
     accentContrast: chooseContrastText([accent, accentDark]),
+    workspaceMemberColors,
   };
 }
 
@@ -246,4 +266,7 @@ export function applyThemeColors(colors: TypeThemeColors) {
   root.style.setProperty("--accent", colors.accent);
   root.style.setProperty("--accent-dark", colors.accentDark);
   root.style.setProperty("--accent-contrast", colors.accentContrast);
+  colors.workspaceMemberColors.forEach((color, index) => {
+    root.style.setProperty(`--workspace-member-color-${index + 1}`, color);
+  });
 }

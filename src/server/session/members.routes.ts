@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getCookie } from "hono/cookie";
 import { createProjectActivity } from "@/server/task/taskActivity";
 import { ACCOUNT_SESSION_COOKIE_NAME } from "@/constants/session";
+import { getWorkspaceMemberColorIndices } from "@/utils/workspaceMemberColors";
 import { getAccountSessionByToken, parseProjectIds } from "./session.helpers";
 import type { TypeSessionEnv } from "@/types/session";
 
@@ -79,11 +80,19 @@ routes.get("/workspace/:workspaceId/members", async (context) => {
                   projectMembers.some(({ userId }) => userId === user.id),
               ),
           );
+  const colorIndices = getWorkspaceMemberColorIndices(
+    memberships.map(({ user, role, joinedAt }) => ({
+      userId: user.id,
+      role,
+      joinedAt,
+    })),
+  );
 
   return context.json({
     projects: accessibleProjects.map(({ id, name }) => ({ id, name })),
     members: visibleMemberships.map(({ user, role, joinedAt }) => ({
       userId: user.id,
+      colorIndex: colorIndices.get(user.id) ?? 0,
       isCurrentUser: user.id === accountSession.userId,
       displayName: user.displayName,
       username: user.username,

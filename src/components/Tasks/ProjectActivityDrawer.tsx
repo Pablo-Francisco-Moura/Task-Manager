@@ -100,15 +100,7 @@ export function ProjectActivityDrawer({ open, projectId, onClose }: IProps) {
     return () => {
       isCurrent = false;
     };
-  }, [
-    isError,
-    isLoading,
-    latestActivityId,
-    open,
-    projectId,
-    queryClient,
-    t,
-  ]);
+  }, [isError, isLoading, latestActivityId, open, projectId, queryClient, t]);
 
   useEffect(() => {
     if (!open) {

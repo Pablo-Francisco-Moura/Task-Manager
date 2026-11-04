@@ -197,13 +197,17 @@ routes.put(
         await transaction.projectMember.deleteMany({
           where: {
             userId: targetUserId,
-            projectId: { in: removedAssignments.map(({ projectId }) => projectId) },
+            projectId: {
+              in: removedAssignments.map(({ projectId }) => projectId),
+            },
           },
         });
         await transaction.projectActivityReadState.deleteMany({
           where: {
             userId: targetUserId,
-            projectId: { in: removedAssignments.map(({ projectId }) => projectId) },
+            projectId: {
+              in: removedAssignments.map(({ projectId }) => projectId),
+            },
           },
         });
       }

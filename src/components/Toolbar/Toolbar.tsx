@@ -1,25 +1,25 @@
+import { useQuery } from "@tanstack/react-query";
 import { useTasks } from "@/hooks/useTasks";
 import { useEffect } from "react";
+import { QUERY_KEYS } from "@/constants/queryKeys";
 import { useProjects } from "@/hooks/useProjects";
 import { useTranslation } from "react-i18next";
 import { useProjectStore } from "@/store/projectStore";
+import { getProjectActivityUnreadCount } from "@/lib/accountWorkspaceApi";
 import Select, { SelectChangeEvent } from "@mui/material/Select";
 import type { TypeLocalProject } from "@/types/localData";
+import Badge from "@mui/material/Badge";
+import Button from "@mui/material/Button";
 import AddIcon from "@mui/icons-material/Add";
 import MenuItem from "@mui/material/MenuItem";
 import InputLabel from "@mui/material/InputLabel";
 import FormControl from "@mui/material/FormControl";
-import Button from "@mui/material/Button";
 import ChatOutlinedIcon from "@mui/icons-material/ChatOutlined";
-import Badge from "@mui/material/Badge";
-import { useQuery } from "@tanstack/react-query";
-import { api } from "@/lib/axios";
-import { QUERY_KEYS } from "@/constants/queryKeys";
 
 interface IProps {
   openAddTask: boolean;
-  onToggleAddTask: () => void;
   onOpenChat: () => void;
+  onToggleAddTask: () => void;
 }
 
 export function Toolbar({ openAddTask, onToggleAddTask, onOpenChat }: IProps) {
@@ -32,16 +32,13 @@ export function Toolbar({ openAddTask, onToggleAddTask, onOpenChat }: IProps) {
   const { t } = useTranslation();
   const { projects, isLoading } = useProjects();
   const { tasks } = useTasks(selectedProject?.id);
-  const {
-    data: unreadCount = 0,
-    isError: isUnreadCountError,
-  } = useQuery({
+  const { data: unreadCount = 0, isError: isUnreadCountError } = useQuery({
     queryKey: [QUERY_KEYS.ACTIVITY_UNREAD, selectedProject?.id],
-    queryFn: async () => {
-      const response = await api.get<{ unreadCount: number }>(
-        `/project/${selectedProject?.id}/activity/unread-count`,
-      );
-      return response.data.unreadCount;
+    queryFn: () => {
+      if (!selectedProject) {
+        throw new Error("A project must be selected to count unread activity");
+      }
+      return getProjectActivityUnreadCount(selectedProject.id);
     },
     enabled: workspaceRole !== null && selectedProject !== null,
     refetchInterval: 10_000,
@@ -178,9 +175,7 @@ export function Toolbar({ openAddTask, onToggleAddTask, onOpenChat }: IProps) {
                     : t("activity.title")
               }
               title={
-                isUnreadCountError
-                  ? t("activity.unreadLoadError")
-                  : undefined
+                isUnreadCountError ? t("activity.unreadLoadError") : undefined
               }
               onClick={onOpenChat}
               disabled={!selectedProject || isLoading}

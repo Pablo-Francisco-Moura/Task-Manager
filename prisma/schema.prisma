@@ -52,6 +52,7 @@ enum ProjectActivityType {
   task_moved
   task_deleted
   comment
+  comment_deleted
 }
 
 model User {

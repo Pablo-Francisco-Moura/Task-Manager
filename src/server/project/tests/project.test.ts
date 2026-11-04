@@ -318,7 +318,38 @@ describe("Project API", () => {
       await prisma.projectActivity.findUnique({
         where: { id: otherComment.id },
       }),
-    ).toMatchObject({ content: null, isDeleted: true });
+    ).toMatchObject({
+      actorId: otherUser.id,
+      actorName: otherUser.displayName,
+      content: null,
+      isDeleted: true,
+    });
+    const deletionActivity = await prisma.projectActivity.findFirstOrThrow({
+      where: {
+        projectId: project.id,
+        type: "comment_deleted",
+      },
+    });
+    expect(deletionActivity).toMatchObject({
+      actorId: TEST_GUEST_IDENTITY.userId,
+      actorName: "Test Guest",
+      details: {
+        commentId: otherComment.id,
+        commentAuthorId: otherUser.id,
+        commentAuthorName: otherUser.displayName,
+      },
+    });
+
+    const activityResponse = await app.request(
+      `/projects/${project.id}/activity`,
+    );
+    expect(await activityResponse.json()).toEqual([
+      expect.objectContaining({
+        id: deletionActivity.id,
+        type: "comment_deleted",
+        actorName: "Test Guest",
+      }),
+    ]);
   });
 
   test("should load project activity for an authorized workspace member", async () => {

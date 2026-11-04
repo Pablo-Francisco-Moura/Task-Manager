@@ -7,15 +7,16 @@ type ActivityClient = Pick<
 
 interface ICreateProjectActivityInput {
   type:
-    | "project_created"
-    | "project_updated"
-    | "member_added"
-    | "member_removed"
+    | "comment"
+    | "task_moved"
     | "task_created"
     | "task_updated"
-    | "task_moved"
     | "task_deleted"
-    | "comment";
+    | "member_added"
+    | "member_removed"
+    | "project_created"
+    | "project_updated"
+    | "comment_deleted";
   actorId: string;
   projectId: number;
   taskId?: number | null;

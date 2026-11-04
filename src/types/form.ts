@@ -51,17 +51,21 @@ export interface TypeFormProps<
 > {
   title: string;
   inputId: string;
-  register: UseFormRegister<TFieldValues>;
   placeholder: string;
   submitLabel: string;
   error?: string | null;
+  stepIndex?: 0 | 1;
   nameError?: string;
-  isSubmitting?: boolean;
-  submitDisabled?: boolean;
+  register: UseFormRegister<TFieldValues>;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
-  onClose?: () => void;
+  stepLabels?: [string, string];
   statusField?: TypeFormChoiceField;
   dueDateField?: TypeFormDueDateField;
+  isSubmitting?: boolean;
   priorityField?: TypeFormChoiceField;
+  submitDisabled?: boolean;
   descriptionField?: TypeFormDescriptionField;
+  onClose?: () => void;
+  onNextStep?: () => void;
+  onPreviousStep?: () => void;
 }

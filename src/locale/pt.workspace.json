@@ -127,7 +127,9 @@
       "submit": "Cadastrar Tarefa",
       "enterName": "Digite o nome da tarefa",
       "error": "Erro ao cadastrar tarefa!",
-      "success": "Tarefa criada com sucesso."
+      "success": "Tarefa criada com sucesso.",
+      "stepDetails": "Detalhes",
+      "stepOptions": "Opções"
     },
     "update": {
       "label": "Editar tarefa",

@@ -18,7 +18,10 @@
     "nameTooLong": "O nome deve ter no máximo 200 caracteres",
     "rowsPerPage": "Linhas por página",
     "pagination": "{{from}}–{{to}} de {{count}}",
-    "all": "Todos"
+    "all": "Todos",
+    "continue": "Continuar",
+    "back": "Voltar",
+    "stepOf": "Etapa {{step}} de {{total}}"
   },
   "navigation": {
     "mainLabel": "Navegação principal",

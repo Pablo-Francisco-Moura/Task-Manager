@@ -31,8 +31,9 @@ export function TaskForm({ projectId, onClose }: IProps) {
   const {
     formState: { isSubmitting, isValid, errors },
     reset,
-    register,
     watch,
+    trigger,
+    register,
     handleSubmit,
   } = useForm<ITaskFormInputs>({
     mode: "onChange",
@@ -46,6 +47,7 @@ export function TaskForm({ projectId, onClose }: IProps) {
     },
   });
   const [error, setError] = useState<string | null>(null);
+  const [stepIndex, setStepIndex] = useState<0 | 1>(0);
 
   const { t } = useTranslation();
   const queryClient = useQueryClient();
@@ -76,6 +78,7 @@ export function TaskForm({ projectId, onClose }: IProps) {
       });
 
       reset();
+      setStepIndex(0);
       setError(null);
       onClose();
       showFeedback(t("task.create.success"));
@@ -90,6 +93,17 @@ export function TaskForm({ projectId, onClose }: IProps) {
     mutation.mutate(data);
   };
 
+  const handleNextStep = async () => {
+    if (await trigger("name")) setStepIndex(1);
+  };
+
+  const handleClose = () => {
+    setStepIndex(0);
+    setError(null);
+    reset();
+    onClose();
+  };
+
   return (
     <Form
       title={t("task.name")}
@@ -97,7 +111,7 @@ export function TaskForm({ projectId, onClose }: IProps) {
       nameError={errors.name?.message}
       submitDisabled={!isValid}
       inputId="task-create-name"
-      onClose={onClose}
+      onClose={handleClose}
       onSubmit={handleSubmit(onSubmit)}
       register={register}
       submitLabel={t("task.create.submit")}
@@ -142,6 +156,10 @@ export function TaskForm({ projectId, onClose }: IProps) {
         dateError: errors.dueDate?.message ?? errors.dueTime?.message,
       }}
       isSubmitting={isSubmitting || mutation.isPending}
+      stepIndex={stepIndex}
+      stepLabels={[t("task.create.stepDetails"), t("task.create.stepOptions")]}
+      onNextStep={() => void handleNextStep()}
+      onPreviousStep={() => setStepIndex(0)}
     />
   );
 }

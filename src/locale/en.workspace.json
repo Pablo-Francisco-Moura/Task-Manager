@@ -127,7 +127,9 @@
       "submit": "Register Task",
       "enterName": "Enter the task name",
       "error": "Error creating task!",
-      "success": "Task created successfully."
+      "success": "Task created successfully.",
+      "stepDetails": "Details",
+      "stepOptions": "Options"
     },
     "update": {
       "label": "Edit Task",

@@ -96,6 +96,7 @@ model WorkspaceMember {
   userId      String        @db.Uuid
   role        WorkspaceRole @default(owner)
   joinedAt    DateTime      @default(now())
+  colorIndex  Int?
   workspace   Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 

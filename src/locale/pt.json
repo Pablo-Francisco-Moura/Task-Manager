@@ -55,6 +55,8 @@
     "noMatches": "Nenhum membro corresponde à busca.",
     "noProjects": "Sem acesso a projetos",
     "allProjects": "Acesso a todos os projetos do workspace",
+    "chatColor": "Cor do Chat: {{color}}",
+    "ownerChatColor": "cor primária do responsável",
     "joined": "Entrou em {{date}}",
     "manageProjects": "Gerenciar acesso a projetos",
     "manageTitle": "Acesso a projetos de {{name}}",

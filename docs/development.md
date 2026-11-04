@@ -61,6 +61,8 @@ npm test
 
 O script de testes aplica migrations ao banco de teste antes de executar Vitest. Confirme sempre que `.env.test` aponta para `test_db`, nunca para dados de produção.
 
+Os comandos `npm test` e `npm run migrate:test` recusam executar sem `.env.test` apontando para `test_db` local e se um `DATABASE_URL` herdado do shell divergir desse arquivo. A limpeza automática dos testes também valida nome e host antes de truncar tabelas, protegendo o banco de desenvolvimento mesmo se a configuração de ambiente estiver incorreta.
+
 ## Migrations e seed
 
 O contêiner aplica migrations pendentes durante o startup. Para executá-las manualmente no banco apontado por `DATABASE_URL`:

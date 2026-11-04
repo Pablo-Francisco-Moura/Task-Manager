@@ -9,7 +9,9 @@ import {
 } from "@mui/material";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { UserInfoDialog } from "@/components/Notifications/UserInfoDialog";
 import { ProjectActivityAction } from "./ProjectActivityAction";
+import { getWorkspaceMemberColor } from "@/utils/workspaceMemberColors";
 import type {
   TypeProjectActivity,
   TypeTaskMovementDetails,
@@ -55,9 +57,10 @@ export function ProjectActivityItem({
 }: IProps) {
   const { t } = useTranslation();
   const [isDetailsExpanded, setIsDetailsExpanded] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const isEditing = editingActivity === activity.id;
   const isComment = activity.type === "comment";
-  const isOwnComment = activity.canEdit;
+  const isOwnComment = activity.isOwn;
   const movement = getTaskMovementDetails(activity);
   const activityDetails = isComment ? [] : getActivityDetails(activity);
   const hasMovementDetails = Boolean(
@@ -101,6 +104,14 @@ export function ProjectActivityItem({
           },
       }}
     >
+      {isProfileOpen ? (
+        <UserInfoDialog
+          open
+          displayName={activity.actorName}
+          username={activity.actorUsername}
+          onClose={() => setIsProfileOpen(false)}
+        />
+      ) : null}
       <Box
         sx={
           isComment
@@ -136,12 +147,29 @@ export function ProjectActivityItem({
               spacing={1}
             >
               <Typography
+                component="button"
+                type="button"
                 variant="caption"
                 fontWeight={700}
-                color="primary.main"
+                onClick={() => setIsProfileOpen(true)}
+                aria-haspopup="dialog"
+                sx={{
+                  p: 0,
+                  border: 0,
+                  background: "none",
+                  font: "inherit",
+                  color: getWorkspaceMemberColor(activity.actorColorIndex),
+                  cursor: "pointer",
+                  "&:hover": { textDecoration: "underline" },
+                }}
               >
                 {activity.actorName}
               </Typography>
+              {activity.isDeleted ? (
+                <Typography variant="caption" color="text.secondary">
+                  {t("activity.comment_deletedVerb")}
+                </Typography>
+              ) : null}
               <Typography
                 variant="caption"
                 color="text.secondary"
@@ -159,14 +187,12 @@ export function ProjectActivityItem({
                 value={editingContent}
                 onChange={(event) => onEditContentChange(event.target.value)}
               />
-            ) : (
+            ) : activity.isDeleted ? null : (
               <Typography
                 variant="body2"
                 sx={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}
               >
-                {activity.isDeleted
-                  ? t("activity.commentDeleted")
-                  : activity.content}
+                {activity.content}
               </Typography>
             )}
           </Stack>

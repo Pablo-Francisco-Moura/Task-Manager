@@ -1,4 +1,9 @@
 .shell {
+  display: flex;
+  height: 100dvh;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
   background:
     radial-gradient(
       ellipse at 10% 0%,
@@ -6,4 +11,14 @@
       transparent 34rem
     ),
     var(--background);
+}
+
+.shell :global(.app-header) {
+  flex: 0 0 auto;
+  z-index: 1;
+}
+
+.shell :global(.app-main) {
+  min-height: 0;
+  overflow: hidden;
 }

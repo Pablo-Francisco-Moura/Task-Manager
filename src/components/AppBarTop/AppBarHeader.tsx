@@ -27,7 +27,7 @@ export function AppBarHeader({
 
   return (
     <header className={`${styles.header} app-header w-full transition-colors`}>
-      <div className="app-header-inner mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+      <div className="app-header-inner flex w-full items-center justify-between px-4 py-4">
         <div className="flex min-w-0 items-center gap-3">
           <span className="app-brand-mark flex h-10 w-10 shrink-0 items-center justify-center rounded-xl">
             <WorkspacesOutlinedIcon fontSize="small" />

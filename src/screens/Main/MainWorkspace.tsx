@@ -15,13 +15,15 @@ export function MainWorkspace() {
   return (
     <div className={styles.workspace}>
       <TabBar />
-      {selectedTab === "task" ? (
-        <TaskScreen />
-      ) : selectedTab === "members" && activeWorkspaceId ? (
-        <MembersScreen />
-      ) : (
-        <ProjectScreen />
-      )}
+      <div className={styles.content}>
+        {selectedTab === "task" ? (
+          <TaskScreen />
+        ) : selectedTab === "members" && activeWorkspaceId ? (
+          <MembersScreen />
+        ) : (
+          <ProjectScreen />
+        )}
+      </div>
     </div>
   );
 }

@@ -12,7 +12,10 @@
       "title": "Crie sua conta",
       "submit": "Criar conta",
       "error": "Não foi possível criar a conta neste momento.",
-      "success": "Conta criada com sucesso."
+      "success": "Conta criada com sucesso.",
+      "stepIdentity": "Identificação",
+      "stepSecurity": "Segurança",
+      "stepWorkspace": "Workspace"
     },
     "displayName": "Como você quer se chamar?",
     "displayNamePlaceholder": "Digite seu nome",

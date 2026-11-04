@@ -12,7 +12,10 @@
       "title": "Create your account",
       "submit": "Create account",
       "error": "Could not create the account right now.",
-      "success": "Account created successfully."
+      "success": "Account created successfully.",
+      "stepIdentity": "Identity",
+      "stepSecurity": "Security",
+      "stepWorkspace": "Workspace"
     },
     "displayName": "How would you like to be called?",
     "displayNamePlaceholder": "Enter your name",

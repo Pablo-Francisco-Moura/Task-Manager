@@ -281,11 +281,11 @@ export function AppBarDialogs({
           }}
         >
           <WorkspacesOutlinedIcon color="primary" sx={{ fontSize: 40 }} />
-          <CircularProgress size={28} aria-label={t("common.sessionLoading")} />
+          <CircularProgress size={28} aria-label={t("common.signingOut")} />
           <Stack spacing={0.5} alignItems="center">
-            <Typography variant="h6">{t("common.sessionLoading")}</Typography>
+            <Typography variant="h6">{t("common.signingOut")}</Typography>
             <Typography variant="body2" color="text.secondary">
-              {t("common.sessionLoadingDetail")}
+              {t("common.signingOutDetail")}
             </Typography>
           </Stack>
         </Box>

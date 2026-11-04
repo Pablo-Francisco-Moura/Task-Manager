@@ -12,6 +12,8 @@
     "sessionLoadError": "Não foi possível iniciar seu espaço de visitante.",
     "sessionLoading": "Iniciando seu espaço...",
     "sessionLoadingDetail": "Preparando seu espaço privado",
+    "signingOut": "Saindo da sua conta...",
+    "signingOutDetail": "Encerrando sua sessão",
     "databaseStarting": "O banco de dados ainda está iniciando. A aplicação continuará tentando conectar.",
     "workspaceNotFound": "Workspace não encontrado.",
     "nameRequired": "Nome é obrigatório",

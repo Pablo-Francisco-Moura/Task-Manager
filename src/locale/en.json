@@ -12,6 +12,8 @@
     "sessionLoadError": "Could not start your guest workspace.",
     "sessionLoading": "Starting your workspace...",
     "sessionLoadingDetail": "Preparing your private workspace",
+    "signingOut": "Signing out...",
+    "signingOutDetail": "Ending your session",
     "databaseStarting": "The database is still starting. The app will keep trying to connect.",
     "workspaceNotFound": "Workspace not found.",
     "nameRequired": "Name is required",

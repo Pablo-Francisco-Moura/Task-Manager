@@ -61,6 +61,51 @@ export function ProjectActivityDrawer({ open, projectId, onClose }: IProps) {
     refetchInterval: open ? 10_000 : false,
     refetchOnWindowFocus: true,
   });
+  const latestActivityId = activities.reduce(
+    (latestId, activity) => Math.max(latestId, activity.id),
+    0,
+  );
+
+  useEffect(() => {
+    if (
+      !open ||
+      projectId === null ||
+      isLoading ||
+      isError ||
+      latestActivityId === 0
+    ) {
+      return;
+    }
+
+    let isCurrent = true;
+    const markAsRead = async () => {
+      try {
+        await api.post(`/project/${projectId}/activity/read`, {
+          activityId: latestActivityId,
+        });
+        if (isCurrent) {
+          await queryClient.invalidateQueries({
+            queryKey: [QUERY_KEYS.ACTIVITY_UNREAD, projectId],
+          });
+        }
+      } catch {
+        if (isCurrent) setError(t("activity.markReadError"));
+      }
+    };
+    void markAsRead();
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [
+    isError,
+    isLoading,
+    latestActivityId,
+    open,
+    projectId,
+    queryClient,
+    t,
+  ]);
 
   useEffect(() => {
     if (!open) {

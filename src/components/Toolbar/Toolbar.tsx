@@ -11,6 +11,10 @@ import InputLabel from "@mui/material/InputLabel";
 import FormControl from "@mui/material/FormControl";
 import Button from "@mui/material/Button";
 import ChatOutlinedIcon from "@mui/icons-material/ChatOutlined";
+import Badge from "@mui/material/Badge";
+import { useQuery } from "@tanstack/react-query";
+import { api } from "@/lib/axios";
+import { QUERY_KEYS } from "@/constants/queryKeys";
 
 interface IProps {
   openAddTask: boolean;
@@ -28,6 +32,21 @@ export function Toolbar({ openAddTask, onToggleAddTask, onOpenChat }: IProps) {
   const { t } = useTranslation();
   const { projects, isLoading } = useProjects();
   const { tasks } = useTasks(selectedProject?.id);
+  const {
+    data: unreadCount = 0,
+    isError: isUnreadCountError,
+  } = useQuery({
+    queryKey: [QUERY_KEYS.ACTIVITY_UNREAD, selectedProject?.id],
+    queryFn: async () => {
+      const response = await api.get<{ unreadCount: number }>(
+        `/project/${selectedProject?.id}/activity/unread-count`,
+      );
+      return response.data.unreadCount;
+    },
+    enabled: workspaceRole !== null && selectedProject !== null,
+    refetchInterval: 10_000,
+    refetchOnWindowFocus: true,
+  });
 
   useEffect(() => {
     if (!preferencesLoaded) return;
@@ -146,7 +165,23 @@ export function Toolbar({ openAddTask, onToggleAddTask, onOpenChat }: IProps) {
               className="task-toolbar-action"
               size="small"
               variant="outlined"
-              startIcon={<ChatOutlinedIcon />}
+              startIcon={
+                <Badge badgeContent={unreadCount} color="error" max={99}>
+                  <ChatOutlinedIcon />
+                </Badge>
+              }
+              aria-label={
+                isUnreadCountError
+                  ? t("activity.unreadLoadError")
+                  : unreadCount > 0
+                    ? t("activity.unreadCount", { count: unreadCount })
+                    : t("activity.title")
+              }
+              title={
+                isUnreadCountError
+                  ? t("activity.unreadLoadError")
+                  : undefined
+              }
               onClick={onOpenChat}
               disabled={!selectedProject || isLoading}
             >

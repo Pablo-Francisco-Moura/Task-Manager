@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { useEffect, useRef, useState } from "react";
+import type { TypeConfirmDialogProps } from "@/types";
 import List from "@mui/material/List";
 import React from "react";
 import Dialog from "@mui/material/Dialog";
@@ -12,13 +13,13 @@ import ListItemText from "@mui/material/ListItemText";
 import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContentText from "@mui/material/DialogContentText";
-import type { TypeConfirmDialogProps } from "@/types";
 
 export function ConfirmDialog({
   open,
+  title,
+  content,
   isLoading = false,
   description,
-  title,
   relatedItems = [],
   relatedItemsLabel,
   onClose,
@@ -50,6 +51,7 @@ export function ConfirmDialog({
           <DialogContentText sx={{ color: "var(--muted)" }}>
             {description}
           </DialogContentText>
+          {content}
           {relatedItems.length > 0 && relatedItemsLabel && (
             <>
               <Button

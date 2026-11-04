@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Box,
   Alert,
   Stack,
   Button,
@@ -17,6 +18,7 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useTranslation } from "react-i18next";
 import { ProjectActivityItem } from "./ProjectActivityItem";
 import { useActivityFormatters } from "./useActivityFormatters";
+import { getWorkspaceMemberColor } from "@/utils/workspaceMemberColors";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import type { TypeProjectActivity } from "@/types";
@@ -38,7 +40,8 @@ export function ProjectActivityDrawer({ open, projectId, onClose }: IProps) {
   const [editingContent, setEditingContent] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [commentToDelete, setCommentToDelete] = useState<number | null>(null);
+  const [commentToDelete, setCommentToDelete] =
+    useState<TypeProjectActivity | null>(null);
   const activityListRef = useRef<HTMLDivElement>(null);
   const wasOpenRef = useRef(false);
   const queryKey = [QUERY_KEYS.ACTIVITY, projectId];
@@ -174,7 +177,7 @@ export function ProjectActivityDrawer({ open, projectId, onClose }: IProps) {
       setCommentToDelete(null);
       await refreshActivity();
     } catch {
-      setError(t("activity.loadError"));
+      setError(t("activity.deleteError"));
     } finally {
       setIsSaving(false);
     }
@@ -200,11 +203,70 @@ export function ProjectActivityDrawer({ open, projectId, onClose }: IProps) {
           open={commentToDelete !== null}
           title={t("activity.confirmDeleteTitle")}
           description={t("activity.confirmDelete")}
+          content={
+            commentToDelete ? (
+              <Box
+                sx={{
+                  mt: 2,
+                  ml: commentToDelete.isOwn ? "auto" : 0,
+                  width: "fit-content",
+                  maxWidth: "100%",
+                  minWidth: 120,
+                  px: 1.5,
+                  py: 1,
+                  borderRadius: commentToDelete.isOwn
+                    ? "12px 12px 3px 12px"
+                    : "12px 12px 12px 3px",
+                  bgcolor: commentToDelete.isOwn
+                    ? "primary.light"
+                    : "background.paper",
+                  border: 1,
+                  borderColor: commentToDelete.isOwn
+                    ? "transparent"
+                    : "divider",
+                }}
+              >
+                <Stack spacing={0.5}>
+                  <Stack
+                    direction="row"
+                    alignItems="baseline"
+                    justifyContent="space-between"
+                    spacing={1}
+                  >
+                    <Typography
+                      variant="caption"
+                      fontWeight={700}
+                      sx={{
+                        color: getWorkspaceMemberColor(
+                          commentToDelete.actorColorIndex,
+                        ),
+                      }}
+                    >
+                      {commentToDelete.actorName}
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      whiteSpace="nowrap"
+                    >
+                      {formatDate(commentToDelete.createdAt)}
+                    </Typography>
+                  </Stack>
+                  <Typography
+                    variant="body2"
+                    sx={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}
+                  >
+                    {commentToDelete.content}
+                  </Typography>
+                </Stack>
+              </Box>
+            ) : null
+          }
           isLoading={isSaving}
           onClose={() => setCommentToDelete(null)}
           onConfirm={() => {
-            if (commentToDelete !== null) {
-              void deleteComment(commentToDelete);
+            if (commentToDelete) {
+              void deleteComment(commentToDelete.id);
             }
           }}
         />
@@ -271,7 +333,12 @@ export function ProjectActivityDrawer({ open, projectId, onClose }: IProps) {
                 onEditContentChange={setEditingContent}
                 onEditSave={(id) => void saveEdit(id)}
                 onEditCancel={() => setEditingActivity(null)}
-                onDelete={setCommentToDelete}
+                onDelete={(activityId) => {
+                  const activityToDelete = activities.find(
+                    (activity) => activity.id === activityId,
+                  );
+                  if (activityToDelete) setCommentToDelete(activityToDelete);
+                }}
               />
             ))
           ) : (

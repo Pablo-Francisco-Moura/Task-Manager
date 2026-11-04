@@ -1,8 +1,8 @@
 import {
   POST,
   GET as nextApiGet,
-  PATCH as nextApiPatch,
   PUT as nextApiPut,
+  PATCH as nextApiPatch,
   DELETE as nextApiDelete,
 } from "@/app/api/[[...route]]/route";
 import { prisma } from "@/lib/prisma";
@@ -745,6 +745,15 @@ describe("Guest workspace session", () => {
     );
     const projectId = (await projectResponse.json()).id as number;
 
+    const secondProjectResponse = await POST(
+      apiRequest("project", ownerCookie, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: "Tarefas" }),
+      }),
+    );
+    const secondProjectId = (await secondProjectResponse.json()).id as number;
+
     const memberResponse = await POST(
       apiRequest("session/account", undefined, {
         method: "POST",
@@ -760,13 +769,45 @@ describe("Guest workspace session", () => {
     const memberCookie = cookieFrom(memberResponse);
     const memberUserId = (await memberResponse.json()).user.id as string;
 
-    const inviteResponse = await POST(
-      apiRequest(`session/workspace/${workspaceId}/invite`, ownerCookie, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: "bia", projectIds: [projectId] }),
-      }),
+    const targetLookupResponse = await nextApiGet(
+      apiRequest(
+        `session/workspace/${workspaceId}/invite-target?username=bia`,
+        ownerCookie,
+      ),
     );
+    expect(targetLookupResponse.status).toBe(200);
+    expect(await targetLookupResponse.json()).toMatchObject({
+      id: memberUserId,
+      displayName: "Bia",
+      username: "bia",
+      hasActiveInvite: false,
+      activeInviteProjectIds: [],
+    });
+
+    const createInviteRequest = () =>
+      POST(
+        apiRequest(`session/workspace/${workspaceId}/invite`, ownerCookie, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username: "bia", projectIds: [projectId] }),
+        }),
+      );
+    const inviteResponses = await Promise.all([
+      createInviteRequest(),
+      createInviteRequest(),
+    ]);
+    expect(inviteResponses.map(({ status }) => status).sort()).toEqual([
+      201, 409,
+    ]);
+    const inviteResponse = inviteResponses.find(
+      ({ status }) => status === 201,
+    )!;
+    const concurrentDuplicateResponse = inviteResponses.find(
+      ({ status }) => status === 409,
+    )!;
+    expect(await concurrentDuplicateResponse.json()).toMatchObject({
+      code: "ACTIVE_INVITE_EXISTS",
+    });
     expect(inviteResponse.status).toBe(201);
     const invite = await inviteResponse.json();
     expect(invite).toMatchObject({
@@ -777,12 +818,58 @@ describe("Guest workspace session", () => {
     });
     expect(new Date(invite.expiresAt).getTime()).toBeGreaterThan(Date.now());
 
+    const duplicateInviteResponse = await POST(
+      apiRequest(`session/workspace/${workspaceId}/invite`, ownerCookie, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: "bia", projectIds: [projectId] }),
+      }),
+    );
+    expect(duplicateInviteResponse.status).toBe(409);
+    expect(await duplicateInviteResponse.json()).toMatchObject({
+      code: "ACTIVE_INVITE_EXISTS",
+    });
+    expect(
+      await prisma.workspaceInvite.count({
+        where: { workspaceId, targetUserId: memberUserId, status: "pending" },
+      }),
+    ).toBe(1);
+
+    const addProjectInviteResponse = await POST(
+      apiRequest(`session/workspace/${workspaceId}/invite`, ownerCookie, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: "bia",
+          projectIds: [secondProjectId],
+        }),
+      }),
+    );
+    expect(addProjectInviteResponse.status).toBe(200);
+    expect(await addProjectInviteResponse.json()).toMatchObject({
+      id: invite.id,
+      updatedExisting: true,
+      projectIds: [projectId, secondProjectId],
+    });
+
+    const activeTargetLookup = await nextApiGet(
+      apiRequest(
+        `session/workspace/${workspaceId}/invite-target?username=bia`,
+        ownerCookie,
+      ),
+    );
+    expect(await activeTargetLookup.json()).toMatchObject({
+      hasActiveInvite: true,
+      activeInviteProjectIds: [projectId, secondProjectId],
+    });
+
     const ownerProjectsResponse = await nextApiGet(
       apiRequest("project", ownerCookie),
     );
     expect(ownerProjectsResponse.status).toBe(200);
     expect(await ownerProjectsResponse.json()).toEqual([
       expect.objectContaining({ id: projectId, name: "Pessoal" }),
+      expect.objectContaining({ id: secondProjectId, name: "Tarefas" }),
     ]);
 
     const sentInvitesResponse = await nextApiGet(
@@ -794,7 +881,12 @@ describe("Guest workspace session", () => {
         id: invite.id,
         targetUserId: memberUserId,
         status: "pending",
-        projectIds: [projectId],
+        projectIds: [projectId, secondProjectId],
+        projects: [
+          { id: projectId, name: "Pessoal" },
+          { id: secondProjectId, name: "Tarefas" },
+        ],
+        createdAt: expect.any(String),
       }),
     ]);
 
@@ -808,6 +900,20 @@ describe("Guest workspace session", () => {
         targetUserId: memberUserId,
         status: "pending",
         readAt: null,
+        workspace: expect.objectContaining({
+          id: workspaceId,
+          name: "Estudos",
+          kind: "personal",
+          createdAt: expect.any(String),
+        }),
+        projects: [
+          { id: projectId, name: "Pessoal" },
+          { id: secondProjectId, name: "Tarefas" },
+        ],
+        createdBy: expect.objectContaining({
+          displayName: "Ana",
+          username: "ana",
+        }),
       }),
     ]);
 
@@ -844,9 +950,9 @@ describe("Guest workspace session", () => {
     expect(membership).toMatchObject({ role: "member" });
     expect(
       await prisma.projectMember.findMany({
-        where: { userId: memberUserId, projectId },
+        where: { userId: memberUserId },
       }),
-    ).toHaveLength(1);
+    ).toHaveLength(2);
   });
 
   test("should let owners manage member project access and remove members", async () => {

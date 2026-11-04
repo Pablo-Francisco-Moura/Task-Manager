@@ -15,4 +15,5 @@ export * from "./confirmDialog";
 export * from "./serializedApi";
 export * from "./workspaceRoute";
 export * from "./projectActivity";
+export * from "./workspaceInvite";
 export * from "./workspaceMembers";

@@ -19,7 +19,11 @@ import { useFeedbackStore } from "@/store/feedbackStore";
 import { WorkspaceInviteDialog } from "@/components/Notifications/WorkspaceInviteDialog";
 import { MemberManagementDialogs } from "./MemberManagementDialogs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { TypeWorkspaceMember, TypeWorkspaceRoster } from "@/types";
+import type {
+  TypeWorkspaceMember,
+  TypeWorkspaceRoster,
+  TypeWorkspaceMemberColorIndex,
+} from "@/types";
 import GroupAddOutlinedIcon from "@mui/icons-material/GroupAddOutlined";
 
 export function MembersScreen() {
@@ -35,6 +39,10 @@ export function MembersScreen() {
   const [selectedProjectIds, setSelectedProjectIds] = useState<number[]>([]);
   const [memberToRemove, setMemberToRemove] =
     useState<TypeWorkspaceMember | null>(null);
+  const [memberToColor, setMemberToColor] =
+    useState<TypeWorkspaceMember | null>(null);
+  const [selectedColorIndex, setSelectedColorIndex] =
+    useState<TypeWorkspaceMemberColorIndex>(1);
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [mutationError, setMutationError] = useState<string | null>(null);
   const canManage = workspaceRole === "owner";
@@ -56,6 +64,7 @@ export function MembersScreen() {
       queryClient.invalidateQueries({ queryKey }),
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.PROJECTS] }),
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.TASKS] }),
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ACTIVITY] }),
     ]);
   };
 
@@ -88,6 +97,22 @@ export function MembersScreen() {
       showFeedback(t("members.memberRemoved"));
     },
     onError: () => setMutationError(t("members.removeError")),
+  });
+
+  const saveColorMutation = useMutation({
+    mutationFn: async () => {
+      if (!activeWorkspaceId || !memberToColor) return;
+      await api.put(
+        `/session/workspace/${activeWorkspaceId}/members/${memberToColor.userId}/color`,
+        { colorIndex: selectedColorIndex },
+      );
+    },
+    onSuccess: async () => {
+      await invalidateMemberData();
+      setMemberToColor(null);
+      showFeedback(t("members.colorUpdated"));
+    },
+    onError: () => setMutationError(t("members.colorUpdateError")),
   });
 
   const normalizedSearch = search.trim().toLowerCase();
@@ -190,6 +215,11 @@ export function MembersScreen() {
               key={member.userId}
               member={member}
               canManage={canManage}
+              onEditColor={(selectedMember) => {
+                setMutationError(null);
+                setSelectedColorIndex(selectedMember.colorIndex || 1);
+                setMemberToColor(selectedMember);
+              }}
               onManageProjects={openProjectDialog}
               onRemove={(selectedMember) => {
                 setMutationError(null);
@@ -207,16 +237,22 @@ export function MembersScreen() {
       <MemberManagementDialogs
         projects={data?.projects ?? []}
         memberToEdit={memberToEdit}
+        memberToColor={memberToColor}
         memberToRemove={memberToRemove}
         selectedProjectIds={selectedProjectIds}
+        selectedColorIndex={selectedColorIndex}
         mutationError={mutationError}
         isSavingProjects={saveProjectsMutation.isPending}
+        isSavingColor={saveColorMutation.isPending}
         isRemovingMember={removeMemberMutation.isPending}
         onCloseEdit={() => setMemberToEdit(null)}
+        onCloseColor={() => setMemberToColor(null)}
         onCloseRemove={() => setMemberToRemove(null)}
         onSaveProjects={() => saveProjectsMutation.mutate()}
+        onSaveColor={() => saveColorMutation.mutate()}
         onRemoveMember={() => removeMemberMutation.mutate()}
         onSelectedProjectIdsChange={setSelectedProjectIds}
+        onSelectedColorIndexChange={setSelectedColorIndex}
       />
     </section>
   );

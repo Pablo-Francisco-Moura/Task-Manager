@@ -24,4 +24,24 @@ describe("getWorkspaceMemberColorIndices", () => {
     ).toEqual(new Set([1, 2, 3, 4, 5, 6, 7, 8, 9]));
     expect(colors.get("member-09")).toBe(colors.get("member-00"));
   });
+
+  it("uses saved member colors and keeps the owner primary", () => {
+    const colors = getWorkspaceMemberColorIndices([
+      {
+        userId: "owner",
+        role: "owner",
+        joinedAt: "2026-01-01",
+        colorIndex: 8,
+      },
+      {
+        userId: "member",
+        role: "member",
+        joinedAt: "2026-01-02",
+        colorIndex: 4,
+      },
+    ]);
+
+    expect(colors.get("owner")).toBe(0);
+    expect(colors.get("member")).toBe(4);
+  });
 });

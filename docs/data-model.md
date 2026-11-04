@@ -39,6 +39,7 @@ erDiagram
       uuid userId PK, FK
       WorkspaceRole role
       datetime joinedAt
+      datetime lastSeenAt
    }
 
    PROJECT {
@@ -101,6 +102,13 @@ erDiagram
       datetime updatedAt
    }
 
+   PROJECT_ACTIVITY_READ_STATE {
+      int projectId PK, FK
+      uuid userId PK, FK
+      datetime lastSeenAt
+      int lastSeenActivityId
+   }
+
    USER ||--o{ SESSION : owns
    WORKSPACE ||--o{ SESSION : scopes
    USER ||--o{ WORKSPACE_MEMBER : joins
@@ -116,6 +124,8 @@ erDiagram
    PROJECT ||--o{ PROJECT_ACTIVITY : logs
    TASK o|--o{ PROJECT_ACTIVITY : relates
    USER ||--o{ PROJECT_ACTIVITY : acts
+   USER ||--o{ PROJECT_ACTIVITY_READ_STATE : reads
+   PROJECT ||--o{ PROJECT_ACTIVITY_READ_STATE : tracks
    PROJECT ||--o{ TASK : contains
 ```
 
@@ -125,4 +135,5 @@ erDiagram
 - Sessões identificam a pessoa e o workspace ativo.
 - Owners administram o workspace e os convites.
 - Membros recebem acesso explícito aos projetos compartilhados.
+- O marco de leitura da atividade é individual por projeto; membros começam a receber notificações quando entram no projeto.
 - A API verifica essas relações no servidor antes de retornar ou alterar dados.

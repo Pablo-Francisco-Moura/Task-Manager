@@ -53,6 +53,127 @@ routes.get("/:projectId/activity", async (c) => {
   );
 });
 
+routes.get("/:projectId/activity/unread-count", async (c) => {
+  const projectId = parsePositiveIntegerString(c.req.param("projectId"));
+  if (!projectId) {
+    return c.json({ error: "projectId must be a positive integer" }, 400);
+  }
+  const workspaceId = c.get("workspaceId");
+  const userId = c.get("userId");
+  const role = await getWorkspaceRole(prisma, workspaceId, userId);
+  if (!role) {
+    return c.json({ error: "Workspace membership required" }, 403);
+  }
+  const project = await prisma.project.findFirst({
+    where: { id: projectId, ...projectAccessWhere(workspaceId, userId, role) },
+    select: { id: true, createdAt: true },
+  });
+  if (!project) {
+    return c.json({ error: "Project not found" }, 404);
+  }
+
+  let accessSince = project.createdAt;
+  if (role !== "owner") {
+    const projectMembership = await prisma.projectMember.findUnique({
+      where: { projectId_userId: { projectId, userId } },
+      select: { lastSeenAt: true },
+    });
+    if (!projectMembership) {
+      return c.json({ error: "Project membership required" }, 403);
+    }
+    accessSince = projectMembership.lastSeenAt;
+  }
+
+  let readState = await prisma.projectActivityReadState.findUnique({
+    where: { projectId_userId: { projectId, userId } },
+    select: { lastSeenActivityId: true },
+  });
+  if (!readState) {
+    const baseline = await prisma.projectActivity.aggregate({
+      where: { projectId, createdAt: { lte: accessSince } },
+      _max: { id: true },
+    });
+    await prisma.projectActivityReadState.createMany({
+      data: [
+        {
+          projectId,
+          userId,
+          lastSeenActivityId: baseline._max.id ?? 0,
+        },
+      ],
+      skipDuplicates: true,
+    });
+    readState = await prisma.projectActivityReadState.findUnique({
+      where: { projectId_userId: { projectId, userId } },
+      select: { lastSeenActivityId: true },
+    });
+  }
+  if (!readState) {
+    throw new Error("Project activity read state could not be initialized");
+  }
+
+  const unreadCount = await prisma.projectActivity.count({
+    where: {
+      projectId,
+      actorId: { not: userId },
+      id: { gt: readState.lastSeenActivityId },
+    },
+  });
+  return c.json({ unreadCount });
+});
+
+routes.post("/:projectId/activity/read", async (c) => {
+  const projectId = parsePositiveIntegerString(c.req.param("projectId"));
+  if (!projectId) {
+    return c.json({ error: "projectId must be a positive integer" }, 400);
+  }
+  const workspaceId = c.get("workspaceId");
+  const userId = c.get("userId");
+  const role = await getWorkspaceRole(prisma, workspaceId, userId);
+  if (!role) {
+    return c.json({ error: "Workspace membership required" }, 403);
+  }
+  const project = await prisma.project.findFirst({
+    where: { id: projectId, ...projectAccessWhere(workspaceId, userId, role) },
+    select: { id: true },
+  });
+  if (!project) {
+    return c.json({ error: "Project not found" }, 404);
+  }
+
+  const body = await readJsonObject(c.req);
+  const activityId =
+    typeof body?.activityId === "number" && Number.isInteger(body.activityId)
+      ? body.activityId
+      : null;
+  if (!activityId || activityId <= 0) {
+    return c.json({ error: "activityId must be a positive integer" }, 400);
+  }
+  const activity = await prisma.projectActivity.findFirst({
+    where: { id: activityId, projectId },
+    select: { id: true },
+  });
+  if (!activity) {
+    return c.json({ error: "Activity not found" }, 404);
+  }
+
+  await prisma.$executeRaw`
+    INSERT INTO "project_activity_read_states" (
+      "projectId",
+      "userId",
+      "lastSeenActivityId"
+    )
+    VALUES (${projectId}, ${userId}::uuid, ${activityId})
+    ON CONFLICT ("projectId", "userId")
+    DO UPDATE SET "lastSeenActivityId" = GREATEST(
+      "project_activity_read_states"."lastSeenActivityId",
+      EXCLUDED."lastSeenActivityId"
+    ),
+    "lastSeenAt" = CURRENT_TIMESTAMP
+  `;
+  return c.json({ read: true });
+});
+
 routes.post("/:projectId/comments", async (c) => {
   const projectId = parsePositiveIntegerString(c.req.param("projectId"));
   if (!projectId) {

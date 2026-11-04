@@ -81,6 +81,11 @@
   "project": {
     "label": "Project",
     "name": "Project Name",
+    "details": {
+      "title": "Project information",
+      "project": "Project",
+      "description": "Description"
+    },
     "count": {
       "singular": "Project",
       "plural": "Projects"

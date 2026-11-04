@@ -67,7 +67,10 @@ routes.post(
         projectId: createdProject.id,
         actorId: userId,
         type: "project_created",
-        details: { projectName: createdProject.name },
+        details: {
+          projectName: createdProject.name,
+          projectDescription: createdProject.description,
+        },
       });
       const workspaceOwners = await transaction.workspaceMember.findMany({
         where: { workspaceId, role: "owner" },

@@ -75,6 +75,9 @@ routes.delete("/workspace/:workspaceId/members/:userId", async (context) => {
     await transaction.projectMember.deleteMany({
       where: { userId: targetUserId, project: { workspaceId } },
     });
+    await transaction.projectActivityReadState.deleteMany({
+      where: { userId: targetUserId, project: { workspaceId } },
+    });
     await transaction.workspaceMember.delete({
       where: {
         workspaceId_userId: { workspaceId, userId: targetUserId },

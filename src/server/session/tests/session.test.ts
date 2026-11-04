@@ -947,6 +947,40 @@ describe("Guest workspace session", () => {
       details: { memberName: "Bia", memberId: memberUserId },
     });
 
+    const lastSeenAt = new Date(Date.now() - 60_000);
+    await prisma.projectMember.update({
+      where: {
+        projectId_userId: {
+          projectId: firstProjectId,
+          userId: memberUserId,
+        },
+      },
+      data: { lastSeenAt },
+    });
+    const unchangedAssignmentResponse = await nextApiPut(
+      apiRequest(
+        `session/workspace/${workspaceId}/members/${memberUserId}/projects`,
+        ownerCookie,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ projectIds: [firstProjectId] }),
+        },
+      ),
+    );
+    expect(unchangedAssignmentResponse.status).toBe(200);
+    expect(
+      await prisma.projectMember.findUnique({
+        where: {
+          projectId_userId: {
+            projectId: firstProjectId,
+            userId: memberUserId,
+          },
+        },
+        select: { lastSeenAt: true },
+      }),
+    ).toEqual({ lastSeenAt });
+
     const memberRosterResponse = await nextApiGet(
       apiRequest(`session/workspace/${workspaceId}/members`, memberCookie),
     );

@@ -123,6 +123,13 @@
       "singular": "Task",
       "plural": "Tasks"
     },
+    "details": {
+      "title": "Task details",
+      "task": "Task",
+      "status": "Status",
+      "priority": "Priority",
+      "description": "Description"
+    },
     "name": "Task Name",
     "description": "Description (optional)",
     "enterDescription": "Add context for this task",

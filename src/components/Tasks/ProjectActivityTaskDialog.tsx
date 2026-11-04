@@ -30,23 +30,45 @@ export function ProjectActivityTaskDialog({
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs">
       <>
-        <DialogTitle>{task?.name ?? taskName}</DialogTitle>
+        <DialogTitle>
+          {task ? t("task.details.title") : taskName}
+        </DialogTitle>
         <DialogContent>
           {task ? (
             <Stack spacing={1}>
-              {task.description ? (
-                <Typography>{task.description}</Typography>
-              ) : null}
-              <Typography variant="body2" color="text.secondary">
+              <Typography>
+                <Typography component="span" fontWeight={600}>
+                  {t("task.details.task")}:
+                </Typography>{" "}
+                {task.name}
+              </Typography>
+              <Typography>
+                <Typography component="span" fontWeight={600}>
+                  {t("task.details.status")}:
+                </Typography>{" "}
                 {t(
                   `task.status.${task.status === "in_progress" ? "inProgress" : task.status}`,
                 )}
-                {" · "}
+              </Typography>
+              <Typography>
+                <Typography component="span" fontWeight={600}>
+                  {t("task.details.priority")}:
+                </Typography>{" "}
                 {t(`task.priority.${task.priority}`)}
               </Typography>
+              {task.description ? (
+                <Typography>
+                  <Typography component="span" fontWeight={600}>
+                    {t("task.details.description")}:
+                  </Typography>{" "}
+                  {task.description}
+                </Typography>
+              ) : null}
               {task.dueAt || task.dueDate ? (
-                <Typography variant="body2" color="text.secondary">
-                  {t("task.dueDate.label")}:{" "}
+                <Typography>
+                  <Typography component="span" fontWeight={600}>
+                    {t("task.dueDate.label")}:
+                  </Typography>{" "}
                   {new Intl.DateTimeFormat(i18n.language, {
                     dateStyle: "medium",
                     ...(task.dueAt ? { timeStyle: "short" as const } : {}),

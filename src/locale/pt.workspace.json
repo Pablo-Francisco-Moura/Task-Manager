@@ -123,6 +123,13 @@
       "singular": "Tarefa",
       "plural": "Tarefas"
     },
+    "details": {
+      "title": "Detalhes da tarefa",
+      "task": "Tarefa",
+      "status": "Status",
+      "priority": "Prioridade",
+      "description": "Descrição"
+    },
     "name": "Nome da Tarefa",
     "description": "Descrição (opcional)",
     "enterDescription": "Adicione contexto para esta tarefa",

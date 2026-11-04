@@ -12,10 +12,10 @@
     "start": "next start",
     "lint": "eslint src",
     "typecheck": "tsc --noEmit",
-    "test": "npm run migrate:test && dotenv -e .env.test vitest run",
+    "test": "npm run migrate:test && dotenv -e .env.test -- vitest run",
     "migrate": "prisma migrate dev",
     "migrate:deploy": "prisma migrate deploy",
-    "migrate:test": "dotenv -e .env.test -- prisma migrate dev",
+    "migrate:test": "node scripts/assert-test-database.js && dotenv -e .env.test -- prisma migrate dev",
     "db:seed": "prisma db seed"
   },
   "dependencies": {

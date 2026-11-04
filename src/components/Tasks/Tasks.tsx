@@ -1,7 +1,6 @@
 import { Task } from "../Task/Task";
 import { Dialog } from "@mui/material";
 import { TaskForm } from "@/components/TaskForm";
-import { useState } from "react";
 import { TaskBoard } from "./TaskBoard";
 import { TaskFilters } from "./TaskFilters";
 import { filterTasks } from "./filterTasks";
@@ -13,6 +12,7 @@ import { TaskEmptyState } from "./TaskEmptyState";
 import { useProjectStore } from "@/store/projectStore";
 import { useTaskMutations } from "./useTaskMutations";
 import { ProjectEmptyState } from "./ProjectEmptyState";
+import { useEffect, useState } from "react";
 import { toTaskDueAtISOString } from "@/utils/taskDueDate";
 import { useProjects, useTasks } from "@/hooks";
 import { ProjectActivityDrawer } from "./ProjectActivityDrawer";
@@ -25,20 +25,29 @@ import type {
 import type { TypeReorderTasksInput } from "@/types";
 
 interface IProps {
-  openAddTask: boolean;
-  onCloseAddTask: () => void;
   isChatOpen: boolean;
+  openAddTask: boolean;
+  onOpenChat: () => void;
   onCloseChat: () => void;
+  onCloseAddTask: () => void;
 }
 
 export function Tasks({
-  openAddTask,
-  onCloseAddTask,
   isChatOpen,
+  openAddTask,
+  onOpenChat,
   onCloseChat,
+  onCloseAddTask,
 }: IProps) {
   const setSelectedTab = useMainStore((s) => s.setSelectedTab);
   const selectedProject = useProjectStore((s) => s.selectedProject);
+  const requestedActivityProjectId = useProjectStore(
+    (s) => s.requestedActivityProjectId,
+  );
+  const setSelectedProject = useProjectStore((s) => s.setSelectedProject);
+  const clearRequestedActivityProject = useProjectStore(
+    (s) => s.clearRequestedActivityProject,
+  );
   const activeWorkspaceId = useProjectStore((s) => s.activeWorkspaceId);
 
   const [editTask, setEditTask] = useState<TypeLocalTask | null>(null);
@@ -134,6 +143,29 @@ export function Tasks({
     isLoading: isTasksLoading,
     refetch: refetchTasks,
   } = useTasks(selectedProject?.id);
+  useEffect(() => {
+    if (requestedActivityProjectId === null) return;
+    if (projects === undefined) {
+      if (isProjectsError) clearRequestedActivityProject();
+      return;
+    }
+
+    const project = projects.find(
+      ({ id }) => id === requestedActivityProjectId,
+    );
+    if (project) {
+      setSelectedProject(project);
+      onOpenChat();
+    }
+    clearRequestedActivityProject();
+  }, [
+    clearRequestedActivityProject,
+    isProjectsError,
+    onOpenChat,
+    projects,
+    requestedActivityProjectId,
+    setSelectedProject,
+  ]);
   const allTasks = tasks ?? [];
   const filteredTasks = filterTasks(
     allTasks,

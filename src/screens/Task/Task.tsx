@@ -21,6 +21,7 @@ export function TaskScreen() {
         onCloseAddTask={() => setOpenAddTask(false)}
         isChatOpen={isChatOpen}
         onCloseChat={() => setIsChatOpen(false)}
+        onOpenChat={() => setIsChatOpen(true)}
       />
     </section>
   );

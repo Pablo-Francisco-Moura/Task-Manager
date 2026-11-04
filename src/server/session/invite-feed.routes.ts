@@ -26,12 +26,25 @@ routes.get("/workspace/invites", async (context) => {
   const invites = await prisma.workspaceInvite.findMany({
     where: { targetUserId: accountSession.userId },
     include: {
-      workspace: { select: { id: true, name: true, kind: true } },
+      workspace: {
+        select: { id: true, name: true, kind: true, createdAt: true },
+      },
       createdBy: { select: { id: true, displayName: true, username: true } },
       targetUser: { select: { id: true, displayName: true, username: true } },
     },
     orderBy: { createdAt: "desc" },
   });
+  const projectScopes = invites.flatMap((invite) =>
+    invite.projectIds.length
+      ? [{ workspaceId: invite.workspaceId, id: { in: invite.projectIds } }]
+      : [],
+  );
+  const projects = projectScopes.length
+    ? await prisma.project.findMany({
+        where: { OR: projectScopes },
+        select: { id: true, name: true, workspaceId: true },
+      })
+    : [];
 
   return context.json({
     invites: invites.map(({ workspace, createdBy, targetUser, ...invite }) => ({
@@ -43,7 +56,15 @@ routes.get("/workspace/invites", async (context) => {
         id: workspace.id,
         name: workspace.name,
         kind: workspace.kind,
+        createdAt: workspace.createdAt,
       },
+      projects: projects
+        .filter(
+          (project) =>
+            project.workspaceId === invite.workspaceId &&
+            invite.projectIds.includes(project.id),
+        )
+        .map(({ id, name }) => ({ id, name })),
       createdBy: {
         id: createdBy.id,
         displayName: createdBy.displayName,
@@ -147,10 +168,24 @@ routes.get("/workspace/:workspaceId/invites", async (context) => {
     },
     orderBy: { createdAt: "desc" },
   });
+  const projectScopes = invites.flatMap((invite) =>
+    invite.projectIds.length
+      ? [{ workspaceId, id: { in: invite.projectIds } }]
+      : [],
+  );
+  const projects = projectScopes.length
+    ? await prisma.project.findMany({
+        where: { OR: projectScopes },
+        select: { id: true, name: true },
+      })
+    : [];
 
   return context.json({
     invites: invites.map(({ createdBy, targetUser, ...invite }) => ({
       ...invite,
+      projects: projects
+        .filter((project) => invite.projectIds.includes(project.id))
+        .map(({ id, name }) => ({ id, name })),
       createdBy: {
         id: createdBy.id,
         displayName: createdBy.displayName,

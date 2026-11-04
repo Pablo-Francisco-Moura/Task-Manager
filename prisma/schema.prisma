@@ -52,6 +52,7 @@ enum ProjectActivityType {
   task_moved
   task_deleted
   comment
+  comment_deleted
 }
 
 model User {
@@ -71,6 +72,7 @@ model User {
   createdTasks          Task[]            @relation("TaskCreator")
   projectMembers        ProjectMember[]
   projectActivities      ProjectActivity[]
+  projectActivityReadStates ProjectActivityReadState[]
 
   @@map("users")
 }
@@ -134,6 +136,7 @@ model Project {
   tasks        Task[]
   projectMembers ProjectMember[]
   activities     ProjectActivity[]
+  activityReadStates ProjectActivityReadState[]
 
   @@map("projects")
 }
@@ -143,6 +146,7 @@ model ProjectMember {
   userId    String @db.Uuid
   role      WorkspaceRole @default(member)
   joinedAt  DateTime @default(now())
+  lastSeenAt DateTime @default(now())
 
   project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
   user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -215,4 +219,18 @@ model ProjectActivity {
   @@index([projectId, createdAt])
   @@index([taskId])
   @@map("project_activities")
+}
+
+model ProjectActivityReadState {
+  projectId         Int
+  userId            String @db.Uuid
+  lastSeenActivityId Int    @default(0)
+  lastSeenAt        DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([projectId, userId])
+  @@index([userId])
+  @@map("project_activity_read_states")
 }

@@ -63,12 +63,26 @@ routes.post(
           createdById: userId,
         },
       });
-      await createProjectActivity(transaction, {
+      const activity = await createProjectActivity(transaction, {
         projectId: createdProject.id,
         actorId: userId,
         type: "project_created",
         details: { projectName: createdProject.name },
       });
+      const workspaceOwners = await transaction.workspaceMember.findMany({
+        where: { workspaceId, role: "owner" },
+        select: { userId: true },
+      });
+      if (workspaceOwners.length) {
+        await transaction.projectActivityReadState.createMany({
+          data: workspaceOwners.map(({ userId: ownerId }) => ({
+            projectId: createdProject.id,
+            userId: ownerId,
+            lastSeenActivityId: activity.id,
+          })),
+          skipDuplicates: true,
+        });
+      }
       return createdProject;
     });
 

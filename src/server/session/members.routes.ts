@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getCookie } from "hono/cookie";
 import { createProjectActivity } from "@/server/task/taskActivity";
 import { ACCOUNT_SESSION_COOKIE_NAME } from "@/constants/session";
+import { getWorkspaceMemberColorIndices } from "@/utils/workspaceMemberColors";
 import { getAccountSessionByToken, parseProjectIds } from "./session.helpers";
 import type { TypeSessionEnv } from "@/types/session";
 
@@ -79,11 +80,19 @@ routes.get("/workspace/:workspaceId/members", async (context) => {
                   projectMembers.some(({ userId }) => userId === user.id),
               ),
           );
+  const colorIndices = getWorkspaceMemberColorIndices(
+    memberships.map(({ user, role, joinedAt }) => ({
+      userId: user.id,
+      role,
+      joinedAt,
+    })),
+  );
 
   return context.json({
     projects: accessibleProjects.map(({ id, name }) => ({ id, name })),
     members: visibleMemberships.map(({ user, role, joinedAt }) => ({
       userId: user.id,
+      colorIndex: colorIndices.get(user.id) ?? 0,
       isCurrentUser: user.id === accountSession.userId,
       displayName: user.displayName,
       username: user.username,
@@ -178,12 +187,33 @@ routes.put(
         existingAssignments.map(({ projectId }) => projectId),
       );
       const requestedProjectIds = new Set(projectIds);
-      await transaction.projectMember.deleteMany({
-        where: { userId: targetUserId, project: { workspaceId } },
-      });
-      if (projectIds.length) {
+      const removedAssignments = existingAssignments.filter(
+        ({ projectId }) => !requestedProjectIds.has(projectId),
+      );
+      const newProjectIds = projectIds.filter(
+        (projectId) => !existingProjectIds.has(projectId),
+      );
+      if (removedAssignments.length) {
+        await transaction.projectMember.deleteMany({
+          where: {
+            userId: targetUserId,
+            projectId: {
+              in: removedAssignments.map(({ projectId }) => projectId),
+            },
+          },
+        });
+        await transaction.projectActivityReadState.deleteMany({
+          where: {
+            userId: targetUserId,
+            projectId: {
+              in: removedAssignments.map(({ projectId }) => projectId),
+            },
+          },
+        });
+      }
+      if (newProjectIds.length) {
         await transaction.projectMember.createMany({
-          data: projectIds.map((projectId) => ({
+          data: newProjectIds.map((projectId) => ({
             projectId,
             userId: targetUserId,
             role: "member" as const,
@@ -191,8 +221,8 @@ routes.put(
         });
       }
       for (const project of validProjects) {
-        if (existingProjectIds.has(project.id)) continue;
-        await createProjectActivity(transaction, {
+        if (!newProjectIds.includes(project.id)) continue;
+        const activity = await createProjectActivity(transaction, {
           projectId: project.id,
           actorId: accountSession.userId,
           type: "member_added",
@@ -201,9 +231,22 @@ routes.put(
             memberId: targetUserId,
           },
         });
+        await transaction.projectActivityReadState.upsert({
+          where: {
+            projectId_userId: {
+              projectId: project.id,
+              userId: targetUserId,
+            },
+          },
+          create: {
+            projectId: project.id,
+            userId: targetUserId,
+            lastSeenActivityId: activity.id,
+          },
+          update: { lastSeenActivityId: activity.id },
+        });
       }
-      for (const assignment of existingAssignments) {
-        if (requestedProjectIds.has(assignment.projectId)) continue;
+      for (const assignment of removedAssignments) {
         await createProjectActivity(transaction, {
           projectId: assignment.projectId,
           actorId: accountSession.userId,

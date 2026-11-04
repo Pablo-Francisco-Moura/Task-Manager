@@ -17,6 +17,7 @@ export interface TypeThemeColors {
   accentDark: string;
   brandContrast: string;
   accentContrast: string;
+  workspaceMemberColors: string[];
 }
 
 export interface TypeColorSettingsDialogProps {

@@ -1,5 +1,9 @@
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Chip, Stack, Tooltip, Typography } from "@mui/material";
+import { UserInfoDialog } from "@/components/Notifications/UserInfoDialog";
+import { getWorkspaceMemberColor } from "@/utils/workspaceMemberColors";
+import { ProjectActivityTaskDialog } from "./ProjectActivityTaskDialog";
+import { Box, Chip, Stack, Tooltip, Typography } from "@mui/material";
 import type {
   TypeLocalTaskStatus,
   TypeProjectActivity,
@@ -32,14 +36,35 @@ export function ProjectActivityAction({
   formatDate,
 }: IProps) {
   const { t } = useTranslation();
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isTaskOpen, setIsTaskOpen] = useState(false);
 
-  const renderTruncatedName = (name: string) => (
+  const renderTruncatedName = (
+    name: string,
+    color: string,
+    onClick?: () => void,
+  ) => (
     <Tooltip title={name} disableHoverListener={Array.from(name).length <= 12}>
       <Typography
-        component="span"
+        component={onClick ? "button" : "span"}
+        type={onClick ? "button" : undefined}
         variant="caption"
-        color="text.secondary"
+        color={color}
         whiteSpace="nowrap"
+        onClick={onClick}
+        aria-haspopup={onClick ? "dialog" : undefined}
+        sx={
+          onClick
+            ? {
+                p: 0,
+                border: 0,
+                background: "none",
+                fontWeight: 700,
+                cursor: "pointer",
+                "&:hover": { textDecoration: "underline" },
+              }
+            : undefined
+        }
       >
         {truncateActivityName(name)}
       </Typography>
@@ -51,6 +76,7 @@ export function ProjectActivityAction({
     let verbKey: string;
     let subjectName: string;
     let suffixKey = "";
+    let taskSubject = false;
 
     switch (activity.type) {
       case "project_created":
@@ -84,6 +110,11 @@ export function ProjectActivityAction({
       case "task_deleted":
         verbKey = `activity.${activity.type}Verb`;
         subjectName = activity.taskName ?? "";
+        taskSubject = true;
+        break;
+      case "comment_deleted":
+        verbKey = "activity.comment_deletedVerb";
+        subjectName = "";
         break;
       default:
         return (
@@ -105,7 +136,11 @@ export function ProjectActivityAction({
         spacing={0.5}
         sx={{ minWidth: 0, whiteSpace: "nowrap", overflow: "hidden" }}
       >
-        {renderTruncatedName(activity.actorName)}
+        {renderTruncatedName(
+          activity.actorName,
+          getWorkspaceMemberColor(activity.actorColorIndex),
+          () => setIsProfileOpen(true),
+        )}
         <Typography
           variant="caption"
           color="text.secondary"
@@ -119,7 +154,11 @@ export function ProjectActivityAction({
           spacing={0.5}
           sx={{ minWidth: 0, whiteSpace: "nowrap" }}
         >
-          {renderTruncatedName(subjectName)}
+          {renderTruncatedName(
+            subjectName,
+            taskSubject ? "secondary.main" : "text.secondary",
+            taskSubject ? () => setIsTaskOpen(true) : undefined,
+          )}
           {suffixKey ? (
             <Typography
               variant="caption"
@@ -154,6 +193,22 @@ export function ProjectActivityAction({
 
   return (
     <>
+      {isProfileOpen ? (
+        <UserInfoDialog
+          open
+          displayName={activity.actorName}
+          username={activity.actorUsername}
+          onClose={() => setIsProfileOpen(false)}
+        />
+      ) : null}
+      {isTaskOpen ? (
+        <ProjectActivityTaskDialog
+          task={activity.task}
+          taskName={activity.taskName ?? ""}
+          open
+          onClose={() => setIsTaskOpen(false)}
+        />
+      ) : null}
       <Stack
         direction="row"
         alignItems="center"
@@ -225,20 +280,33 @@ export function ProjectActivityAction({
       ) : null}
       {isExpanded &&
         details.map((detail, index) => (
-          <Stack
+          <Box
             key={`${activity.id}-detail-${index}`}
-            spacing={0.5}
-            sx={{ mt: 0.75, width: "100%", textAlign: "left" }}
+            sx={{
+              mt: 0.75,
+              p: 1,
+              width: "100%",
+              textAlign: "left",
+              border: 1,
+              borderColor: "divider",
+              borderRadius: 1.5,
+              bgcolor: "background.paper",
+            }}
           >
             <Typography variant="caption" fontWeight={700}>
               {t(`activity.fields.${detail.field}`)}
             </Typography>
-            <Stack
-              alignItems="flex-start"
-              spacing={0.5}
-              sx={{ minWidth: 0, pl: 0.5 }}
-            >
-              <Stack spacing={0.25} sx={{ minWidth: 0 }}>
+            <Stack spacing={0.75} sx={{ mt: 0.5, minWidth: 0 }}>
+              <Box
+                sx={{
+                  minWidth: 0,
+                  p: 0.75,
+                  border: 1,
+                  borderColor: "error.light",
+                  borderRadius: 1,
+                  bgcolor: "action.hover",
+                }}
+              >
                 <Typography variant="caption" color="text.secondary">
                   {t("activity.previousValue")}
                 </Typography>
@@ -253,14 +321,23 @@ export function ProjectActivityAction({
                 >
                   {detail.from || t("activity.emptyValue")}
                 </Typography>
-              </Stack>
+              </Box>
               <SwapVertOutlinedIcon
                 fontSize="small"
                 color="action"
                 aria-hidden="true"
                 sx={{ alignSelf: "center" }}
               />
-              <Stack spacing={0.25} sx={{ minWidth: 0 }}>
+              <Box
+                sx={{
+                  minWidth: 0,
+                  p: 0.75,
+                  border: 1,
+                  borderColor: "success.light",
+                  borderRadius: 1,
+                  bgcolor: "action.hover",
+                }}
+              >
                 <Typography variant="caption" color="text.secondary">
                   {t("activity.afterValue")}
                 </Typography>
@@ -275,9 +352,9 @@ export function ProjectActivityAction({
                 >
                   {detail.to || t("activity.emptyValue")}
                 </Typography>
-              </Stack>
+              </Box>
             </Stack>
-          </Stack>
+          </Box>
         ))}
     </>
   );

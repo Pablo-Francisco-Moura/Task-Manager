@@ -318,7 +318,38 @@ describe("Project API", () => {
       await prisma.projectActivity.findUnique({
         where: { id: otherComment.id },
       }),
-    ).toMatchObject({ content: null, isDeleted: true });
+    ).toMatchObject({
+      actorId: otherUser.id,
+      actorName: otherUser.displayName,
+      content: null,
+      isDeleted: true,
+    });
+    const deletionActivity = await prisma.projectActivity.findFirstOrThrow({
+      where: {
+        projectId: project.id,
+        type: "comment_deleted",
+      },
+    });
+    expect(deletionActivity).toMatchObject({
+      actorId: TEST_GUEST_IDENTITY.userId,
+      actorName: "Test Guest",
+      details: {
+        commentId: otherComment.id,
+        commentAuthorId: otherUser.id,
+        commentAuthorName: otherUser.displayName,
+      },
+    });
+
+    const activityResponse = await app.request(
+      `/projects/${project.id}/activity`,
+    );
+    expect(await activityResponse.json()).toEqual([
+      expect.objectContaining({
+        id: deletionActivity.id,
+        type: "comment_deleted",
+        actorName: "Test Guest",
+      }),
+    ]);
   });
 
   test("should load project activity for an authorized workspace member", async () => {
@@ -353,6 +384,162 @@ describe("Project API", () => {
     expect(await nextApiResponse.json()).toEqual([
       expect.objectContaining({ taskName: "Example task" }),
     ]);
+  });
+
+  test("should track unread activity for workspace owners from project creation", async () => {
+    const beforeProjectCreation = new Date(Date.now() - 60_000);
+    const project = await prisma.project.create({
+      data: {
+        name: "Owner notifications",
+        createdAt: new Date(),
+      },
+    });
+    const otherUser = await prisma.user.create({
+      data: { displayName: "Other member", kind: "account" },
+    });
+    await prisma.projectActivity.create({
+      data: {
+        projectId: project.id,
+        actorId: otherUser.id,
+        actorName: otherUser.displayName,
+        type: "comment",
+        content: "Before project creation",
+        createdAt: beforeProjectCreation,
+      },
+    });
+
+    const projectUrl = `/projects/${project.id}/activity/unread-count`;
+    const beforeNewActivity = await app.request(projectUrl);
+    expect(await beforeNewActivity.json()).toEqual({ unreadCount: 0 });
+
+    await prisma.projectActivity.create({
+      data: {
+        projectId: project.id,
+        actorId: otherUser.id,
+        actorName: otherUser.displayName,
+        type: "comment",
+        content: "After project creation",
+      },
+    });
+    await prisma.projectActivity.create({
+      data: {
+        projectId: project.id,
+        actorId: TEST_GUEST_IDENTITY.userId,
+        actorName: "Test Guest",
+        type: "comment",
+        content: "My own comment",
+      },
+    });
+
+    const unreadResponse = await app.request(projectUrl);
+    expect(await unreadResponse.json()).toEqual({ unreadCount: 1 });
+
+    const latestActivity = await prisma.projectActivity.findFirstOrThrow({
+      where: { projectId: project.id },
+      orderBy: { id: "desc" },
+      select: { id: true },
+    });
+    const readResponse = await app.request(
+      `/projects/${project.id}/activity/read`,
+      {
+        method: "POST",
+        body: JSON.stringify({ activityId: latestActivity.id }),
+        headers: { "Content-Type": "application/json" },
+      },
+    );
+    expect(readResponse.status).toBe(200);
+    expect(await readResponse.json()).toEqual({ read: true });
+
+    await prisma.projectActivity.create({
+      data: {
+        projectId: project.id,
+        actorId: otherUser.id,
+        actorName: otherUser.displayName,
+        type: "comment",
+        content: "Created after the chat loaded",
+      },
+    });
+    const clearedResponse = await app.request(projectUrl);
+    expect(await clearedResponse.json()).toEqual({ unreadCount: 1 });
+  });
+
+  test("should count activity only from a member's project entry and clear it when read", async () => {
+    const project = await prisma.project.create({
+      data: { name: "Member notifications" },
+    });
+    const otherUser = await prisma.user.create({
+      data: { displayName: "Other member", kind: "account" },
+    });
+    await prisma.projectActivity.create({
+      data: {
+        projectId: project.id,
+        actorId: otherUser.id,
+        actorName: otherUser.displayName,
+        type: "comment",
+        content: "Before project entry",
+        createdAt: new Date(Date.now() - 60_000),
+      },
+    });
+    await prisma.workspaceMember.update({
+      where: {
+        workspaceId_userId: {
+          workspaceId: TEST_GUEST_IDENTITY.workspaceId,
+          userId: TEST_GUEST_IDENTITY.userId,
+        },
+      },
+      data: { role: "member" },
+    });
+    await prisma.projectMember.create({
+      data: {
+        projectId: project.id,
+        userId: TEST_GUEST_IDENTITY.userId,
+      },
+    });
+
+    const projectUrl = `/projects/${project.id}/activity/unread-count`;
+    const beforeNewActivity = await app.request(projectUrl);
+    expect(await beforeNewActivity.json()).toEqual({ unreadCount: 0 });
+
+    await prisma.projectActivity.create({
+      data: {
+        projectId: project.id,
+        actorId: otherUser.id,
+        actorName: otherUser.displayName,
+        type: "comment",
+        content: "After project entry",
+      },
+    });
+    const unreadResponse = await app.request(projectUrl);
+    expect(await unreadResponse.json()).toEqual({ unreadCount: 1 });
+
+    const latestActivity = await prisma.projectActivity.findFirstOrThrow({
+      where: { projectId: project.id },
+      orderBy: { id: "desc" },
+      select: { id: true },
+    });
+    const readResponse = await app.request(
+      `/projects/${project.id}/activity/read`,
+      {
+        method: "POST",
+        body: JSON.stringify({ activityId: latestActivity.id }),
+        headers: { "Content-Type": "application/json" },
+      },
+    );
+    expect(readResponse.status).toBe(200);
+    const clearedResponse = await app.request(projectUrl);
+    expect(await clearedResponse.json()).toEqual({ unreadCount: 0 });
+
+    await prisma.projectActivity.create({
+      data: {
+        projectId: project.id,
+        actorId: otherUser.id,
+        actorName: otherUser.displayName,
+        type: "comment",
+        content: "Activity after the member read the chat",
+      },
+    });
+    const newUnreadResponse = await app.request(projectUrl);
+    expect(await newUnreadResponse.json()).toEqual({ unreadCount: 1 });
   });
 
   // DELETE /api/project/:id - Delete project and its linked tasks.

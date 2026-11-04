@@ -35,6 +35,8 @@ As rotas que leem ou alteram dados exigem uma sessão válida e aplicam o escopo
 - `PATCH /api/project/:id` — atualiza um projeto.
 - `DELETE /api/project/:id` — exclui um projeto permitido.
 - `GET /api/project/:projectId/activity` — lista atividade do projeto.
+- `GET /api/project/:projectId/activity/unread-count` — consulta atividades não lidas de outras pessoas.
+- `POST /api/project/:projectId/activity/read` — marca como lida até `activityId` enviado no corpo.
 - `POST /api/project/:projectId/comments` — cria um comentário.
 - `PATCH /api/project/:projectId/activity/:activityId` — atualiza um comentário permitido.
 - `DELETE /api/project/:projectId/activity/:activityId` — remove ou oculta um comentário permitido.

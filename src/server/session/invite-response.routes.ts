@@ -101,7 +101,7 @@ routes.post("/workspace/invites/:inviteId/accept", async (context) => {
       });
       const project = validProjects.find(({ id }) => id === projectId);
       if (project) {
-        await createProjectActivity(transaction, {
+        const activity = await createProjectActivity(transaction, {
           projectId,
           actorId: invite.createdById,
           type: "member_added",
@@ -109,6 +109,20 @@ routes.post("/workspace/invites/:inviteId/accept", async (context) => {
             memberName: accountSession.user.displayName,
             memberId: accountSession.userId,
           },
+        });
+        await transaction.projectActivityReadState.upsert({
+          where: {
+            projectId_userId: {
+              projectId,
+              userId: accountSession.userId,
+            },
+          },
+          create: {
+            projectId,
+            userId: accountSession.userId,
+            lastSeenActivityId: activity.id,
+          },
+          update: { lastSeenActivityId: activity.id },
         });
       }
     }

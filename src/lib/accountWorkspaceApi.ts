@@ -13,6 +13,7 @@ export class AccountWorkspaceRequestError extends Error {
   constructor(
     message: string,
     readonly status: number,
+    readonly code?: string,
   ) {
     super(message);
     this.name = "AccountWorkspaceRequestError";
@@ -68,10 +69,23 @@ export async function accountWorkspaceRequest<T>(
     if (response.status === 401 && typeof window !== "undefined") {
       window.dispatchEvent(new Event(ACCOUNT_SESSION_EXPIRED_EVENT));
     }
-    throw new AccountWorkspaceRequestError(message, response.status);
+    throw new AccountWorkspaceRequestError(
+      message,
+      response.status,
+      typeof payload?.code === "string" ? payload.code : undefined,
+    );
   }
 
   return payload as T;
+}
+
+export async function getProjectActivityUnreadCount(
+  projectId: number,
+): Promise<number> {
+  const result = await accountWorkspaceRequest<{ unreadCount: number }>(
+    `/api/project/${projectId}/activity/unread-count`,
+  );
+  return result.unreadCount;
 }
 
 export function mapAccountTask(task: TypeSerializedTask): TypeLocalTask {

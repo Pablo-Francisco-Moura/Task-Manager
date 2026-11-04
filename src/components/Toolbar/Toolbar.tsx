@@ -1,21 +1,25 @@
+import { useQuery } from "@tanstack/react-query";
 import { useTasks } from "@/hooks/useTasks";
 import { useEffect } from "react";
+import { QUERY_KEYS } from "@/constants/queryKeys";
 import { useProjects } from "@/hooks/useProjects";
 import { useTranslation } from "react-i18next";
 import { useProjectStore } from "@/store/projectStore";
+import { getProjectActivityUnreadCount } from "@/lib/accountWorkspaceApi";
 import Select, { SelectChangeEvent } from "@mui/material/Select";
 import type { TypeLocalProject } from "@/types/localData";
+import Badge from "@mui/material/Badge";
+import Button from "@mui/material/Button";
 import AddIcon from "@mui/icons-material/Add";
 import MenuItem from "@mui/material/MenuItem";
 import InputLabel from "@mui/material/InputLabel";
 import FormControl from "@mui/material/FormControl";
-import Button from "@mui/material/Button";
 import ChatOutlinedIcon from "@mui/icons-material/ChatOutlined";
 
 interface IProps {
   openAddTask: boolean;
-  onToggleAddTask: () => void;
   onOpenChat: () => void;
+  onToggleAddTask: () => void;
 }
 
 export function Toolbar({ openAddTask, onToggleAddTask, onOpenChat }: IProps) {
@@ -28,6 +32,18 @@ export function Toolbar({ openAddTask, onToggleAddTask, onOpenChat }: IProps) {
   const { t } = useTranslation();
   const { projects, isLoading } = useProjects();
   const { tasks } = useTasks(selectedProject?.id);
+  const { data: unreadCount = 0, isError: isUnreadCountError } = useQuery({
+    queryKey: [QUERY_KEYS.ACTIVITY_UNREAD, selectedProject?.id],
+    queryFn: () => {
+      if (!selectedProject) {
+        throw new Error("A project must be selected to count unread activity");
+      }
+      return getProjectActivityUnreadCount(selectedProject.id);
+    },
+    enabled: workspaceRole !== null && selectedProject !== null,
+    refetchInterval: 10_000,
+    refetchOnWindowFocus: true,
+  });
 
   useEffect(() => {
     if (!preferencesLoaded) return;
@@ -146,7 +162,21 @@ export function Toolbar({ openAddTask, onToggleAddTask, onOpenChat }: IProps) {
               className="task-toolbar-action"
               size="small"
               variant="outlined"
-              startIcon={<ChatOutlinedIcon />}
+              startIcon={
+                <Badge badgeContent={unreadCount} color="error" max={99}>
+                  <ChatOutlinedIcon />
+                </Badge>
+              }
+              aria-label={
+                isUnreadCountError
+                  ? t("activity.unreadLoadError")
+                  : unreadCount > 0
+                    ? t("activity.unreadCount", { count: unreadCount })
+                    : t("activity.title")
+              }
+              title={
+                isUnreadCountError ? t("activity.unreadLoadError") : undefined
+              }
               onClick={onOpenChat}
               disabled={!selectedProject || isLoading}
             >

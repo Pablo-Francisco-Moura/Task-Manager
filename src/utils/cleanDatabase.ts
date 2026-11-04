@@ -3,9 +3,39 @@ import { createHash } from "node:crypto";
 import { TEST_GUEST_IDENTITY } from "@/constants/testGuest";
 
 export async function cleanDatabase() {
-  // Detects the current schema from DATABASE_URL.
-  const schemaMatch = process.env.DATABASE_URL?.match(/schema=([^&]+)/);
-  const schema = schemaMatch ? schemaMatch[1] : "public";
+  const databaseUrl = process.env.DATABASE_URL;
+  if (!databaseUrl) {
+    throw new Error("Refusing to clean database: DATABASE_URL is missing.");
+  }
+  let parsedDatabaseUrl: URL;
+  try {
+    parsedDatabaseUrl = new URL(databaseUrl);
+  } catch {
+    throw new Error("Refusing to clean database: DATABASE_URL is invalid.");
+  }
+  if (decodeURIComponent(parsedDatabaseUrl.pathname.slice(1)) !== "test_db") {
+    throw new Error(
+      "Refusing to clean database: only the dedicated test_db database can be truncated.",
+    );
+  }
+  if (
+    !["localhost", "127.0.0.1", "::1", "[::1]"].includes(
+      parsedDatabaseUrl.hostname.toLowerCase(),
+    )
+  ) {
+    throw new Error(
+      "Refusing to clean database: only a local test_db database can be truncated.",
+    );
+  }
+  if (!["postgres:", "postgresql:"].includes(parsedDatabaseUrl.protocol)) {
+    throw new Error(
+      "Refusing to clean database: DATABASE_URL must use PostgreSQL.",
+    );
+  }
+  const schema = parsedDatabaseUrl.searchParams.get("schema") ?? "public";
+  if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(schema)) {
+    throw new Error("Refusing to clean database: schema name is invalid.");
+  }
 
   const tables = await prisma.$queryRaw<Array<{ tablename: string }>>`
     SELECT tablename FROM pg_tables WHERE schemaname = ${schema}

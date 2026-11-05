@@ -11,11 +11,11 @@ import {
   DialogContent,
   CircularProgress,
 } from "@mui/material";
+import { BrandIcon } from "@/components/BrandIcon/BrandIcon";
 import { useTranslation } from "react-i18next";
 import { ACCOUNT_WORKSPACE_SUGGESTIONS } from "@/constants/session";
 import type { ReactNode } from "react";
 import type { TypeWorkspaceMembership } from "@/types";
-import WorkspacesOutlinedIcon from "@mui/icons-material/WorkspacesOutlined";
 
 interface IProps {
   children: ReactNode;
@@ -280,7 +280,7 @@ export function AppBarDialogs({
             color: "text.primary",
           }}
         >
-          <WorkspacesOutlinedIcon color="primary" sx={{ fontSize: 40 }} />
+          <BrandIcon size={40} />
           <CircularProgress size={28} aria-label={t("common.signingOut")} />
           <Stack spacing={0.5} alignItems="center">
             <Typography variant="h6">{t("common.signingOut")}</Typography>

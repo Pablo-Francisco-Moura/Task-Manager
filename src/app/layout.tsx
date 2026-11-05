@@ -5,7 +5,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: metadataTitle,
-  icons: { icon: "/icon.png" },
+  icons: { icon: "/icon.png", shortcut: "/icon.png" },
 };
 
 export default function RootLayout({

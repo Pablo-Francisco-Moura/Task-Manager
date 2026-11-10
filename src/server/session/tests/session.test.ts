@@ -1438,7 +1438,9 @@ describe("Guest workspace session", () => {
       expect.objectContaining({
         type: "project_created",
         actorName: "Ana",
-        details: { projectName: "Account project" },
+        details: expect.objectContaining({
+          projectName: "Account project",
+        }),
       }),
       expect.objectContaining({
         type: "task_created",

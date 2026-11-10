@@ -13,12 +13,14 @@ import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import GroupOutlinedIcon from "@mui/icons-material/GroupOutlined";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import AlternateEmailIcon from "@mui/icons-material/AlternateEmail";
+import PaletteOutlinedIcon from "@mui/icons-material/PaletteOutlined";
 import FolderOpenOutlinedIcon from "@mui/icons-material/FolderOpenOutlined";
 
 interface IProps {
   member: TypeWorkspaceMember;
   canManage: boolean;
   onRemove: (member: TypeWorkspaceMember) => void;
+  onEditColor: (member: TypeWorkspaceMember) => void;
   onManageProjects: (member: TypeWorkspaceMember) => void;
 }
 
@@ -26,6 +28,7 @@ export function MemberCard({
   member,
   canManage,
   onRemove,
+  onEditColor,
   onManageProjects,
 }: IProps) {
   const { t, i18n } = useTranslation();
@@ -132,6 +135,14 @@ export function MemberCard({
         </Box>
         {canManage && member.role === "member" ? (
           <Stack direction="row" spacing={0.5} justifyContent="flex-end">
+            <Tooltip title={t("members.editChatColor")}>
+              <IconButton
+                aria-label={`${t("members.editChatColor")}: ${member.displayName}`}
+                onClick={() => onEditColor(member)}
+              >
+                <PaletteOutlinedIcon />
+              </IconButton>
+            </Tooltip>
             <Tooltip title={t("members.manageProjects")}>
               <IconButton
                 aria-label={`${t("members.manageProjects")}: ${member.displayName}`}

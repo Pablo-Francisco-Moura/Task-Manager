@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { UserInfoDialog } from "@/components/Notifications/UserInfoDialog";
 import { getWorkspaceMemberColor } from "@/utils/workspaceMemberColors";
 import { ProjectActivityTaskDialog } from "./ProjectActivityTaskDialog";
+import { ProjectActivityProjectDialog } from "./ProjectActivityProjectDialog";
 import { Box, Chip, Stack, Tooltip, Typography } from "@mui/material";
 import type {
   TypeLocalTaskStatus,
@@ -28,6 +29,27 @@ function truncateActivityName(value: string) {
     : value;
 }
 
+function getProjectDescription(details: Record<string, unknown> | null) {
+  if (typeof details?.projectDescription === "string") {
+    return details.projectDescription;
+  }
+
+  const changes = details?.changes;
+  if (typeof changes !== "object" || changes === null) return null;
+
+  const descriptionChange = (changes as Record<string, unknown>).description;
+  if (typeof descriptionChange !== "object" || descriptionChange === null) {
+    return null;
+  }
+
+  const descriptionValue = (descriptionChange as Record<string, unknown>).to;
+  return typeof descriptionValue === "string"
+    ? descriptionValue
+    : descriptionValue === null
+      ? ""
+      : null;
+}
+
 export function ProjectActivityAction({
   activity,
   details,
@@ -38,6 +60,7 @@ export function ProjectActivityAction({
   const { t } = useTranslation();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isTaskOpen, setIsTaskOpen] = useState(false);
+  const [isProjectOpen, setIsProjectOpen] = useState(false);
 
   const renderTruncatedName = (
     name: string,
@@ -77,6 +100,7 @@ export function ProjectActivityAction({
     let subjectName: string;
     let suffixKey = "";
     let taskSubject = false;
+    let projectSubject = false;
 
     switch (activity.type) {
       case "project_created":
@@ -87,6 +111,7 @@ export function ProjectActivityAction({
             activityData.projectName) ||
           activity.taskName ||
           "";
+        projectSubject = true;
         break;
       case "member_added":
         verbKey = `activity.${activity.type}Verb`;
@@ -156,8 +181,12 @@ export function ProjectActivityAction({
         >
           {renderTruncatedName(
             subjectName,
-            taskSubject ? "secondary.main" : "text.secondary",
-            taskSubject ? () => setIsTaskOpen(true) : undefined,
+            taskSubject || projectSubject ? "secondary.main" : "text.secondary",
+            taskSubject
+              ? () => setIsTaskOpen(true)
+              : projectSubject
+                ? () => setIsProjectOpen(true)
+                : undefined,
           )}
           {suffixKey ? (
             <Typography
@@ -207,6 +236,18 @@ export function ProjectActivityAction({
           taskName={activity.taskName ?? ""}
           open
           onClose={() => setIsTaskOpen(false)}
+        />
+      ) : null}
+      {isProjectOpen ? (
+        <ProjectActivityProjectDialog
+          projectName={
+            typeof activity.details?.projectName === "string"
+              ? activity.details.projectName
+              : activity.taskName ?? ""
+          }
+          description={getProjectDescription(activity.details)}
+          open
+          onClose={() => setIsProjectOpen(false)}
         />
       ) : null}
       <Stack

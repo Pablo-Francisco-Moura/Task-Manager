@@ -343,13 +343,22 @@ describe("Project API", () => {
     const activityResponse = await app.request(
       `/projects/${project.id}/activity`,
     );
-    expect(await activityResponse.json()).toEqual([
-      expect.objectContaining({
-        id: deletionActivity.id,
-        type: "comment_deleted",
-        actorName: "Test Guest",
-      }),
-    ]);
+    const activities = await activityResponse.json();
+    expect(activities).toHaveLength(2);
+    expect(activities).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: comment.id,
+          type: "comment",
+          content: "Updated comment",
+        }),
+        expect.objectContaining({
+          id: deletionActivity.id,
+          type: "comment_deleted",
+          actorName: "Test Guest",
+        }),
+      ]),
+    );
   });
 
   test("should load project activity for an authorized workspace member", async () => {

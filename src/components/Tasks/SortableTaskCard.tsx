@@ -67,17 +67,27 @@ export function SortableTaskCard({
           </IconButton>
         </Tooltip>
         <div className={styles.cardCopy}>
-          <h4 className={styles.cardTitle}>{task.name}</h4>
+          <h4 className={styles.cardTitle} title={task.name}>
+            {task.name}
+          </h4>
           <TaskPriorityBadge priority={task.priority} />
           {task.description && (
-            <p className={styles.cardDescription}>{task.description}</p>
+            <p className={styles.cardDescription} title={task.description}>
+              {task.description}
+            </p>
           )}
           {dueValue && (
             <p className={styles.cardDueDate} data-overdue={isOverdue}>
               <EventOutlinedIcon fontSize="inherit" aria-hidden="true" />
-              {t(
-                isOverdue ? "task.dueDate.overdue" : "task.dueDate.label",
-              )}: {formatTaskDueDate(dueValue, i18n.language, hasDueTime)}
+              <span>
+                {t(
+                  isOverdue ? "task.dueDate.overdue" : "task.dueDate.label",
+                )}
+                :
+              </span>
+              <span className={styles.cardDueDateValue}>
+                {formatTaskDueDate(dueValue, i18n.language, hasDueTime)}
+              </span>
             </p>
           )}
         </div>

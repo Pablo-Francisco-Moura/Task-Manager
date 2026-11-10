@@ -9,6 +9,7 @@ import {
   REQUIRED_TEXT_CONTRAST,
 } from "@/constants";
 import type { TypeColorSettings, TypeThemeColors, TypeTheme } from "@/types";
+import { updateBrandIconFavicon } from "@/utils/brandIcon";
 
 function normalizeHex(value: unknown, fallback: string) {
   return typeof value === "string" && /^#[\da-f]{6}$/i.test(value)
@@ -269,4 +270,5 @@ export function applyThemeColors(colors: TypeThemeColors) {
   colors.workspaceMemberColors.forEach((color, index) => {
     root.style.setProperty(`--workspace-member-color-${index + 1}`, color);
   });
+  updateBrandIconFavicon(colors);
 }

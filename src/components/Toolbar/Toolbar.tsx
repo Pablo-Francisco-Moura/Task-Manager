@@ -6,8 +6,13 @@ import { useProjects } from "@/hooks/useProjects";
 import { useTranslation } from "react-i18next";
 import { useProjectStore } from "@/store/projectStore";
 import { getProjectActivityUnreadCount } from "@/lib/accountWorkspaceApi";
+import { TaskFilters } from "@/components/Tasks/TaskFilters";
 import Select, { SelectChangeEvent } from "@mui/material/Select";
-import type { TypeLocalProject } from "@/types/localData";
+import type {
+  TypeLocalProject,
+  TypeLocalTaskStatus,
+  TypeLocalTaskPriority,
+} from "@/types/localData";
 import Badge from "@mui/material/Badge";
 import Button from "@mui/material/Button";
 import AddIcon from "@mui/icons-material/Add";
@@ -18,11 +23,27 @@ import ChatOutlinedIcon from "@mui/icons-material/ChatOutlined";
 
 interface IProps {
   openAddTask: boolean;
+  search: string;
+  statusFilter: TypeLocalTaskStatus | "all";
+  priorityFilter: TypeLocalTaskPriority | "all";
   onOpenChat: () => void;
   onToggleAddTask: () => void;
+  onSearchChange: (value: string) => void;
+  onStatusFilterChange: (value: TypeLocalTaskStatus | "all") => void;
+  onPriorityFilterChange: (value: TypeLocalTaskPriority | "all") => void;
 }
 
-export function Toolbar({ openAddTask, onToggleAddTask, onOpenChat }: IProps) {
+export function Toolbar({
+  openAddTask,
+  search,
+  statusFilter,
+  priorityFilter,
+  onOpenChat,
+  onToggleAddTask,
+  onSearchChange,
+  onStatusFilterChange,
+  onPriorityFilterChange,
+}: IProps) {
   const selectedProject = useProjectStore((s) => s.selectedProject);
   const selectedProjectId = useProjectStore((s) => s.selectedProjectId);
   const preferencesLoaded = useProjectStore((s) => s.preferencesLoaded);
@@ -156,7 +177,15 @@ export function Toolbar({ openAddTask, onToggleAddTask, onOpenChat }: IProps) {
             )}
           </p>
         )}
-        <div className="flex items-center gap-2">
+        <div className="flex flex-nowrap items-center gap-2">
+          <TaskFilters
+            search={search}
+            statusFilter={statusFilter}
+            priorityFilter={priorityFilter}
+            onSearchChange={onSearchChange}
+            onStatusFilterChange={onStatusFilterChange}
+            onPriorityFilterChange={onPriorityFilterChange}
+          />
           {workspaceRole !== null ? (
             <Button
               className="task-toolbar-action"

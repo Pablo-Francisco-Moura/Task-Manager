@@ -4,9 +4,20 @@ import type {
 } from "@/types";
 
 const WORKSPACE_MEMBER_COLOR_COUNT = 10;
-const MEMBER_COLOR_INDICES: TypeWorkspaceMemberColorIndex[] = [
+export const WORKSPACE_MEMBER_COLOR_INDICES: TypeWorkspaceMemberColorIndex[] = [
   1, 2, 3, 4, 5, 6, 7, 8, 9,
 ];
+
+export function isWorkspaceMemberColorIndex(
+  colorIndex: number | null | undefined,
+): colorIndex is TypeWorkspaceMemberColorIndex {
+  return (
+    typeof colorIndex === "number" &&
+    Number.isInteger(colorIndex) &&
+    colorIndex >= 1 &&
+    colorIndex <= 9
+  );
+}
 
 export function getWorkspaceMemberColorIndices(
   members: TypeWorkspaceMemberIdentity[],
@@ -25,8 +36,11 @@ export function getWorkspaceMemberColorIndices(
     memberColorIndices.set(owner.userId, 0);
   }
   nonOwners.forEach((member, index) => {
-    const colorIndex =
-      MEMBER_COLOR_INDICES[index % (WORKSPACE_MEMBER_COLOR_COUNT - 1)];
+    const colorIndex = isWorkspaceMemberColorIndex(member.colorIndex)
+      ? member.colorIndex
+      : WORKSPACE_MEMBER_COLOR_INDICES[
+          index % (WORKSPACE_MEMBER_COLOR_COUNT - 1)
+        ];
     memberColorIndices.set(member.userId, colorIndex);
   });
 

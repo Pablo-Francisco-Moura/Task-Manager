@@ -81,10 +81,11 @@ routes.get("/workspace/:workspaceId/members", async (context) => {
               ),
           );
   const colorIndices = getWorkspaceMemberColorIndices(
-    memberships.map(({ user, role, joinedAt }) => ({
+    memberships.map(({ user, role, joinedAt, colorIndex }) => ({
       userId: user.id,
       role,
       joinedAt,
+      colorIndex,
     })),
   );
 
@@ -108,6 +109,79 @@ routes.get("/workspace/:workspaceId/members", async (context) => {
     })),
   });
 });
+
+routes.put(
+  "/workspace/:workspaceId/members/:userId/color",
+  async (context) => {
+    const providedToken = getCookie(context, ACCOUNT_SESSION_COOKIE_NAME);
+    if (!providedToken) {
+      return context.json({ error: "Account session required" }, 401);
+    }
+
+    const workspaceId = context.req.param("workspaceId");
+    const targetUserId = context.req.param("userId");
+    const uuidPattern =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidPattern.test(workspaceId) || !uuidPattern.test(targetUserId)) {
+      return context.json({ error: "Invalid workspace or user id" }, 400);
+    }
+
+    const body: unknown = await context.req.json().catch(() => ({}));
+    const colorIndex =
+      typeof body === "object" && body !== null && "colorIndex" in body
+        ? body.colorIndex
+        : null;
+    if (
+      typeof colorIndex !== "number" ||
+      !Number.isInteger(colorIndex) ||
+      colorIndex < 1 ||
+      colorIndex > 9
+    ) {
+      return context.json({ error: "colorIndex must be between 1 and 9" }, 400);
+    }
+
+    const accountSession = await getAccountSessionByToken(providedToken);
+    if (!accountSession || accountSession.user.kind !== "account") {
+      return context.json({ error: "Account session expired" }, 401);
+    }
+
+    const ownerMembership = await prisma.workspaceMember.findUnique({
+      where: {
+        workspaceId_userId: {
+          workspaceId,
+          userId: accountSession.userId,
+        },
+      },
+    });
+    if (!ownerMembership || ownerMembership.role !== "owner") {
+      return context.json({ error: "Workspace owner required" }, 403);
+    }
+
+    const targetMembership = await prisma.workspaceMember.findUnique({
+      where: {
+        workspaceId_userId: { workspaceId, userId: targetUserId },
+      },
+    });
+    if (!targetMembership) {
+      return context.json({ error: "Workspace member not found" }, 404);
+    }
+    if (targetMembership.role !== "member") {
+      return context.json({ error: "Cannot change owner color" }, 409);
+    }
+
+    const updatedMembership = await prisma.workspaceMember.update({
+      where: {
+        workspaceId_userId: { workspaceId, userId: targetUserId },
+      },
+      data: { colorIndex },
+      select: { colorIndex: true },
+    });
+    return context.json({
+      userId: targetUserId,
+      colorIndex: updatedMembership.colorIndex,
+    });
+  },
+);
 
 routes.put(
   "/workspace/:workspaceId/members/:userId/projects",

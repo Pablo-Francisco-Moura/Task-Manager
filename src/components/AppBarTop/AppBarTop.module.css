@@ -4,11 +4,6 @@
   border-bottom: 1px solid var(--line);
 }
 
-.header :global(.app-brand-mark) {
-  background: var(--brand);
-  color: var(--brand-contrast);
-}
-
 .header :global(.app-brand-kicker) {
   color: var(--accent);
   font-size: 0.65rem;

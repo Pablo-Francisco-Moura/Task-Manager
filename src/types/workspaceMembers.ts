@@ -6,6 +6,7 @@ export type TypeWorkspaceMemberIdentity = {
   userId: string;
   role: "owner" | "member";
   joinedAt: Date | string;
+  colorIndex?: number | null;
 };
 
 export type TypeWorkspaceMember = {

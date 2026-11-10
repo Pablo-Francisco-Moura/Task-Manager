@@ -17,6 +17,7 @@ import { useProjectStore } from "@/store/projectStore";
 import { useTranslation } from "react-i18next";
 import { useEffect, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrandIcon } from "@/components/BrandIcon/BrandIcon";
 
 type ProvidersProps = {
   children: React.ReactNode;
@@ -228,9 +229,10 @@ export function Providers({ children }: ProvidersProps) {
       >
         <div className="w-full max-w-md rounded-3xl border border-slate-200/80 bg-white/85 p-6 shadow-[0_24px_60px_rgba(15,23,42,0.12)] backdrop-blur-xl dark:border-slate-700/80 dark:bg-slate-900/80 dark:shadow-[0_24px_60px_rgba(2,6,23,0.6)]">
           <div className="mb-5 flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 text-xl text-white shadow-lg shadow-emerald-500/20">
-              ✦
-            </div>
+            <BrandIcon
+              className="h-12 w-12 shrink-0 rounded-2xl shadow-lg"
+              size={48}
+            />
             <div>
               <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">
                 Workspace

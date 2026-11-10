@@ -143,7 +143,7 @@ export function useSignOutAction({
           window.setTimeout(resolve, remainingLoadingTime),
         );
       }
-      window.location.reload();
+      window.location.replace("/");
     } catch (error) {
       setWorkspaceError(
         error instanceof Error ? error.message : t("account.signOutError"),

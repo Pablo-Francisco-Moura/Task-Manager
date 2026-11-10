@@ -88,10 +88,13 @@
 }
 
 .card {
+  box-sizing: border-box;
   display: grid;
+  height: 8.5rem;
   grid-template-columns: 2.25rem minmax(0, 1fr) auto;
   align-items: start;
   gap: 0.4rem;
+  overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 5px;
   background: var(--background);
@@ -104,28 +107,43 @@
 }
 
 .cardTitle {
+  display: -webkit-box;
+  overflow: hidden;
   margin: 0;
   color: var(--foreground);
   font-size: 0.88rem;
   font-weight: 650;
   overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .cardDescription {
+  display: -webkit-box;
+  overflow: hidden;
   margin: 0.45rem 0 0;
   color: var(--muted);
   font-size: 0.8rem;
   overflow-wrap: anywhere;
   white-space: pre-wrap;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .cardDueDate {
-  display: flex;
-  align-items: center;
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  align-items: start;
   gap: 0.3rem;
   margin: 0.45rem 0 0;
   color: var(--muted);
   font-size: 0.75rem;
+  line-height: 1.25;
+}
+
+.cardDueDateValue {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .cardDueDate[data-overdue="true"] {

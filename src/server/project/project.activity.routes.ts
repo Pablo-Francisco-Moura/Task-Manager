@@ -38,7 +38,7 @@ routes.get("/activity/notifications", async (c) => {
 
   const workspaceMembers = await prisma.workspaceMember.findMany({
     where: { workspaceId },
-    select: { userId: true, role: true, joinedAt: true },
+    select: { userId: true, role: true, joinedAt: true, colorIndex: true },
   });
   const actorColorIndices = getWorkspaceMemberColorIndices(workspaceMembers);
   const projectNames = new Map(
@@ -105,7 +105,7 @@ routes.get("/:projectId/activity", async (c) => {
 
   const workspaceMembers = await prisma.workspaceMember.findMany({
     where: { workspaceId: project.workspaceId },
-    select: { userId: true, role: true, joinedAt: true },
+    select: { userId: true, role: true, joinedAt: true, colorIndex: true },
   });
   const actorColorIndices = getWorkspaceMemberColorIndices(workspaceMembers);
   const activities = await prisma.projectActivity.findMany({

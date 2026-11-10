@@ -12,7 +12,10 @@
       "title": "Create your account",
       "submit": "Create account",
       "error": "Could not create the account right now.",
-      "success": "Account created successfully."
+      "success": "Account created successfully.",
+      "stepIdentity": "Identity",
+      "stepSecurity": "Security",
+      "stepWorkspace": "Workspace"
     },
     "displayName": "How would you like to be called?",
     "displayNamePlaceholder": "Enter your name",
@@ -78,6 +81,11 @@
   "project": {
     "label": "Project",
     "name": "Project Name",
+    "details": {
+      "title": "Project information",
+      "project": "Project",
+      "description": "Description"
+    },
     "count": {
       "singular": "Project",
       "plural": "Projects"
@@ -120,6 +128,13 @@
       "singular": "Task",
       "plural": "Tasks"
     },
+    "details": {
+      "title": "Task details",
+      "task": "Task",
+      "status": "Status",
+      "priority": "Priority",
+      "description": "Description"
+    },
     "name": "Task Name",
     "description": "Description (optional)",
     "enterDescription": "Add context for this task",
@@ -127,7 +142,9 @@
       "submit": "Register Task",
       "enterName": "Enter the task name",
       "error": "Error creating task!",
-      "success": "Task created successfully."
+      "success": "Task created successfully.",
+      "stepDetails": "Details",
+      "stepOptions": "Options"
     },
     "update": {
       "label": "Edit Task",
@@ -145,6 +162,10 @@
     "loading": "Loading tasks...",
     "empty": "No tasks associated with this project!",
     "search": "Search tasks",
+    "openFilters": "Open task filters",
+    "openFiltersWithCount": "Open task filters ({{count}} active)",
+    "filtersTitle": "Task filters",
+    "clearFilters": "Clear filters",
     "filterStatus": "Filter by status",
     "allStatuses": "All statuses",
     "filterPriority": "Filter by priority",

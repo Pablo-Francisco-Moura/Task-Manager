@@ -87,7 +87,6 @@ export function FormSelectField<
             color: "var(--field-ink, var(--foreground))",
             ".MuiOutlinedInput-notchedOutline": {
               borderColor: "var(--field-line, var(--line))",
-              borderLeftWidth: 4,
             },
             "&:hover .MuiOutlinedInput-notchedOutline": {
               borderColor: "var(--field-line, var(--line))",
@@ -95,7 +94,6 @@ export function FormSelectField<
             "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
               borderColor: "var(--field-line, var(--line))",
               borderWidth: 2,
-              borderLeftWidth: 4,
             },
             "& .MuiSelect-icon": {
               color: "var(--field-ink, var(--foreground))",

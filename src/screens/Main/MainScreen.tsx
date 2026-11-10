@@ -6,10 +6,10 @@ import styles from "./MainScreen.module.css";
 export function MainScreen() {
   return (
     <div
-      className={`${styles.shell} app-shell flex min-h-screen w-full flex-col overflow-x-hidden transition-colors`}
+      className={`${styles.shell} app-shell w-full overflow-x-hidden transition-colors`}
     >
       <AppBarTop />
-      <main className="app-main mx-auto flex w-full max-w-6xl flex-1 flex-col px-4 pb-12 sm:px-6 lg:px-8">
+      <main className="app-main flex w-full flex-1 flex-col px-4">
         <MainWorkspace />
       </main>
       <FeedbackSnackbar />

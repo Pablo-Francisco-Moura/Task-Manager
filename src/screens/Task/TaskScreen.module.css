@@ -111,12 +111,16 @@
 }
 
 .taskScreen :global(.task-name) {
+  display: -webkit-box;
   min-width: 0;
   flex: 1;
+  overflow: hidden;
   color: var(--foreground);
   font-size: 0.95rem;
   font-weight: 600;
   overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .taskScreen :global(.task-copy) {
@@ -162,10 +166,14 @@
 }
 
 .taskScreen :global(.task-description) {
+  display: -webkit-box;
+  overflow: hidden;
   color: var(--muted);
   font-size: 0.85rem;
   overflow-wrap: anywhere;
   white-space: pre-wrap;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .taskScreen :global(.task-due-date) {

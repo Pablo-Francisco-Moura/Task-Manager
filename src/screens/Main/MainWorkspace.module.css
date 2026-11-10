@@ -1,6 +1,6 @@
 .workspace :global(.screen-content) {
   width: 100%;
-  padding: 2.5rem 0 3rem;
+  padding: 2.5rem 0 1rem;
 }
 
 .workspace :global(.screen-heading),
@@ -141,4 +141,36 @@
     padding: 0.55rem 0.7rem;
     font-size: 0.8rem;
   }
+}
+.workspace {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+}
+
+.content {
+  min-height: 0;
+  flex: 1;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+.content::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.content::-webkit-scrollbar-thumb {
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: var(--scrollbar-thumb);
+  background-clip: padding-box;
+}
+
+.content::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+  background-clip: padding-box;
 }

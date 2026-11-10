@@ -12,6 +12,7 @@ import {
 } from "@mui/material";
 import { PasswordField } from "./PasswordField";
 import { useTranslation } from "react-i18next";
+import { useEffect, useState } from "react";
 import { ACCOUNT_WORKSPACE_SUGGESTIONS } from "@/constants/session";
 import type { TypeAccountDialogMode } from "@/types";
 
@@ -33,12 +34,12 @@ interface IProps {
   onSubmit: () => void;
   onChange: (
     field:
-      | "displayName"
-      | "username"
       | "email"
+      | "username"
       | "password"
-      | "confirmPassword"
-      | "workspaceName",
+      | "displayName"
+      | "workspaceName"
+      | "confirmPassword",
     value: string,
   ) => void;
   onTogglePassword: (field: "password" | "confirmPassword") => void;
@@ -75,6 +76,7 @@ export function AccountDialog({
   onSubmit,
 }: IProps) {
   const { t } = useTranslation();
+  const [signupStep, setSignupStep] = useState(0);
   const dialogContent = resolveAccountDialogContent(mode, t);
   const isSignIn = mode === "signIn";
   const trimmedUsername = username.trim().toLowerCase();
@@ -86,6 +88,19 @@ export function AccountDialog({
   const trimmedEmail = email.trim();
   const isOptionalEmailValid =
     !trimmedEmail || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail);
+  const signupSteps = [
+    t("account.create.stepIdentity"),
+    t("account.create.stepSecurity"),
+    t("account.create.stepWorkspace"),
+  ];
+  const canContinue =
+    signupStep === 0
+      ? Boolean(displayName.trim()) && isUsernameValid && isOptionalEmailValid
+      : password.length >= 6 && Boolean(confirmPassword) && passwordsMatch;
+
+  useEffect(() => {
+    if (open && !isSignIn) setSignupStep(0);
+  }, [open, isSignIn]);
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
@@ -93,6 +108,16 @@ export function AccountDialog({
       <DialogContent>
         <Stack spacing={2} sx={{ pt: 1 }}>
           {!isSignIn ? (
+            <Typography variant="caption" color="text.secondary">
+              {t("common.stepOf", {
+                step: signupStep + 1,
+                total: signupSteps.length,
+              })}
+              {" · "}
+              {signupSteps[signupStep]}
+            </Typography>
+          ) : null}
+          {!isSignIn && signupStep === 0 ? (
             <>
               <TextField
                 label={t("account.displayName")}
@@ -152,7 +177,7 @@ export function AccountDialog({
                 }
               />
             </>
-          ) : (
+          ) : isSignIn ? (
             <TextField
               label={t("account.identifier")}
               value={email}
@@ -166,26 +191,28 @@ export function AccountDialog({
                   : t("account.identifierHint")
               }
             />
-          )}
-          <PasswordField
-            label={t("account.password")}
-            value={password}
-            placeholder={t("account.passwordPlaceholder")}
-            error={
-              (hasPasswordInput || hasAttemptedSubmit) && password.length < 6
-            }
-            helperText={
-              (hasPasswordInput || hasAttemptedSubmit) && password.length < 6
-                ? t("account.passwordInvalid")
-                : t("account.passwordHint")
-            }
-            onChange={(value) => onChange("password", value)}
-            showLabel={t("account.showPassword")}
-            hideLabel={t("account.hidePassword")}
-            visible={isPasswordVisible}
-            onToggle={() => onTogglePassword("password")}
-          />
-          {!isSignIn ? (
+          ) : null}
+          {isSignIn || signupStep === 1 ? (
+            <PasswordField
+              label={t("account.password")}
+              value={password}
+              placeholder={t("account.passwordPlaceholder")}
+              error={
+                (hasPasswordInput || hasAttemptedSubmit) && password.length < 6
+              }
+              helperText={
+                (hasPasswordInput || hasAttemptedSubmit) && password.length < 6
+                  ? t("account.passwordInvalid")
+                  : t("account.passwordHint")
+              }
+              onChange={(value) => onChange("password", value)}
+              showLabel={t("account.showPassword")}
+              hideLabel={t("account.hidePassword")}
+              visible={isPasswordVisible}
+              onToggle={() => onTogglePassword("password")}
+            />
+          ) : null}
+          {!isSignIn && signupStep === 1 ? (
             <>
               <PasswordField
                 label={t("account.confirmPassword")}
@@ -208,6 +235,10 @@ export function AccountDialog({
                 visible={isConfirmPasswordVisible}
                 onToggle={() => onTogglePassword("confirmPassword")}
               />
+            </>
+          ) : null}
+          {!isSignIn && signupStep === 2 ? (
+            <>
               <TextField
                 label={t("account.workspaceName")}
                 value={workspaceName}
@@ -254,13 +285,45 @@ export function AccountDialog({
         <Button onClick={onClose} disabled={isSubmitting}>
           {t("common.cancel")}
         </Button>
-        <Button variant="contained" onClick={onSubmit} disabled={isSubmitting}>
-          {isSubmitting
-            ? isSignIn
+        {isSignIn ? (
+          <Button
+            variant="contained"
+            onClick={onSubmit}
+            disabled={isSubmitting}
+          >
+            {isSubmitting
               ? t("account.signIn.submitting")
-              : t("common.saving")
-            : dialogContent.submit}
-        </Button>
+              : dialogContent.submit}
+          </Button>
+        ) : (
+          <>
+            {signupStep > 0 ? (
+              <Button
+                onClick={() => setSignupStep((current) => current - 1)}
+                disabled={isSubmitting}
+              >
+                {t("common.back")}
+              </Button>
+            ) : null}
+            {signupStep < signupSteps.length - 1 ? (
+              <Button
+                variant="contained"
+                onClick={() => setSignupStep((current) => current + 1)}
+                disabled={isSubmitting || !canContinue}
+              >
+                {t("common.continue")}
+              </Button>
+            ) : (
+              <Button
+                variant="contained"
+                onClick={onSubmit}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? t("common.saving") : dialogContent.submit}
+              </Button>
+            )}
+          </>
+        )}
       </DialogActions>
     </Dialog>
   );

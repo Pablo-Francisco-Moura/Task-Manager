@@ -12,7 +12,10 @@
       "title": "Crie sua conta",
       "submit": "Criar conta",
       "error": "Não foi possível criar a conta neste momento.",
-      "success": "Conta criada com sucesso."
+      "success": "Conta criada com sucesso.",
+      "stepIdentity": "Identificação",
+      "stepSecurity": "Segurança",
+      "stepWorkspace": "Workspace"
     },
     "displayName": "Como você quer se chamar?",
     "displayNamePlaceholder": "Digite seu nome",
@@ -78,6 +81,11 @@
   "project": {
     "label": "Projeto",
     "name": "Nome do Projeto",
+    "details": {
+      "title": "Informações do projeto",
+      "project": "Projeto",
+      "description": "Descrição"
+    },
     "count": {
       "singular": "Projeto",
       "plural": "Projetos"
@@ -120,6 +128,13 @@
       "singular": "Tarefa",
       "plural": "Tarefas"
     },
+    "details": {
+      "title": "Detalhes da tarefa",
+      "task": "Tarefa",
+      "status": "Status",
+      "priority": "Prioridade",
+      "description": "Descrição"
+    },
     "name": "Nome da Tarefa",
     "description": "Descrição (opcional)",
     "enterDescription": "Adicione contexto para esta tarefa",
@@ -127,7 +142,9 @@
       "submit": "Cadastrar Tarefa",
       "enterName": "Digite o nome da tarefa",
       "error": "Erro ao cadastrar tarefa!",
-      "success": "Tarefa criada com sucesso."
+      "success": "Tarefa criada com sucesso.",
+      "stepDetails": "Detalhes",
+      "stepOptions": "Opções"
     },
     "update": {
       "label": "Editar tarefa",
@@ -145,6 +162,10 @@
     "loading": "Carregando tarefas...",
     "empty": "Nenhuma tarefa associada a este projeto!",
     "search": "Buscar tarefas",
+    "openFilters": "Abrir filtros de tarefas",
+    "openFiltersWithCount": "Abrir filtros de tarefas ({{count}} aplicados)",
+    "filtersTitle": "Filtros de tarefas",
+    "clearFilters": "Limpar filtros",
     "filterStatus": "Filtrar por status",
     "allStatuses": "Todos os status",
     "filterPriority": "Filtrar por prioridade",

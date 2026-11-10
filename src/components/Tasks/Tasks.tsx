@@ -2,7 +2,6 @@ import { Task } from "../Task/Task";
 import { Dialog } from "@mui/material";
 import { TaskForm } from "@/components/TaskForm";
 import { TaskBoard } from "./TaskBoard";
-import { TaskFilters } from "./TaskFilters";
 import { filterTasks } from "./filterTasks";
 import { AlertMessage } from "@/components/AlertMessage";
 import { useMainStore } from "@/store/mainStore";
@@ -30,6 +29,9 @@ interface IProps {
   onOpenChat: () => void;
   onCloseChat: () => void;
   onCloseAddTask: () => void;
+  search: string;
+  statusFilter: TypeLocalTaskStatus | "all";
+  priorityFilter: TypeLocalTaskPriority | "all";
 }
 
 export function Tasks({
@@ -38,6 +40,9 @@ export function Tasks({
   onOpenChat,
   onCloseChat,
   onCloseAddTask,
+  search,
+  statusFilter,
+  priorityFilter,
 }: IProps) {
   const setSelectedTab = useMainStore((s) => s.setSelectedTab);
   const selectedProject = useProjectStore((s) => s.selectedProject);
@@ -54,13 +59,6 @@ export function Tasks({
   const [openDialog, setOpenDialog] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState<TypeLocalTask | null>(null);
   const [openEditDialog, setOpenEditDialog] = useState(false);
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<TypeLocalTaskStatus | "all">(
-    "all",
-  );
-  const [priorityFilter, setPriorityFilter] = useState<
-    TypeLocalTaskPriority | "all"
-  >("all");
   const workspaceRole = useProjectStore((state) => state.workspaceRole);
 
   const { t } = useTranslation();
@@ -239,14 +237,6 @@ export function Tasks({
 
   return (
     <div className="task-workspace">
-      <TaskFilters
-        search={search}
-        statusFilter={statusFilter}
-        priorityFilter={priorityFilter}
-        onSearchChange={setSearch}
-        onStatusFilterChange={setStatusFilter}
-        onPriorityFilterChange={setPriorityFilter}
-      />
       <ProjectActivityDrawer
         open={isChatOpen}
         projectId={selectedProject?.id ?? null}

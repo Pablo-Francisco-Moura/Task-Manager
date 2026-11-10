@@ -1028,6 +1028,43 @@ describe("Guest workspace session", () => {
       members: [],
     });
 
+    const colorResponse = await nextApiPut(
+      apiRequest(
+        `session/workspace/${workspaceId}/members/${memberUserId}/color`,
+        ownerCookie,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ colorIndex: 4 }),
+        },
+      ),
+    );
+    expect(colorResponse.status).toBe(200);
+    expect(await colorResponse.json()).toMatchObject({
+      userId: memberUserId,
+      colorIndex: 4,
+    });
+    expect(
+      await prisma.workspaceMember.findUnique({
+        where: {
+          workspaceId_userId: { workspaceId, userId: memberUserId },
+        },
+      }),
+    ).toMatchObject({ colorIndex: 4 });
+
+    const deniedColorUpdate = await nextApiPut(
+      apiRequest(
+        `session/workspace/${workspaceId}/members/${memberUserId}/color`,
+        memberCookie,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ colorIndex: 5 }),
+        },
+      ),
+    );
+    expect(deniedColorUpdate.status).toBe(403);
+
     const assignmentResponse = await nextApiPut(
       apiRequest(
         `session/workspace/${workspaceId}/members/${memberUserId}/projects`,
@@ -1043,6 +1080,14 @@ describe("Guest workspace session", () => {
     expect(await assignmentResponse.json()).toMatchObject({
       userId: memberUserId,
       projectIds: [firstProjectId],
+    });
+    const ownerRosterColorResponse = await nextApiGet(
+      apiRequest(`session/workspace/${workspaceId}/members`, ownerCookie),
+    );
+    expect(await ownerRosterColorResponse.json()).toMatchObject({
+      members: expect.arrayContaining([
+        expect.objectContaining({ userId: memberUserId, colorIndex: 4 }),
+      ]),
     });
     expect(
       await prisma.projectActivity.findFirst({
